@@ -1,0 +1,43 @@
+{
+  "name": "nodejs-expressjs-mongodb-base-project",
+  "private": true,
+  "version": "1.0.0",
+  "author": "NMH",
+  "description": "DAHTTT",
+  "engines": {
+    "node": ">=18.x"
+  },
+  "scripts": {
+    "lint": "eslint src --ext js --report-unused-disable-directives --max-warnings 0",
+    "clean": "rm -rf build && mkdir build",
+    "build-babel": "babel ./src -d ./build/src",
+    "build": "npm run clean && npm run build-babel",
+    "production": "npm run build && cross-env BUILD_MODE=production node ./build/src/server.js",
+    "dev": "cross-env BUILD_MODE=dev nodemon --exec babel-node ./src/server.js"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.28.3",
+    "async-exit-hook": "^2.0.1",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "cross-env": "^10.0.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "http-status-codes": "^2.3.0",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.19.0",
+    "nodemailer": "^7.0.6"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.28.3",
+    "@babel/core": "^7.28.3",
+    "@babel/eslint-parser": "^7.28.0",
+    "@babel/node": "^7.28.0",
+    "@babel/plugin-transform-runtime": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-plugin-module-resolver": "^5.0.2",
+    "eslint": "^9.34.0",
+    "nodemon": "^3.1.10"
+  }
+}
