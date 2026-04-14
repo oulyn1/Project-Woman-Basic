@@ -4,10 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import TableEmployee from '~/components/admin/TableEmployee/TableEmployee'
 
 function EmployeePage() {
-  const navigate = useNavigate()
-  const handleEditAccountClick = (id) => {
-    navigate(`/admin/employee/salary/${id}`)
-  }
   return (
     <Box
       sx={{
@@ -32,7 +28,7 @@ function EmployeePage() {
         </Typography>
       </Box>
       <Box sx={{ px: 6 }}>
-        <TableEmployee onEditAccount={handleEditAccountClick} />
+        <TableEmployee />
       </Box>
     </Box>
   )

@@ -1,7 +1,6 @@
 import { Badge, Box, Button } from '@mui/material'
 import React from 'react'
 import AutoStoriesOutlinedIcon from '@mui/icons-material/AutoStoriesOutlined'
-import PinDropOutlinedIcon from '@mui/icons-material/PinDropOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined'
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined'
@@ -25,9 +24,6 @@ function TopBar() {
   }
   const handleStoryClick = () => {
     navigate('/story')
-  }
-  const handleStoreClick = () => {
-    navigate('/storelocator')
   }
   const handleCartClick = () => {
     navigate('/cart')
@@ -68,24 +64,6 @@ function TopBar() {
         >
           <AutoStoriesOutlinedIcon />
           Câu Chuyện PNJ
-        </Button>
-        <Button
-          key='cuahang'
-          sx={{
-            my: 2,
-            color: '#696969',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            textTransform: 'none',
-            '&:hover': {
-              backgroundColor: 'white'
-            },
-          }}
-          onClick={handleStoreClick}
-        >
-          <PinDropOutlinedIcon />
-          Cửa Hàng
         </Button>
       </Box>
       <Box

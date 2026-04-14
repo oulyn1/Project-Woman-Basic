@@ -7,9 +7,6 @@ import { cartRoute } from "~/routes/v1/cartRoute"
 import { orderRoute } from "./orderRoute"
 import { ratingRoute } from "./ratingRoute"
 import { promotionRoute } from "./promotionRoute"
-import { workShiftRoute } from "./workshiftRoute"
-import { salaryRoute } from "./salaryRoute"
-import { branchRoute } from "./branchRoute"
 import { customerRoute } from "./customerRoute"
 
 const Router = express.Router()
@@ -31,12 +28,6 @@ Router.use('/order', orderRoute)
 Router.use('/ratings', ratingRoute)
 
 Router.use('/promotion', promotionRoute)
-
-Router.use('/workshift', workShiftRoute)
-
-Router.use('/salary', salaryRoute)
-
-Router.use('/branches', branchRoute)
 
 Router.use('/customers', customerRoute)
 

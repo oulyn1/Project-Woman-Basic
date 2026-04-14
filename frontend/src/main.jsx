@@ -14,7 +14,6 @@ import ProductPage from './pages/AdminPage/ProductPage/ProductPage.jsx'
 import AddProduct from './pages/AdminPage/ProductPage/AddProduct/AddProduct.jsx'
 import EditProduct from './pages/AdminPage/ProductPage/EditProduct/EditProduct.jsx'
 import Register from './pages/CustomerPage/Register/Register.jsx'
-import PageRoute from './pages/PageRoute/PageRoute.jsx'
 import CreateInformation from './pages/CustomerPage/AccountInformation/CreateInformation.jsx'
 import CategoryPage from './pages/AdminPage/CategoryPage/CategoryPage.jsx'
 import AddCategory from './pages/AdminPage/CategoryPage/AddCategory/AddCategory.jsx'
@@ -38,13 +37,7 @@ import AddPromotion from './pages/AdminPage/PromotionPage/AddPromotion/AddPromot
 import PromotionPage from './pages/AdminPage/PromotionPage/PromotionPage.jsx'
 import EditPromotion from './pages/AdminPage/PromotionPage/EditPromotion/EditPromotion.jsx'
 import Dashboard from './pages/AdminPage/DashBoard/DashBoard.jsx'
-import EmployeePage from './pages/AdminPage/EmployeePage/EmployeePage.jsx'
-import SalaryPage from './pages/AdminPage/EmployeePage/SalaryPage/SalaryPage'
-import AddSalaryPage from './pages/AdminPage/EmployeePage/SalaryPage/AddSalaryPage/AddSalaryPage'
-import BranchPage from './pages/AdminPage/BranchPage/BranchPage'
 import Customer from './pages/AdminPage/Customer/Customer'
-import StoreLocator from './pages/CustomerPage/StoreLocator/StoreLocator'
-import WorkShiftPage from './pages/AdminPage/EmployeePage/WorkShiftPage/WorkShiftPage'
 
 let router = createBrowserRouter([
   {
@@ -78,10 +71,6 @@ let router = createBrowserRouter([
       {
         path: 'myorders',
         element: <MyOrders />,
-      },
-      {
-        path: 'storelocator',
-        element: <StoreLocator />,
       },
       {
         path: 'listproduct/:genderSlug/:typeSlug/:materialSlug',
@@ -163,26 +152,6 @@ let router = createBrowserRouter([
           {
             path: 'promotion/edit-promotion/:promotionId',
             element: <EditPromotion />,
-          },
-          {
-            path: 'employee',
-            element: <EmployeePage/>,
-          },
-          {
-            path: 'employee/salary/:id',
-            element: <SalaryPage/>,
-          },
-          {
-            path: 'employee/addsalary/:id',
-            element: <AddSalaryPage/>,
-          },
-          {
-            path: 'employee/workshift/:id',
-            element: <WorkShiftPage/>,
-          },
-          {
-            path: 'branch',
-            element: <BranchPage/>,
           },
           {
             path: 'customer',

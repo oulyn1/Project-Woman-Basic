@@ -26,8 +26,6 @@ function SideBar() {
     { icon: DiscountOutlinedIcon, title: 'Quản Lý Khuyến Mãi', path: '/admin/promotion' },
     { icon: RateReviewOutlinedIcon, title: 'Quản Lý Đánh Giá', path: '/admin/rating' },
     { icon: PeopleAltOutlinedIcon, title: 'Quản Lý Khách Hàng', path: '/admin/customer' },
-    { icon: GroupsOutlinedIcon, title: 'Quản Lý Nhân Viên', path: '/admin/employee' },
-    { icon: StoreOutlinedIcon, title: 'Quản Lý Chi Nhánh', path: '/admin/branch' }
   ]
 
   const employeeMenu = [

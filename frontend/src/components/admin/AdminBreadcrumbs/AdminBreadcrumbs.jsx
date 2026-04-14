@@ -20,10 +20,6 @@ const breadcrumbNameMap = {
   '/admin/promotion/edit-promotion': 'Edit Promotion',
   '/admin/rating': 'Rating',
   '/admin/employee': 'Employee',
-  '/admin/employee/salary': 'Salary',
-  '/admin/employee/addsalary': 'Add Salary',
-  '/admin/employee/workshift': 'Workshift',
-  '/admin/branch': 'Branch',
   '/admin/customer': 'Customer',
 }
 

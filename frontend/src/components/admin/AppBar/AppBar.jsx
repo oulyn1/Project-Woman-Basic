@@ -16,13 +16,6 @@ function AppBar() {
     const userStr = localStorage.getItem('user')
     const user = JSON.parse(userStr)
     const id = user._id
-    const shiftStr = localStorage.getItem('workshift')
-    const shift = JSON.parse(shiftStr)
-    if (shift) {
-      const shiftid = shift._id
-      navigator.sendBeacon(`http://localhost:8017/v1/workshift/${shiftid}/close`, null)
-      localStorage.removeItem('workshift')
-    }
     navigator.sendBeacon(`http://localhost:8017/v1/user/logout/${id}`, null)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')

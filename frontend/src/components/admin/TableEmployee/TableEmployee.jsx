@@ -19,7 +19,7 @@ import {
 } from '~/apis/userAPIs';
 import TablePageControls from '../TablePageControls/TablePageControls';
 import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage';
-const TableEmployee = ({ onEditAccount }) => {
+const TableEmployee = () => {
   const [rows, setRows] = useState([]);
 
   const [page, setPage] = useState(0);
@@ -67,9 +67,7 @@ const TableEmployee = ({ onEditAccount }) => {
     fetchUsers();
   }, [debouncedSearchQuery]);
 
-  const handleEdit = (id) => {
-    onEditAccount(id);
-  };
+
   const handleCloseSnackbar = (_, reason) => {
     if (reason !== 'clickaway') {
       setOpenSnackbar(false);
@@ -110,7 +108,6 @@ const TableEmployee = ({ onEditAccount }) => {
               <TableCell sx={{ width: '150px' }}>ĐIỆN THOẠI</TableCell>
               <TableCell sx={{ width: '200px' }}>ĐỊA CHỈ</TableCell>
               <TableCell sx={{ width: '120px', textAlign: 'center' }}>Trạng thái</TableCell>
-              <TableCell sx={{ width: '120px', textAlign: 'center' }}>Thao Tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -159,30 +156,7 @@ const TableEmployee = ({ onEditAccount }) => {
                       {row.status == 'online' ? 'Online' : 'Offline'}
                     </Box>
                   </TableCell>
-                  <TableCell align='center'>
-                    <Box
-                      sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}
-                    >
-                      <Tooltip title='Chi tiết nhân viên'>
-                        <IconButton
-                          color='primary'
-                          size='small'
-                          onClick={() => handleEdit(row._id)}
-                          sx={{
-                            width: 46,
-                            height: 46,
-                            minWidth: 32,
-                            padding: 0,
-                            borderRadius: 1,
-                            backgroundColor: '#e8f5e8',
-                            '&:hover': { backgroundColor: '#c8e6c9' },
-                          }}
-                        >
-                          <InfoOutline fontSize='small' />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
+
                 </TableRow>
               ))}
           </TableBody>
