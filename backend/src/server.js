@@ -21,7 +21,7 @@ const START_SERVER = () => {
   app.use(errorHandlingMiddleware)
 
   app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`Hello Nguyen Minh Hieu, I am running at ${ env.APP_HOST }:${ env.APP_PORT }/`)
+    console.log(`Hello Oulyne, I am running at ${ env.APP_HOST }:${ env.APP_PORT }/`)
   })
 
   exitHook(() => {
