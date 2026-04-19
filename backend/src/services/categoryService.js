@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 const createNew = async (reqBody) => {
   try {
     const newCategory = {
-      ...reqBody,
+      name: reqBody.name,
       slug: slugify(reqBody.name)
     }
 

@@ -5,14 +5,14 @@ import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const createNew = async (req, res, next) => {
     const correctCondition = Joi.object({
-      name: Joi.string().required().min(3).max(255).trim().strict().messages({
+      name: Joi.string().required().min(3).max(255).trim().messages({
         'any.required': 'Product name is required!',
         'string.empty': 'Product name cannot be empty!',
         'string.max': 'Product name must be less than or equal to 50 characters long',
         'string.min': 'Product name must be at least 3 characters long',
         'string.trim': 'Product name must not have leading or trailing whitespace'
       }),
-      description: Joi.string().required().min(3).max(1000).trim().strict().messages({
+      description: Joi.string().required().min(3).max(1000).trim().messages({
         'any.required': 'Description is required!',
         'string.empty': 'Description cannot be empty!',
         'string.max': 'Description must be less than or equal to 255 characters long',
@@ -31,7 +31,7 @@ const createNew = async (req, res, next) => {
         'any.required': 'Image URL is required!',
         'string.uri': 'Image must be a valid URL'
       }),
-      material: Joi.string().required().min(3).trim().strict().messages({
+      material: Joi.string().required().min(3).trim().messages({
         'any.required': 'Image URL is required!'
       }),
       categoryId: Joi.string()
@@ -44,7 +44,12 @@ const createNew = async (req, res, next) => {
     })
 
     try {
-      await correctCondition.validateAsync(req.body, { abortEarly: false })
+      const value = await correctCondition.validateAsync(req.body, { 
+        abortEarly: false,
+        allowUnknown: true,
+        stripUnknown: true
+      })
+      req.body = value
       next()
     } catch (error) {
       next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))

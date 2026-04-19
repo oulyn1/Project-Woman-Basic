@@ -10,7 +10,7 @@ import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
 
 function ListProduct() {
   const navigate = useNavigate()
-  const { genderSlug, typeSlug, materialSlug } = useParams()
+  const { categorySlug } = useParams()
 
   const [allProducts, setAllProducts] = useState([])
   const [categories, setCategories] = useState([])
@@ -41,30 +41,20 @@ function ListProduct() {
   const filteredProducts = useMemo(() => {
     if (!categories.length || !allProducts.length) return []
 
-    const genderCat = categories.find(c => c.slug === genderSlug)
-    if (!genderCat) return []
+    const targetCat = categories.find(c => c.slug === categorySlug)
+    if (!targetCat) return []
 
-    const typeCat = categories.find(
-      c => c.slug === typeSlug && c.parentId === genderCat._id
-    )
-    if (!typeCat) return []
+    // Lọc sản phẩm đúng category và còn stock
+    return allProducts.filter(p => p.categoryId === targetCat._id && p.stock > 0)
+  }, [categories, allProducts, categorySlug])
 
-    const materialCat = categories.find(
-      c => c.slug === materialSlug && c.parentId === typeCat._id
-    )
-    if (!materialCat) return []
-
-    // Lọc sản phẩm đúng material và còn stock
-    return allProducts.filter(p => p.categoryId === materialCat._id && p.stock > 0)
-  }, [categories, allProducts, genderSlug, typeSlug, materialSlug])
-
-  // Banner theo type
+  // Banner theo category slug
   const bannerData = [
     { slug: 'nhan', imageUrl: 'https://cdn.pnj.io/images/promo/235/1200x450-nhan-t01-25.jpg', altText: 'Nhẫn' },
     { slug: 'day-chuyen', imageUrl: 'https://cdn.pnj.io/images/promo/257/daychuyen-t7-25-1200x450.jpg', altText: 'Dây chuyền' },
     { slug: 'bong-tai', imageUrl: 'https://cdn.pnj.io/images/promo/235/1200x450-bong-tai-t1-25.jpg', altText: 'Bông tai' }
   ]
-  const banner = bannerData.find(b => b.slug === typeSlug)
+  const banner = bannerData.find(b => b.slug === categorySlug)
 
   const now = new Date()
 

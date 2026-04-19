@@ -38,24 +38,10 @@ const StyledListHeader = styled(ListSubheader)({
   fontWeight: 600
 })
 
-// ==== Hàm build tree danh mục ====
-function buildCategoryTree(data) {
-  const map = {}
-  data.forEach((cat) => (map[cat._id] = { ...cat, children: [] }))
-  const roots = []
-  data.forEach((cat) => {
-    if (cat.parentId) {
-      map[cat.parentId]?.children.push(map[cat._id])
-    } else {
-      roots.push(map[cat._id])
-    }
-  })
-  return roots
-}
+
 
 function NavBar() {
-  const [_categories, setCategories] = useState([])
-  const [categoryTree, setCategoryTree] = useState([])
+  const [categories, setCategories] = useState([])
   const [anchorEls, setAnchorEls] = useState({})
   const [openModal, setOpenModal] = useState(false)
   const navigate = useNavigate()
@@ -95,7 +81,6 @@ function NavBar() {
       try {
         const data = await fetchAllCategorysAPI()
         setCategories(data)
-        setCategoryTree(buildCategoryTree(data))
       } catch {
         //
       }
@@ -125,45 +110,16 @@ function NavBar() {
 
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', height: 50, px: 4 }}>
-      {/* ==== Menu Danh mục ==== */}
+      {/* ==== Danh mục phẳng ==== */}
       <Box sx={{ display: 'flex', gap: 3 }}>
-        {categoryTree.map((root) => (
-          <Box key={root._id}>
-            <Button
-              aria-controls={anchorEls[root._id] ? `${root._id}-menu` : undefined}
-              aria-haspopup="true"
-              onClick={(e) => handleMenuOpen(e, root._id)}
-              sx={{ color: '#696969', textTransform: 'none', '&:hover': { backgroundColor: 'white' } }}
-            >
-              {root.name}
-            </Button>
-            <Menu
-              id={`${root._id}-menu`}
-              anchorEl={anchorEls[root._id]}
-              open={Boolean(anchorEls[root._id])}
-              onClose={() => handleMenuClose(root._id)}
-              slotProps={{
-                list: { sx: { width: 800, py: 0, display: 'flex', padding: '20px' } }
-              }}
-            >
-              {root.children.map((type) => (
-                <Box key={type._id} sx={{ flex: 1, pr: 2 }}>
-                  <StyledListHeader>{type.name}</StyledListHeader>
-                  {type.children.map((material) => (
-                    <MenuItem
-                      key={material._id}
-                      onClick={() => {
-                        navigate(`/listproduct/${root.slug}/${type.slug}/${material.slug}`)
-                        handleMenuClose(root._id)}
-                      }
-                    >
-                      {material.name}
-                    </MenuItem>
-                  ))}
-                </Box>
-              ))}
-            </Menu>
-          </Box>
+        {categories.map((cat) => (
+          <Button
+            key={cat._id}
+            onClick={() => navigate(`/listproduct/${cat.slug}`)}
+            sx={{ color: '#696969', textTransform: 'none', '&:hover': { backgroundColor: 'white' } }}
+          >
+            {cat.name}
+          </Button>
         ))}
       </Box>
 

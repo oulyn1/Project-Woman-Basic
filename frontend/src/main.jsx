@@ -73,7 +73,7 @@ let router = createBrowserRouter([
         element: <MyOrders />,
       },
       {
-        path: 'listproduct/:genderSlug/:typeSlug/:materialSlug',
+        path: 'listproduct/:categorySlug',
         element: <ListProduct />,
       },
       {

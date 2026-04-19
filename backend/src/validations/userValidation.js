@@ -5,14 +5,14 @@ import ApiError from '~/utils/ApiError'
 // ✅ Đăng ký
 const register = async (req, res, next) => {
   const correctCondition = Joi.object({
-    name: Joi.string().required().min(3).max(50).trim().strict().messages({
+    name: Joi.string().required().min(3).max(50).trim().messages({
       'any.required': 'Tên người dùng là bắt buộc',
       'string.empty': 'Tên người dùng không được để trống',
       'string.min': 'Tên phải ít nhất 3 ký tự',
       'string.max': 'Tên tối đa 50 ký tự',
       'string.trim': 'Tên không được có khoảng trắng đầu/cuối'
     }),
-    email: Joi.string().email().required().trim().strict().messages({
+    email: Joi.string().email().required().trim().messages({
       'any.required': 'Email là bắt buộc',
       'string.empty': 'Email không được để trống',
       'string.email': 'Email không hợp lệ',
@@ -26,7 +26,12 @@ const register = async (req, res, next) => {
   })
 
   try {
-    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    const value = await correctCondition.validateAsync(req.body, { 
+      abortEarly: false,
+      allowUnknown: true,
+      stripUnknown: true
+    })
+    req.body = value
     next()
   } catch (error) {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, error.message))
@@ -36,7 +41,7 @@ const register = async (req, res, next) => {
 // ✅ Đăng nhập
 const login = async (req, res, next) => {
   const correctCondition = Joi.object({
-    email: Joi.string().email().required().trim().strict().messages({
+    email: Joi.string().email().required().trim().messages({
       'any.required': 'Email là bắt buộc',
       'string.empty': 'Email không được để trống',
       'string.email': 'Email không hợp lệ'
@@ -48,7 +53,12 @@ const login = async (req, res, next) => {
   })
 
   try {
-    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    const value = await correctCondition.validateAsync(req.body, { 
+      abortEarly: false,
+      allowUnknown: true,
+      stripUnknown: true
+    })
+    req.body = value
     next()
   } catch (error) {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, error.message))

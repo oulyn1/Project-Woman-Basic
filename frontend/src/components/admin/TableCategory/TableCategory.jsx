@@ -52,40 +52,11 @@ const TableCategory = ({ onEditCategory }) => {
   useEffect(() => {
     const fetchCategorys = async () => {
       try {
-        // 1. Lấy tất cả category để build map cha-con
-        const allCategories = await fetchAllCategorysAPI()
-
-        // 2. Lấy data hiển thị theo search
         const data = !debouncedSearchQuery
-          ? allCategories
+          ? await fetchAllCategorysAPI()
           : await searchCategorysAPI(debouncedSearchQuery)
 
-        // 3. Build map toàn bộ category để tra cứu parent/children
-        const map = {}
-        allCategories.forEach(cat => (map[cat._id] = { ...cat, children: [] }))
-        allCategories.forEach(cat => {
-          if (cat.parentId) {
-            map[cat.parentId]?.children.push(map[cat._id])
-          }
-        })
-
-        // 4. Thêm parentName cho mỗi category trong data
-        const categoriesWithParentName = data.map(cat => {
-          let parentName = null
-          let currentParent = cat.parentId ? map[cat.parentId] : null
-          const parentNames = []
-
-          while (currentParent) {
-            parentNames.push(currentParent.name)
-            currentParent = currentParent.parentId ? map[currentParent.parentId] : null
-          }
-
-          if (parentNames.length > 0) parentName = parentNames.join(' - ')
-
-          return { ...cat, parentName }
-        })
-
-        setRows(categoriesWithParentName)
+        setRows(data)
       } catch {
         setRows([])
         setSnackbarMessage('Không thể tải dữ liệu danh mục. Vui lòng thử lại.')
@@ -151,7 +122,6 @@ const TableCategory = ({ onEditCategory }) => {
             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
               <TableCell><strong>STT</strong></TableCell>
               <TableCell><strong>DANH MỤC</strong></TableCell>
-              <TableCell><strong>DANH MỤC CHA</strong></TableCell>
               <TableCell align="center"><strong>THAO TÁC</strong></TableCell>
             </TableRow>
           </TableHead>
@@ -162,9 +132,7 @@ const TableCategory = ({ onEditCategory }) => {
                 <TableCell>
                   <Typography variant="body2" fontWeight="medium">{row.name}</Typography>
                 </TableCell>
-                <TableCell>
-                  <Typography variant="body2">{row.parentName || 'Gốc'}</Typography>
-                </TableCell>
+
                 <TableCell align="center">
                   <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
                     <Tooltip title="Sửa danh mục">
