@@ -11,6 +11,7 @@ function CategoryPage() {
   const [openEditModal, setOpenEditModal] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleAddClick = () => setOpenAddModal(true)
   
@@ -22,6 +23,7 @@ function CategoryPage() {
   const handleSuccess = () => {
     setOpenAddModal(false)
     setOpenEditModal(false)
+    setRefreshTrigger(prev => prev + 1)
   }
 
   return (
@@ -80,6 +82,7 @@ function CategoryPage() {
         <TableCategory 
           onEditCategory={handleEditClick} 
           searchQuery={searchQuery}
+          refreshTrigger={refreshTrigger}
         />
       </Box>
 

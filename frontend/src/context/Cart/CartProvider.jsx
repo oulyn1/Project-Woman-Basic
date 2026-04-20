@@ -43,7 +43,10 @@ const CartProvider = ({ children }) => {
       if (res.success) {
         setCartItems(res.data?.items || [])
       }
-    } catch { /* ... */ }
+      return res
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
   }
 
   const updateQuantity = async (productId, variantId, newQuantity) => {

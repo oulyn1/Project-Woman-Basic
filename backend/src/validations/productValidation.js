@@ -7,7 +7,7 @@ const createNew = async (req, res, next) => {
     const correctCondition = Joi.object({
       categoryId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE).required(),
       name: Joi.string().required().min(3).max(255).trim(),
-      description: Joi.string().required().min(3).max(1000).trim(),
+      description: Joi.string().required().min(3).max(10000).trim(),
       price: Joi.number().required().min(0),
       images: Joi.array().items(Joi.string().uri()).min(1).required(),
       tags: Joi.array().items(Joi.string().trim()).default([]),
@@ -39,7 +39,7 @@ const updateOne = async (req, res, next) => {
   const correctCondition = Joi.object({
     categoryId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
     name: Joi.string().min(3).max(255).trim(),
-    description: Joi.string().min(3).max(1000).trim(),
+    description: Joi.string().min(3).max(10000).trim(),
     price: Joi.number().min(0),
     images: Joi.array().items(Joi.string().uri()).min(1),
     tags: Joi.array().items(Joi.string().trim()),

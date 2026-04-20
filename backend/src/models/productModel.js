@@ -8,7 +8,7 @@ const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   categoryId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE).required(),
   name: Joi.string().required().min(3).max(255).trim(),
   slug: Joi.string().required().min(3).trim(),
-  description: Joi.string().required().min(3).max(1000).trim(),
+  description: Joi.string().required().min(3).max(10000).trim(),
   price: Joi.number().required().min(0),
   sold: Joi.number().integer().min(0).default(0),
   images: Joi.array().items(Joi.string().uri()).required(),

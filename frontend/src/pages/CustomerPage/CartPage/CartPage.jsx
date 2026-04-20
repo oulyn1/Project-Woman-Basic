@@ -23,16 +23,18 @@ function CartPage() {
   }, [])
 
   // Toggle chọn 1 sản phẩm
-  const handleSelectItem = (id, checked) => {
+  const handleSelectItem = (uniqueKey, checked) => {
     setSelectedItems(prev =>
-      checked ? [...prev, id] : prev.filter(itemId => itemId !== id)
+      checked ? [...prev, uniqueKey] : prev.filter(key => key !== uniqueKey)
     )
   }
+
+  const getUniqueKey = (item) => `${item.productId}-${item.variantId}`
 
   // Toggle chọn tất cả sản phẩm
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedItems(cartItems.map(item => item.productId))
+      setSelectedItems(cartItems.map(item => getUniqueKey(item)))
     } else {
       setSelectedItems([])
     }
@@ -52,7 +54,7 @@ function CartPage() {
   }
 
   const subtotal = cartItems.reduce((acc, item) => {
-    if (!selectedItems.includes(item.productId)) return acc
+    if (!selectedItems.includes(getUniqueKey(item))) return acc
     const finalPrice = getDiscountedPrice(item.product)
     return acc + finalPrice * item.quantity
   }, 0)
@@ -60,7 +62,7 @@ function CartPage() {
   const handleCheckout = () => {
     if (selectedItems.length === 0) return
     const productsToCheckout = cartItems.filter(item =>
-      selectedItems.includes(item.productId)
+      selectedItems.includes(getUniqueKey(item))
     )
     navigate('/checkout', { state: { products: productsToCheckout } })
   }
@@ -112,10 +114,10 @@ function CartPage() {
               )
               const finalPrice = getDiscountedPrice(item.product)
               return (
-                <Box key={item.productId} sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+                <Box key={getUniqueKey(item)} sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                   <Checkbox
-                    checked={selectedItems.includes(item.productId)}
-                    onChange={(e) => handleSelectItem(item.productId, e.target.checked)}
+                    checked={selectedItems.includes(getUniqueKey(item))}
+                    onChange={(e) => handleSelectItem(getUniqueKey(item), e.target.checked)}
                     sx={{ alignSelf: 'flex-start', p: 0, mr: 1, mt: '12px' }}
                     size="small"
                   />
@@ -135,7 +137,7 @@ function CartPage() {
 
                     <Box sx={{ display: 'flex', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', width: '120px' }}>
                       <IconButton
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.productId, item.variantId, item.quantity - 1)}
                         size="small"
                         sx={{ borderRadius: 0, borderRight: '1px solid #ccc', p: '4px 8px' }}
                         disabled={item.quantity <= 1}
@@ -148,10 +150,10 @@ function CartPage() {
                       </Typography>
 
                       <IconButton
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.productId, item.variantId, item.quantity + 1)}
                         size="small"
                         sx={{ borderRadius: 0, borderLeft: '1px solid #ccc', p: '4px 8px' }}
-                        disabled={item.quantity >= (item.product?.stock ?? Infinity)}
+                        disabled={item.quantity >= (item.variant?.stock ?? Infinity)}
                       >
                         <AddIcon fontSize="small" />
                       </IconButton>
@@ -173,7 +175,7 @@ function CartPage() {
                       </Typography>
                     )}
                   </Box>
-                  <IconButton aria-label="Xóa sản phẩm" sx={{ alignSelf: 'flex-start' }} size="small" onClick={() => removeFromCart(item.productId)}>
+                  <IconButton aria-label="Xóa sản phẩm" sx={{ alignSelf: 'flex-start' }} size="small" onClick={() => removeFromCart(item.productId, item.variantId)}>
                     <DeleteIcon sx={{ color: '#ccc', fontSize: 20 }} />
                   </IconButton>
                 </Box>

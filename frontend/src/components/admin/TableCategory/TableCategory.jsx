@@ -23,7 +23,7 @@ import CategoryIcon from '@mui/icons-material/Category'
 import { fetchAllCategorysAPI, deleteCategoryAPI, searchCategorysAPI } from '~/apis/categoryAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
-const TableCategory = ({ onEditCategory, searchQuery }) => {
+const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingCategoryId, setDeletingCategoryId] = useState(null)
   const [rows, setRows] = useState([])
@@ -47,7 +47,7 @@ const TableCategory = ({ onEditCategory, searchQuery }) => {
       }
     }
     fetchCategorys()
-  }, [searchQuery])
+  }, [searchQuery, refreshTrigger])
 
   const handleOpenMenu = (event, id) => {
     setAnchorEl(event.currentTarget)

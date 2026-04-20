@@ -7,7 +7,7 @@ const PROMOTION_COLLECTION_NAME = "promotions"
 
 const PROMOTION_COLLECTION_SCHEMA = Joi.object({
   title: Joi.string().required().min(3).max(255).trim().strict(),
-  description: Joi.string().max(1000).trim().allow(""),
+  description: Joi.string().max(10000).trim().allow(""),
   discountPercent: Joi.number().required().min(0).max(100),
   startDate: Joi.date().required(),
   endDate: Joi.date().required(),

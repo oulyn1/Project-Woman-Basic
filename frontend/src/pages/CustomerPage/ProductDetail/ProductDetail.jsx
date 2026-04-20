@@ -1,5 +1,7 @@
-import { Box, Button, Container, Typography, Grid, Divider, CircularProgress, Chip, Tooltip } from '@mui/material'
+import { Box, Button, Container, Typography, Grid, Divider, CircularProgress, Chip, Tooltip, Snackbar, Alert, IconButton } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
+import AddIcon from '@mui/icons-material/Add'
+import RemoveIcon from '@mui/icons-material/Remove'
 import React, { useEffect, useState, useMemo } from 'react'
 import ServiceDetail from '~/components/customer/ServiceDetail/ServiceDetail'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -22,6 +24,8 @@ function ProductDetail() {
   const [ratings, setRatings] = useState([])
   const [averageStar, setAverageStar] = useState(0)
   const [promotions, setPromotions] = useState([])
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+  const [quantity, setQuantity] = useState(1)
   
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState(null)
@@ -59,6 +63,11 @@ function ProductDetail() {
     }
     if (productId) fetchData()
   }, [productId])
+  
+  // Reset quantity when variant changes
+  useEffect(() => {
+    setQuantity(1)
+  }, [selectedSize, selectedColor])
 
   const uniqueSizes = useMemo(() => {
     if (!product?.variants) return []
@@ -85,18 +94,24 @@ function ProductDetail() {
 
   const isOutOfStock = useMemo(() => {
     if (!currentVariant) return true
-    const existingInCart = cartItems.find(i => i.productId === product._id && i.variantId === currentVariant.variantId)
+    const existingInCart = cartItems.find(i => i.productId === product._id && i.variantId === currentVariant._id)
     const quantityInCart = existingInCart ? existingInCart.quantity : 0
-    return quantityInCart >= currentVariant.stock || currentVariant.stock === 0
-  }, [currentVariant, cartItems, product])
+    return (quantityInCart + quantity) > currentVariant.stock || currentVariant.stock === 0
+  }, [currentVariant, cartItems, product, quantity])
 
   const handleCartClick = async () => {
     const token = localStorage.getItem('accessToken')
     if (!token) { navigate('/login'); return }
     if (currentVariant && !isOutOfStock) {
       setIsAdding(true)
-      await addToCart(product, currentVariant.variantId, 1)
+      const res = await addToCart(product, currentVariant._id, quantity)
       setIsAdding(false)
+      
+      if (res?.success) {
+        setSnackbar({ open: true, message: 'Đã thêm sản phẩm vào giỏ hàng!', severity: 'success' })
+      } else {
+        setSnackbar({ open: true, message: res?.error || 'Có lỗi xảy ra, vui lòng thử lại!', severity: 'error' })
+      }
     }
   }
 
@@ -106,11 +121,11 @@ function ProductDetail() {
       state: {
         products: [{
           _id: product._id,
-          variantId: currentVariant.variantId,
+          variantId: currentVariant._id,
           name: `${product.name} (${selectedSize} / ${selectedColor.name})`,
           image: product.images?.[0],
           price: finalPrice,
-          quantity: 1
+          quantity: quantity
         }],
         fromBuyNow: true
       }
@@ -215,9 +230,34 @@ function ProductDetail() {
           </Box>
 
           {currentVariant && (
-            <Typography variant="body2" color={currentVariant.stock > 0 ? "success.main" : "error.main"} sx={{ mb: 2, fontWeight: 'bold' }}>
-              {currentVariant.stock > 0 ? `Còn ${currentVariant.stock} sản phẩm` : "Hết hàng cho biến thể này"}
-            </Typography>
+            <>
+              <Typography variant="body2" color={currentVariant.stock > 0 ? "success.main" : "error.main"} sx={{ mb: 2, fontWeight: 'bold' }}>
+                {currentVariant.stock > 0 ? `Còn ${currentVariant.stock} sản phẩm` : "Hết hàng cho biến thể này"}
+              </Typography>
+              
+              {currentVariant.stock > 0 && (
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Số lượng</Typography>
+                  <Box sx={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #ddd', borderRadius: 2 }}>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      <RemoveIcon fontSize="small" />
+                    </IconButton>
+                    <Typography sx={{ px: 3, fontWeight: 'bold' }}>{quantity}</Typography>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setQuantity(prev => (currentVariant && prev < currentVariant.stock) ? prev + 1 : prev)}
+                      disabled={currentVariant && quantity >= currentVariant.stock}
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </Box>
+              )}
+            </>
           )}
 
           <Box sx={{ display: 'flex', gap: 2 }}>
@@ -271,6 +311,16 @@ function ProductDetail() {
           <Typography color="text.secondary">Chưa có đánh giá nào cho sản phẩm này.</Typography>
         )}
       </Box>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={3000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   )
 }

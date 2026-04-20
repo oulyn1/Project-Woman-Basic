@@ -35,15 +35,16 @@ const ProductCard = ({ product, promotions = [], isNew }) => {
         component="img"
         width='168px'
         height='168px'
-        image={product.image}
+        image={product.images?.[0] || ''}
         alt={product.name}
+        sx={{ objectFit: 'contain', bgcolor: '#f9f9f9' }}
       />
       <CardContent sx={{ pb: '4px !important' }}>
         <Typography sx={{ fontSize: '14px', color: '#5A5A5A', textAlign: 'center', minHeight: '63px' }}>
           {product.name}
         </Typography>
         <Typography sx={{ fontSize: '16px', color: '#c48c46', textAlign: 'center', mt: 1 }}>
-          {product.price} ₫
+          {product.price?.toLocaleString()} ₫
         </Typography>
 
         {/* Hiển thị promotion nếu có và đang áp dụng */}
