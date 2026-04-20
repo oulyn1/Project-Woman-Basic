@@ -1,217 +1,208 @@
 import React, { useEffect, useState } from 'react'
-import Box from '@mui/material/Box'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import Alert from '@mui/material/Alert'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar,
+  Stack,
+  Collapse,
+  Avatar,
+  Divider,
+  Menu,
+  MenuItem
+} from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import Snackbar from '@mui/material/Snackbar'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import PercentIcon from '@mui/icons-material/Percent'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import DescriptionIcon from '@mui/icons-material/Description'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 
 import { fetchAllPromotionsAPI, deletePromotionAPI, searchPromotionsAPI } from '~/apis/promotionAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage'
 
-const TablePromotion = ({ onEditPromotion }) => {
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
-  const [deletingPromotionId, setDeletingPromotionId] = useState(null)
+const TablePromotion = ({ onEditPromotion, searchQuery }) => {
   const [rows, setRows] = useState([])
-
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Debounce search
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-    useEffect(() => {
-      const handler = setTimeout(() => setDebouncedValue(value), delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const [rowsPerPage] = useState(10)
+  const [expandedId, setExpandedId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
     const fetchPromotions = async () => {
+      setLoading(true)
       try {
-        let data
-        if (!debouncedSearchQuery) {
-          data = await fetchAllPromotionsAPI()
-        } else {
-          data = await searchPromotionsAPI(debouncedSearchQuery)
-        }
-        const sortedData = data.sort(
-          (a, b) => new Date(b.startDate) - new Date(a.startDate)
-        )
+        const data = searchQuery
+          ? await searchPromotionsAPI(searchQuery)
+          : await fetchAllPromotionsAPI()
+        const sortedData = data.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
         setRows(sortedData)
       } catch {
         setRows([])
-        setSnackbarMessage('Không thể tải dữ liệu khuyến mãi. Vui lòng thử lại.')
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
+        setSnackbar({ open: true, message: 'Lỗi khi tải khuyến mãi!', severity: 'error' })
+      } finally {
+        setLoading(false)
       }
     }
     fetchPromotions()
-  }, [debouncedSearchQuery])
+  }, [searchQuery])
 
-  const handleEdit = id => onEditPromotion(id)
-  const handleDelete = id => {
-    setDeletingPromotionId(id)
-    setOpenDeleteConfirm(true)
+  const handleOpenMenu = (event, id) => {
+    event.stopPropagation()
+    setAnchorEl(event.currentTarget)
+    setSelectedId(id)
+  }
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null)
+    setSelectedId(null)
+  }
+
+  const handleAction = (type) => {
+    if (type === 'edit') onEditPromotion(selectedId)
+    else if (type === 'delete') setOpenDeleteConfirm(true)
+    handleCloseMenu()
   }
 
   const handleConfirmDelete = async () => {
     try {
-      await deletePromotionAPI(deletingPromotionId)
-      setRows(rows.filter(p => p._id !== deletingPromotionId))
-      setSnackbarMessage('Khuyến mãi đã được xóa thành công!')
-      setSnackbarSeverity('success')
+      await deletePromotionAPI(selectedId || expandedId)
+      setRows(rows.filter(p => p._id !== (selectedId || expandedId)))
+      setSnackbar({ open: true, message: 'Đã xóa khuyến mãi!', severity: 'success' })
     } catch {
-      setSnackbarMessage('Lỗi khi xóa khuyến mãi. Vui lòng thử lại.')
-      setSnackbarSeverity('error')
+      setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
-      setOpenSnackbar(true)
       setOpenDeleteConfirm(false)
-      setDeletingPromotionId(null)
     }
   }
 
-  const handleCloseDeleteConfirm = () => {
-    setOpenDeleteConfirm(false)
-    setDeletingPromotionId(null)
-  }
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') setOpenSnackbar(false)
-  }
-
-  const handleChangePage = (_, newPage) => setPage(newPage)
-  const handleChangeRowsPerPage = e => {
-    setRowsPerPage(parseInt(e.target.value, 10))
-    setPage(0)
-  }
-
-  const truncateDescription = (desc, maxLength = 50) =>
-    desc.length <= maxLength ? desc : `${desc.substring(0, maxLength)}...`
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('vi-VN')
-  }
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
+  const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('vi-VN') : 'N/A'
 
   return (
-    <>
-      <TableRowsPerPage
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 100]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
+    <Box sx={{ mt: 2 }}>
+      <Stack spacing={2}>
+        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((promo) => (
+          <Box
+            key={promo._id}
+            sx={{
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderColor: 'rgba(255,255,255,0.1)'
+              }
+            }}
+          >
+            {/* Promotion Header */}
+            <Box sx={{ p: 2.5, cursor: 'pointer' }} onClick={() => toggleExpand(promo._id)}>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Avatar sx={{ bgcolor: '#ff4081', color: 'white' }}><PercentIcon /></Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" color="white">{promo.title}</Typography>
+                  <Typography variant="body2" color="#888">Giảm {promo.discountPercent}% • {promo.productIds?.length || 0} sản phẩm</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <IconButton onClick={(e) => handleOpenMenu(e, promo._id)} sx={{ color: '#888' }}>
+                    <MoreVertIcon fontSize="small" />
+                  </IconButton>
+                  {expandedId === promo._id ? <ExpandLessIcon sx={{ color: '#555' }} /> : <ExpandMoreIcon sx={{ color: '#555' }} />}
+                </Box>
+              </Stack>
+            </Box>
 
-      <TableContainer
-        component={Paper}
-        sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', overflowX: 'auto' }}
-      >
-        <Table sx={{ minWidth: 1000 }} aria-label="promotion table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell><strong>STT</strong></TableCell>
-              <TableCell><strong>TÊN KM</strong></TableCell>
-              <TableCell><strong>MÔ TẢ</strong></TableCell>
-              <TableCell><strong>GIẢM (%)</strong></TableCell>
-              <TableCell><strong>NGÀY BẮT ĐẦU</strong></TableCell>
-              <TableCell><strong>NGÀY KẾT THÚC</strong></TableCell>
-              <TableCell align="center"><strong>SẢN PHẨM</strong></TableCell>
-              <TableCell align="center"><strong>THAO TÁC</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
-              <TableRow key={row._id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
-                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                <TableCell>{row.title}</TableCell>
-                <TableCell>{truncateDescription(row.description)}</TableCell>
-                <TableCell>{row.discountPercent}%</TableCell>
-                <TableCell>{formatDate(row.startDate)}</TableCell>
-                <TableCell>{formatDate(row.endDate)}</TableCell>
-                <TableCell align="center">{row.productIds?.length || 0}</TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <Tooltip title="Sửa khuyến mãi">
-                      <IconButton
-                        color="primary"
-                        size="small"
-                        onClick={() => handleEdit(row._id)}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Xóa khuyến mãi">
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(row._id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+            {/* Expandable Details */}
+            <Collapse in={expandedId === promo._id}>
+              <Box sx={{ p: 3, pt: 0, backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
+                  <Box sx={{ flex: 1.5 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <DescriptionIcon sx={{ color: '#555', fontSize: 18 }} />
+                      <Typography variant="overline" color="#555" fontWeight="bold">Mô tả chương trình</Typography>
+                    </Stack>
+                    <Typography variant="body2" color="#aaa" sx={{ lineHeight: 1.6 }}>{promo.description}</Typography>
                   </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
 
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={rows.length}
-        onChangePage={handleChangePage}
-      />
+                  <Box sx={{ flex: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <CalendarTodayIcon sx={{ color: '#555', fontSize: 18 }} />
+                      <Typography variant="overline" color="#555" fontWeight="bold">Thời gian áp dụng</Typography>
+                    </Stack>
+                    <Typography variant="body2" color="#aaa">Bắt đầu: {formatDate(promo.startDate)}</Typography>
+                    <Typography variant="body2" color="#aaa">Kết thúc: {formatDate(promo.endDate)}</Typography>
+                  </Box>
 
-      <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa khuyến mãi này không?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color="primary">Hủy</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Xóa</Button>
+                  <Box sx={{ flex: 0.8, display: 'flex', alignItems: 'center' }}>
+                    <Box sx={{ p: 2, borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.02)', textAlign: 'center', width: '100%' }}>
+                      <ShoppingCartIcon sx={{ color: '#888', mb: 0.5 }} />
+                      <Typography variant="h6" color="white" fontWeight="bold">{promo.productIds?.length || 0}</Typography>
+                      <Typography variant="caption" color="#555">Sản phẩm</Typography>
+                    </Box>
+                  </Box>
+                </Stack>
+              </Box>
+            </Collapse>
+          </Box>
+        ))}
+
+        {rows.length === 0 && !loading && (
+          <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>
+            Không tìm thấy chương trình khuyến mãi nào.
+          </Typography>
+        )}
+      </Stack>
+
+      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        PaperProps={{ sx: { backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160 } }}
+      >
+        <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}><EditIcon fontSize="small" /> Chỉnh sửa</MenuItem>
+        <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}><DeleteIcon fontSize="small" /> Xóa khuyến mãi</MenuItem>
+      </Menu>
+
+      <Dialog
+        open={openDeleteConfirm}
+        onClose={() => setOpenDeleteConfirm(false)}
+        PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
+        <DialogContent sx={{ color: '#aaa' }}>Hành động này không thể hoàn tác. Bạn có chắc muốn xóa?</DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ textTransform: 'none' }}>Xóa vĩnh viễn</Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} variant="filled">
-          {snackbarMessage}
-        </Alert>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
       </Snackbar>
-    </>
+    </Box>
   )
 }
 

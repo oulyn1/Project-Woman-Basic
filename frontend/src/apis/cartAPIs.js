@@ -42,14 +42,14 @@ const requestGetCartByUserAPI = async (fn) => {
 export const getCartByUserAPI = () =>
   requestGetCartByUserAPI(() => api.get('/cart'))
 
-export const addToCartAPI = (productId, quantity = 1) =>
-  request(() => api.post('/cart/items', { productId, quantity }))
+export const addToCartAPI = (productId, variantId, quantity = 1) =>
+  request(() => api.post('/cart/items', { productId, variantId, quantity }))
 
-export const updateQuantityAPI = (productId, quantity) =>
-  request(() => api.put('/cart/items', { productId, quantity }))
+export const updateQuantityAPI = (productId, variantId, quantity) =>
+  request(() => api.put('/cart/items', { productId, variantId, quantity }))
 
-export const removeItemAPI = (productId) =>
-  request(() => api.delete('/cart/items', { data: { productId } }))
+export const removeItemAPI = (productId, variantId) =>
+  request(() => api.delete('/cart/items', { data: { productId, variantId } }))
 
 export const clearCartAPI = () =>
   request(() => api.delete('/cart'))

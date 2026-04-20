@@ -1,163 +1,146 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Button, Typography, Snackbar, Alert, CircularProgress } from '@mui/material'
-import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
-import { fetchAllCategorysAPI, getCategoryDetailAPI, updateCategoryAPI } from '~/apis/categoryAPIs'
-import { useNavigate, useParams } from 'react-router-dom'
+import {
+  Box,
+  Button,
+  Typography,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import SaveIcon from '@mui/icons-material/Save'
+import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
+import { getCategoryDetailAPI, updateCategoryAPI } from '~/apis/categoryAPIs'
 
-function EditCategory() {
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-  const [loading, setLoading] = useState(false)
-  const [productCategories, setProductCategories] = useState([])
-
-  const navigate = useNavigate()
-  const { categoryId } = useParams()
-
-  const [formData, setFormData] = useState({
-    name: '',
-  })
+function EditCategory({ open, onClose, onSuccess, categoryId }) {
+  const [formData, setFormData] = useState({ name: '' })
   const [errors, setErrors] = useState({})
-
-
-
+  const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
     const fetchCategoryData = async () => {
-      setLoading(true)
+      setFetching(true)
       try {
         const category = await getCategoryDetailAPI(categoryId)
-        setFormData({
-          name: category.name || '',
-        })
+        setFormData({ name: category.name || '' })
       } catch {
-        setSnackbarMessage('Không thể lấy thông tin danh mục. Vui lòng thử lại!')
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
+        setSnackbar({ open: true, message: 'Lỗi khi lấy dữ liệu danh mục!', severity: 'error' })
       } finally {
-        setLoading(false)
+        setFetching(false)
       }
     }
-    if (categoryId) {
-      fetchCategoryData()
-    }
-  }, [categoryId])
+    if (open && categoryId) fetchCategoryData()
+  }, [open, categoryId])
 
   const handleCloseSnackbar = (_, reason) => {
-    if (reason === 'clickaway') return
-    setOpenSnackbar(false)
+    if (reason !== 'clickaway') setSnackbar((prev) => ({ ...prev, open: false }))
   }
 
-  const handleChange = (event) => {
-    const { name, value } = event.target
+  const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
   const validate = () => {
-    const tempErrors = {
-      name: formData.name ? '' : 'Vui lòng nhập tên danh mục.',
-    }
-
+    const tempErrors = { name: formData.name ? '' : 'Vui lòng nhập tên danh mục.' }
     setErrors(tempErrors)
     return Object.values(tempErrors).every((x) => x === '')
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const handleSubmit = async (e) => {
+    e.preventDefault()
     if (!validate()) return
-
     setLoading(true)
+
     try {
-      const categoryDataToUpdate = {
-        name: formData.name.trim(),
-      }
-
-      await updateCategoryAPI(categoryId, categoryDataToUpdate)
-
-      setSnackbarMessage('Sản phẩm đã được cập nhật thành công!')
-      setSnackbarSeverity('success')
-      setOpenSnackbar(true)
-
-      setTimeout(() => {
-        navigate('/admin/category')
-      }, 800)
-
-      setErrors({})
+      await updateCategoryAPI(categoryId, { name: formData.name.trim() })
+      setSnackbar({ open: true, message: 'Danh mục đã cập nhật thành công!', severity: 'success' })
+      setTimeout(() => onSuccess(), 500)
     } catch {
-      setSnackbarMessage('Có lỗi xảy ra khi cập nhật danh mục. Vui lòng thử lại!')
-      setSnackbarSeverity('error')
-      setOpenSnackbar(true)
+      setSnackbar({ open: true, message: 'Lỗi khi cập nhật danh mục!', severity: 'error' })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Box
-      sx={{
-        backgroundColor: '#343a40',
-        height: 'auto',
-        overflow: 'auto',
-        mx: 5,
-        my: 1,
-        borderRadius: '8px'
-      }}
-    >
-      <Box
-        sx={{
-          color: 'white',
-          m: '16px 48px 16px 16px',
-          display: 'flex',
-          justifyContent: 'space-between'
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1a1a1a',
+            color: 'white',
+            borderRadius: '12px',
+            border: '1px solid #333'
+          }
         }}
       >
-        <Typography variant="h5">Chỉnh sửa danh mục</Typography>
-      </Box>
-      <Box sx={{ px: 6 }} component="form" onSubmit={handleSubmit}>
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" fontWeight="bold">Chỉnh sửa danh mục</Typography>
+          <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
+        </DialogTitle>
 
-        <FieldCustom
-          label="Tên danh mục"
-          required
-          placeholder="Nhập tên danh mục..."
-          value={formData.name}
-          onChange={handleChange}
-          name="name"
-          error={!!errors.name}
-          helperText={errors.name}
-        />
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <DialogContent sx={{ p: 3, pt: 4 }}>
+          {fetching ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress color="inherit" /></Box>
+          ) : (
+            <FieldCustom
+              label="Tên danh mục"
+              required
+              placeholder="Nhập tên danh mục..."
+              value={formData.name}
+              onChange={handleChange}
+              name="name"
+              error={!!errors.name}
+              helperText={errors.name}
+            />
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
+          <Button onClick={onClose} sx={{ color: '#888', textTransform: 'none' }}>Hủy</Button>
           <Button
-            type="submit"
+            onClick={handleSubmit}
             variant="contained"
-            disabled={loading}
+            disabled={loading || fetching}
+            startIcon={<SaveIcon />}
             sx={{
-              my: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
+              backgroundColor: '#e3f2fd',
+              color: '#1976d2',
               textTransform: 'none',
-              fontSize: '18px'
+              fontWeight: 'bold',
+              px: 3,
+              '&:hover': { backgroundColor: '#bbdefb' }
             }}
           >
-            {loading ? <CircularProgress size={22} color="inherit" /> : <SaveIcon />}
-            {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {loading ? 'Đang lưu...' : 'Lưu cập nhật'}
           </Button>
-        </Box>
-      </Box>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
+        open={snackbar.open}
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ marginTop: '46px' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} variant="filled" sx={{ width: '100%' }}>
-          {snackbarMessage}
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   )
 }
 

@@ -63,11 +63,11 @@ function NavBar() {
     const fetchProducts = async () => {
       try {
         if (!debouncedSearchQuery) {
-          const data = await fetchAllProductsAPI()
-          setRows(data)
+          const res = await fetchAllProductsAPI()
+          setRows(res.data || [])
         } else {
-          const data = await searchProductsAPI(debouncedSearchQuery)
-          setRows(data)
+          const res = await searchProductsAPI(debouncedSearchQuery)
+          setRows(res.data || [])
         }
       } catch {
         setRows([])

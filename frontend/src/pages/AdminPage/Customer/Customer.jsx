@@ -1,19 +1,51 @@
-import { Box, Typography } from '@mui/material'
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Box, Typography, InputBase } from '@mui/material'
+import React, { useState } from 'react'
+import SearchIcon from '@mui/icons-material/Search'
 import TableCustomer from '~/components/admin/TableCustomer/TableCustomer'
 
 function Customer() {
-  const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState('')
+
   return (
-    <Box sx={{ backgroundColor: '#343a40', height: 'auto', overflow: 'auto', mx: 5, my: 1, borderRadius: '8px' }}>
-      <Box sx={{ color: 'white', m: '16px 48px 16px 16px', display: 'flex', justifyContent: 'space-between' }}>
-        <Typography variant='h5'>Danh sách Khách Hàng</Typography>
+    <Box
+      sx={{
+        backgroundColor: '#343a40',
+        mx: 5,
+        my: 1,
+        borderRadius: '8px',
+        minHeight: '80vh',
+        pb: 4
+      }}
+    >
+      {/* Header with Search */}
+      <Box sx={{ px: 5, py: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderRadius: '8px',
+            px: 2,
+            py: 0.5,
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}
+        >
+          <SearchIcon sx={{ color: '#888', mr: 1 }} />
+          <InputBase
+            placeholder="Tìm theo tên, email hoặc số điện thoại..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ color: 'white', flex: 1 }}
+          />
+        </Box>
       </Box>
-      <Box sx={{ px: 6 }}>
-        <TableCustomer onRowClick={(id) => navigate(`/admin/customers/${id}`)} />
+
+      <Box sx={{ px: 5 }}>
+        <TableCustomer searchQuery={searchQuery} />
       </Box>
     </Box>
   )
 }
+
 export default Customer

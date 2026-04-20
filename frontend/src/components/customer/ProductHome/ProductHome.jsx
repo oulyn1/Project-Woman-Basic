@@ -16,7 +16,7 @@ function ProductHome() {
 
   useEffect(() => {
     // Lấy tất cả sản phẩm
-    fetchAllProductsAPI().then(data => setAllProducts(data))
+    fetchAllProductsAPI().then(res => setAllProducts(res.data || []))
     // Lấy tất cả promotion
     fetchAllPromotionsAPI().then(data => setPromotions(data))
   }, [])

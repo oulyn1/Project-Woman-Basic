@@ -22,6 +22,7 @@ import ListProduct from './pages/CustomerPage/ListProduct/ListProduct.jsx'
 import ProductDetail from './pages/CustomerPage/ProductDetail/ProductDetail.jsx'
 import Login from './pages/CustomerPage/Login/Login.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
+import RoleGate from './components/RoleGate.jsx'
 import StoryPage from './pages/CustomerPage/StoryPage/StoryPage.jsx'
 import CartProvider from './context/Cart/CartProvider.jsx'
 import CartPage from './pages/CustomerPage/CartPage/CartPage.jsx'
@@ -42,44 +43,49 @@ import Customer from './pages/AdminPage/Customer/Customer'
 let router = createBrowserRouter([
   {
     path: '/',
-    element: <CustomerPage />,
+    element: <RoleGate />,
     children: [
       {
-        index: true,
-        element: <HomePage />
-      },
-      {
-        path: 'editprofile',
-        element: <CreateInformation />,
-      },
-      {
-        path: 'story',
-        element: <StoryPage />,
-      },
-      {
-        path: 'cart',
-        element: <CartPage />,
-      },
-      {
-        path: 'checkout',
-        element: <Checkout />,
-      },
-      {
-        path: 'thank-you',
-        element: <ThankYou />,
-      },
-      {
-        path: 'myorders',
-        element: <MyOrders />,
-      },
-      {
-        path: 'listproduct/:categorySlug',
-        element: <ListProduct />,
-      },
-      {
-        path: 'productdetail/:productId',
-        element: <ProductDetail />,
-      },
+        element: <CustomerPage />,
+        children: [
+          {
+            index: true,
+            element: <HomePage />
+          },
+          {
+            path: 'editprofile',
+            element: <CreateInformation />,
+          },
+          {
+            path: 'story',
+            element: <StoryPage />,
+          },
+          {
+            path: 'cart',
+            element: <CartPage />,
+          },
+          {
+            path: 'checkout',
+            element: <Checkout />,
+          },
+          {
+            path: 'thank-you',
+            element: <ThankYou />,
+          },
+          {
+            path: 'myorders',
+            element: <MyOrders />,
+          },
+          {
+            path: 'listproduct/:categorySlug',
+            element: <ListProduct />,
+          },
+          {
+            path: 'productdetail/:productId',
+            element: <ProductDetail />,
+          },
+        ]
+      }
     ]
   },
   {
@@ -102,24 +108,8 @@ let router = createBrowserRouter([
             element: <ProductPage />,
           },
           {
-            path: 'product/add-product',
-            element: <AddProduct />,
-          },
-          {
-            path: 'product/edit-product/:productId',
-            element: <EditProduct />,
-          },
-          {
             path: 'category',
             element: <CategoryPage />,
-          },
-          {
-            path: 'category/add-category',
-            element: <AddCategory />,
-          },
-          {
-            path: 'category/edit-category/:categoryId',
-            element: <EditCategory />,
           },
           {
             path: 'order',
@@ -130,28 +120,12 @@ let router = createBrowserRouter([
             element: <AccountPage />,
           },
           {
-            path: 'account/add-account',
-            element: <AddAccount />,
-          },
-          {
-            path: 'account/edit-account/:id',
-            element: <EditAccount />,
-          },
-          {
             path: 'rating',
             element: <RatingsPage />,
           },
           {
             path: 'promotion',
             element: <PromotionPage />,
-          },
-          {
-            path: 'promotion/add-promotion',
-            element: <AddPromotion />,
-          },
-          {
-            path: 'promotion/edit-promotion/:promotionId',
-            element: <EditPromotion />,
           },
           {
             path: 'customer',

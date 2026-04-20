@@ -1,9 +1,29 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Button, Dialog, DialogTitle,
-  DialogContent, DialogActions, Snackbar, Alert
+  Box,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Snackbar,
+  Alert,
+  Stack,
+  Collapse,
+  Avatar,
+  Divider,
+  IconButton
 } from '@mui/material'
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import LocalShippingIcon from '@mui/icons-material/LocalShipping'
+import PersonIcon from '@mui/icons-material/Person'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
+
 import {
   fetchAllOrdersAPI,
   updateOrderAPI,
@@ -11,233 +31,220 @@ import {
   confirmOrderAPI
 } from '~/apis/orderAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage'
 
-const TableOrder = () => {
+const TableOrder = ({ searchQuery }) => {
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-  const [searchQuery, setSearchQuery] = useState('')
+  const [rowsPerPage] = useState(10)
+  const [expandedId, setExpandedId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const [confirmDialog, setConfirmDialog] = useState({ open: false, orderId: null, action: '' })
-  const [detailDialog, setDetailDialog] = useState({ open: false, order: null })
 
-  // Debounce hook
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-    useEffect(() => {
-      const handler = setTimeout(() => setDebouncedValue(value), delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
-
-  // Fetch orders
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true)
       try {
-        const data = debouncedSearchQuery
-          ? await searchOrdersAPI(debouncedSearchQuery)
+        const data = searchQuery
+          ? await searchOrdersAPI(searchQuery)
           : await fetchAllOrdersAPI()
-        const sortedData = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        )
+        const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         setOrders(sortedData)
       } catch {
         setOrders([])
-        setSnackbarMessage('Không thể tải đơn hàng.')
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
+        setSnackbar({ open: true, message: 'Lỗi khi tải đơn hàng!', severity: 'error' })
+      } finally {
+        setLoading(false)
       }
     }
     fetchOrders()
-  }, [debouncedSearchQuery])
+  }, [searchQuery])
 
-  const handleChangePage = (_, newPage) => setPage(newPage)
-  const handleChangeRowsPerPage = (e) => {
-    setRowsPerPage(parseInt(e.target.value, 10))
-    setPage(0)
-  }
-  const handleCloseSnackbar = () => setOpenSnackbar(false)
-
-  const handleAction = (orderId, action) => {
-    if (action === 'view') {
-      const order = orders.find(o => o._id === orderId)
-      setDetailDialog({ open: true, order })
-    } else {
-      setConfirmDialog({ open: true, orderId, action })
-    }
+  const handleAction = (event, orderId, action) => {
+    event.stopPropagation()
+    setConfirmDialog({ open: true, orderId, action })
   }
 
   const handleConfirmAction = async () => {
     try {
       const { orderId, action } = confirmDialog
       let updatedOrder = null
-
-      if (action === 'confirm') {
-        updatedOrder = await confirmOrderAPI(orderId)
-      } else if (action === 'cancel') {
-        updatedOrder = await updateOrderAPI(orderId, { status: 'cancelled' })
-      }
-
+      if (action === 'confirm') updatedOrder = await confirmOrderAPI(orderId)
+      else if (action === 'cancel') updatedOrder = await updateOrderAPI(orderId, { status: 'cancelled' })
+      
       setOrders(orders.map(o => o._id === orderId ? updatedOrder : o))
-      setSnackbarMessage(`Đơn hàng đã ${action === 'confirm' ? 'xác nhận' : 'hủy'}`)
-      setSnackbarSeverity('success')
+      setSnackbar({ open: true, message: `Thành công!`, severity: 'success' })
     } catch (error) {
-      setSnackbarMessage(error.response?.data?.message || 'Có lỗi xảy ra!')
-      setSnackbarSeverity('error')
+      setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
-      setOpenSnackbar(true)
       setConfirmDialog({ open: false, orderId: null, action: '' })
     }
   }
 
-  const getStatusColor = (status) => {
+  const getStatusStyle = (status) => {
     switch (status) {
-    case 'pending': return '#fbc02d'
-    case 'confirmed': return '#1976d2'
-    case 'shipped': return '#ff9800'
-    case 'delivered': return '#388e3c'
-    case 'cancelled': return '#d32f2f'
-    default: return '#757575'
+      case 'pending': return { bg: 'rgba(251, 192, 45, 0.1)', color: '#fbc02d' }
+      case 'confirmed': return { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' }
+      case 'shipped': return { bg: 'rgba(255, 152, 0, 0.1)', color: '#ff9800' }
+      case 'delivered': return { bg: 'rgba(56, 142, 60, 0.1)', color: '#388e3c' }
+      case 'cancelled': return { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
+      default: return { bg: 'rgba(117, 117, 117, 0.1)', color: '#757575' }
     }
   }
 
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
+
   return (
-    <>
-      {/* Rows per page + Search */}
-      <TableRowsPerPage
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 50]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-
-      <TableContainer component={Paper} sx={{ borderRadius: 2, overflowX: 'auto', mt: 2 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell>STT</TableCell>
-              <TableCell>Mã đơn</TableCell>
-              <TableCell>Khách hàng</TableCell>
-              <TableCell align="right">Tổng tiền</TableCell>
-              <TableCell>Trạng thái</TableCell>
-              <TableCell>Ngày tạo</TableCell>
-              <TableCell align="center">Thao tác</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((o, index) => (
-              <TableRow key={o._id} sx={{ '&:hover': { backgroundColor: '#fafafa' } }}>
-                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                <TableCell>{o._id}</TableCell>
-                <TableCell>{o.buyerInfo?.name}</TableCell>
-                <TableCell align="right">{o.total.toLocaleString('vi-VN')}₫</TableCell>
-                <TableCell>
-                  <Box sx={{
-                    display: 'inline-block',
-                    px: 1,
-                    py: 0.5,
-                    borderRadius: 1,
-                    backgroundColor: getStatusColor(o.status),
-                    color: 'white',
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold'
-                  }}>
-                    {o.status}
+    <Box sx={{ mt: 2 }}>
+      <Stack spacing={2}>
+        {orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => {
+          const statusStyle = getStatusStyle(order.status)
+          return (
+            <Box
+              key={order._id}
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              {/* Order Header */}
+              <Box sx={{ p: 2.5, cursor: 'pointer' }} onClick={() => toggleExpand(order._id)}>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: '#888' }}><ReceiptLongIcon /></Avatar>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2" color="#888">#{order._id.slice(-8).toUpperCase()}</Typography>
+                    <Typography variant="body1" fontWeight="bold" color="white">{order.buyerInfo?.name}</Typography>
                   </Box>
-                </TableCell>
-                <TableCell>{new Date(o.createdAt).toLocaleString()}</TableCell>
-                <TableCell align="center">
-                  <Button size="small" sx={{ mr: 1 }} onClick={() => handleAction(o._id, 'view')}>
-                    Xem chi tiết
-                  </Button>
-                  {o.status === 'pending' && (
-                    <>
-                      <Button size="small" onClick={() => handleAction(o._id, 'confirm')} sx={{ mr: 1 }}>
-                        Confirm
-                      </Button>
-                      <Button size="small" color="error" onClick={() => handleAction(o._id, 'cancel')}>
-                        Hủy
-                      </Button>
-                    </>
-                  )}
-                  {o.status !== 'pending' && <Typography>—</Typography>}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="h6" fontWeight="bold" color="#fff">{order.total.toLocaleString('vi-VN')}₫</Typography>
+                    <Box
+                      sx={{
+                        display: 'inline-block',
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: '20px',
+                        backgroundColor: statusStyle.bg,
+                        color: statusStyle.color,
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        mt: 0.5
+                      }}
+                    >
+                      {order.status}
+                    </Box>
+                  </Box>
+                  {expandedId === order._id ? <ExpandLessIcon sx={{ color: '#555' }} /> : <ExpandMoreIcon sx={{ color: '#555' }} />}
+                </Stack>
+              </Box>
 
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={orders.length}
-        onChangePage={handleChangePage}
-      />
+              {/* Order Details (Expandable) */}
+              <Collapse in={expandedId === order._id}>
+                <Box sx={{ p: 3, pt: 0, backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                  <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
+                    <Box sx={{ flex: 1.5 }}>
+                      <Typography variant="overline" color="#555" fontWeight="bold">Sản phẩm đã đặt</Typography>
+                      <Stack spacing={1.5} sx={{ mt: 1 }}>
+                        {order.items.map((item, i) => (
+                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" color="#aaa">{item.product?.name || 'N/A'} x{item.quantity}</Typography>
+                            <Typography variant="body2" color="#fff">{(item.price * item.quantity).toLocaleString('vi-VN')}₫</Typography>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="overline" color="#555" fontWeight="bold">Thông tin giao hàng</Typography>
+                      <Stack spacing={1.5} sx={{ mt: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <LocalShippingIcon sx={{ color: '#888', fontSize: 18 }} />
+                          <Typography variant="body2" color="#aaa">{order.buyerInfo?.address || 'Chưa cập nhật'}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <CalendarTodayIcon sx={{ color: '#888', fontSize: 18 }} />
+                          <Typography variant="body2" color="#aaa">{new Date(order.createdAt).toLocaleString('vi-VN')}</Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+
+                    <Box sx={{ flex: 0.8, display: 'flex', flexDirection: 'column', gap: 1, justifyContent: 'center' }}>
+                      {order.status === 'pending' && (
+                        <>
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            startIcon={<CheckCircleOutlineIcon />}
+                            onClick={(e) => handleAction(e, order._id, 'confirm')}
+                            sx={{
+                              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                              color: '#4caf50',
+                              textTransform: 'none',
+                              '&:hover': { backgroundColor: 'rgba(76, 175, 80, 0.2)' }
+                            }}
+                          >
+                            Xác nhận
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            fullWidth
+                            color="error"
+                            startIcon={<CancelOutlinedIcon />}
+                            onClick={(e) => handleAction(e, order._id, 'cancel')}
+                            sx={{ textTransform: 'none' }}
+                          >
+                            Hủy đơn
+                          </Button>
+                        </>
+                      )}
+                    </Box>
+                  </Stack>
+                </Box>
+              </Collapse>
+            </Box>
+          )
+        })}
+      </Stack>
+
+      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={orders.length} onChangePage={(_, p) => setPage(p)} />
 
       {/* Confirm Dialog */}
-      <Dialog open={confirmDialog.open} onClose={() => setConfirmDialog({ open: false, orderId: null, action: '' })}>
-        <DialogTitle>Xác nhận hành động</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Bạn có chắc chắn muốn {confirmDialog.action === 'confirm' ? 'xác nhận' : 'hủy'} đơn hàng này?
-          </Typography>
+      <Dialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog({ open: false, orderId: null, action: '' })}
+        PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận hành động</DialogTitle>
+        <DialogContent sx={{ color: '#aaa' }}>
+          Bạn có chắc chắn muốn {confirmDialog.action === 'confirm' ? 'xác nhận' : 'hủy'} đơn hàng này?
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialog({ open: false, orderId: null, action: '' })}>Hủy</Button>
-          <Button onClick={handleConfirmAction} color="primary" variant="contained">Xác nhận</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Detail Dialog */}
-      <Dialog open={detailDialog.open} onClose={() => setDetailDialog({ open: false, order: null })} maxWidth="sm" fullWidth>
-        <DialogTitle>Chi tiết đơn hàng</DialogTitle>
-        <DialogContent dividers>
-          <Box sx={{ display: 'flex', fontWeight: 'bold', mb: 1 }}>
-            <Typography sx={{ flex: 2 }}>Sản phẩm</Typography>
-            <Typography sx={{ flex: 1, textAlign: 'center' }}>Số lượng</Typography>
-            <Typography sx={{ flex: 1, textAlign: 'right' }}>Giá</Typography>
-          </Box>
-          <Box sx={{ borderTop: '1px solid #eee', mb: 1 }} />
-          {detailDialog.order?.items.map((item, i) => (
-            <Box key={i} sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography sx={{ flex: 2 }}>{item.product?.name || 'N/A'}</Typography>
-              <Typography sx={{ flex: 1, textAlign: 'center' }}>{item.quantity}</Typography>
-              <Typography sx={{ flex: 1, textAlign: 'right', color: '#cc3300' }}>
-                {(item.price * item.quantity).toLocaleString('vi-VN')}₫
-              </Typography>
-            </Box>
-          ))}
-          <Box sx={{ borderTop: '1px solid #eee', mt: 2, pt: 1, display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>Tổng tiền:</Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: '#cc3300' }}>
-              {detailDialog.order?.total.toLocaleString('vi-VN')}₫
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailDialog({ open: false, order: null })} variant="outlined" color="primary">
-            Đóng
+        <DialogActions sx={{ p: 2, borderTop: '1px solid #333' }}>
+          <Button onClick={() => setConfirmDialog({ open: false, orderId: null, action: '' })} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleConfirmAction} variant="contained" color={confirmDialog.action === 'confirm' ? 'primary' : 'error'} sx={{ textTransform: 'none' }}>
+            {confirmDialog.action === 'confirm' ? 'Xác nhận ngay' : 'Hủy đơn hàng'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar
-        open={openSnackbar}
+        open={snackbar.open}
         autoHideDuration={4000}
-        onClose={handleCloseSnackbar}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} variant="filled">
-          {snackbarMessage}
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   )
 }
 

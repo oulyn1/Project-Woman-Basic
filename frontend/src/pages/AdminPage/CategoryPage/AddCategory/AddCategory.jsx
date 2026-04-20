@@ -1,168 +1,129 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Button,
   Typography,
   Snackbar,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
-import { useNavigate } from 'react-router-dom'
 
 import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
-import {
-  createCategoryAPI,
-  fetchAllCategorysAPI
-} from '~/apis/categoryAPIs'
+import { createCategoryAPI } from '~/apis/categoryAPIs'
 
-function AddCategory() {
-  const navigate = useNavigate()
-
-  const [productCategories, setProductCategories] = useState([])
-
-
-
-
-  // State dữ liệu form
-  const [formData, setFormData] = useState({
-    name: '',
-  })
-
-  // State lỗi validation
+function AddCategory({ open, onClose, onSuccess }) {
+  const [formData, setFormData] = useState({ name: '' })
   const [errors, setErrors] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
-  // State Snackbar
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  })
-
-  // Hàm đóng Snackbar
   const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setSnackbar((prev) => ({ ...prev, open: false }))
-    }
+    if (reason !== 'clickaway') setSnackbar((prev) => ({ ...prev, open: false }))
   }
 
-  // Xử lý thay đổi input text
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
-
-  // Validate dữ liệu
   const validate = () => {
     const tempErrors = {
       name: formData.name ? '' : 'Vui lòng nhập tên danh mục.',
     }
-
     setErrors(tempErrors)
     return Object.values(tempErrors).every((x) => x === '')
   }
 
-  // Xử lý submit form
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
+    setLoading(true)
 
     try {
-      const categoryData = {
-        name: formData.name
-      }
-
-      await createCategoryAPI(categoryData)
-
-      setSnackbar({
-        open: true,
-        message: 'Danh mục đã được thêm thành công!',
-        severity: 'success'
-      })
-
-      setTimeout(() => navigate('/admin/category'), 500)
-      setErrors({})
+      await createCategoryAPI({ name: formData.name })
+      setSnackbar({ open: true, message: 'Danh mục đã được thêm thành công!', severity: 'success' })
+      setFormData({ name: '' })
+      setTimeout(() => onSuccess(), 500)
     } catch {
-      setSnackbar({
-        open: true,
-        message: 'Có lỗi xảy ra khi thêm danh mục. Vui lòng thử lại!',
-        severity: 'error'
-      })
+      setSnackbar({ open: true, message: 'Lỗi khi thêm danh mục!', severity: 'error' })
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <Box
-      sx={{
-        backgroundColor: '#343a40',
-        mx: 5,
-        my: 1,
-        borderRadius: '8px',
-        overflow: 'auto'
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          color: 'white',
-          m: '16px 48px 16px 16px',
-          display: 'flex',
-          justifyContent: 'space-between'
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1a1a1a',
+            color: 'white',
+            borderRadius: '12px',
+            border: '1px solid #333'
+          }
         }}
       >
-        <Typography variant="h5">Thêm danh mục</Typography>
-      </Box>
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" fontWeight="bold">Thêm danh mục mới</Typography>
+          <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
+        </DialogTitle>
 
-      {/* Form */}
-      <Box component="form" onSubmit={handleSubmit} sx={{ px: 6 }}>
+        <DialogContent sx={{ p: 3, pt: 4 }}>
+          <FieldCustom
+            label="Tên danh mục"
+            required
+            placeholder="Ví dụ: Áo khoác"
+            value={formData.name}
+            onChange={handleChange}
+            name="name"
+            error={!!errors.name}
+            helperText={errors.name}
+          />
+        </DialogContent>
 
-        <FieldCustom
-          label="Tên danh mục"
-          required
-          placeholder="Nhập tên danh mục..."
-          value={formData.name}
-          onChange={handleChange}
-          name="name"
-          error={!!errors.name}
-          helperText={errors.name}
-        />
-
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
+          <Button onClick={onClose} sx={{ color: '#888', textTransform: 'none' }}>Hủy</Button>
           <Button
-            type="submit"
+            onClick={handleSubmit}
             variant="contained"
+            disabled={loading}
             startIcon={<AddOutlinedIcon />}
             sx={{
-              my: 2,
-              gap: 1,
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
               textTransform: 'none',
-              fontSize: '18px'
+              fontWeight: 'bold',
+              px: 3,
+              '&:hover': { backgroundColor: '#c8e6c9' }
             }}
           >
-            Thêm danh mục
+            {loading ? 'Đang thêm...' : 'Thêm ngay'}
           </Button>
-        </Box>
-      </Box>
+        </DialogActions>
+      </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: '46px' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   )
 }
 

@@ -1,192 +1,180 @@
-import React, { useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import { InfoOutline } from '@mui/icons-material';
+import React, { useEffect, useState } from 'react'
 import {
-  AllEmployeeAPI,
-  searchEmployeeAPI
-} from '~/apis/userAPIs';
-import TablePageControls from '../TablePageControls/TablePageControls';
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage';
-const TableEmployee = () => {
-  const [rows, setRows] = useState([]);
+  Box,
+  Typography,
+  Alert,
+  Snackbar,
+  Stack,
+  Collapse,
+  Avatar,
+  CircularProgress
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import EmailIcon from '@mui/icons-material/Email'
+import PhoneIcon from '@mui/icons-material/Phone'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
+import BadgeIcon from '@mui/icons-material/Badge'
 
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+import { AllEmployeeAPI, searchEmployeeAPI } from '~/apis/userAPIs'
+import TablePageControls from '../TablePageControls/TablePageControls'
 
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const token = localStorage.getItem('accessToken');
-
-  // Hook debounce để giảm số lần gọi API
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value);
-      }, delay);
-      return () => clearTimeout(handler);
-    }, [value, delay]);
-    return debouncedValue;
-  };
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+const TableEmployee = ({ searchQuery }) => {
+  const [rows, setRows] = useState([])
+  const [page, setPage] = useState(0)
+  const [rowsPerPage] = useState(10)
+  const [expandedId, setExpandedId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+  
+  const token = localStorage.getItem('accessToken')
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchEmployees = async () => {
+      setLoading(true)
       try {
-        if (!debouncedSearchQuery) {
-          const data = await AllEmployeeAPI(token);
-          setRows(data);
-        } else {
-          const data = await searchEmployeeAPI(debouncedSearchQuery, token);
-          setRows(data);
-        }
+        const data = !searchQuery
+          ? await AllEmployeeAPI(token)
+          : await searchEmployeeAPI(searchQuery, token)
+        setRows(data)
       } catch {
-        setRows([]);
-        setSnackbarMessage(
-          'Không thể tải dữ liệu Tài khoản. Vui lòng thử lại.'
-        );
-        setSnackbarSeverity('error');
-        setOpenSnackbar(true);
+        setRows([])
+        setSnackbar({ open: true, message: 'Lỗi khi tải dữ liệu nhân viên!', severity: 'error' })
+      } finally {
+        setLoading(false)
       }
-    };
-    fetchUsers();
-  }, [debouncedSearchQuery]);
-
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setOpenSnackbar(false);
     }
-  };
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage);
-  };
+    fetchEmployees()
+  }, [searchQuery, token])
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
 
   return (
-    <>
-      <TableRowsPerPage
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 100]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflowX: 'auto',
-        }}
-      >
-        <Table sx={{ minWidth: 1000 }} aria-label='user table'>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell sx={{ width: '50px' }}>STT</TableCell>
-              <TableCell sx={{ width: '200px' }}>HỌ VÀ TÊN</TableCell>
-              <TableCell sx={{ width: '250px' }}>EMAIL</TableCell>
-              <TableCell sx={{ width: '150px' }}>ĐIỆN THOẠI</TableCell>
-              <TableCell sx={{ width: '200px' }}>ĐỊA CHỈ</TableCell>
-              <TableCell sx={{ width: '120px', textAlign: 'center' }}>Trạng thái</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row, index) => (
-                <TableRow
-                  key={row._id}
+    <Box sx={{ mt: 2 }}>
+      {loading && rows.length === 0 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress color="inherit" /></Box>
+      ) : (
+        <Stack spacing={2}>
+          {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+            <Box
+              key={row._id}
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.05)',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  borderColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              {/* Main Header */}
+              <Box
+                sx={{ p: 2, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
+                onClick={() => toggleExpand(row._id)}
+              >
+                <Avatar
                   sx={{
-                    '&:last-child td, &:last-child th': { border: 0 },
-                    '&:hover': { backgroundColor: '#fafafa' },
+                    bgcolor: '#2196f3',
+                    width: 44,
+                    height: 44,
+                    mr: 2,
+                    fontWeight: 'bold'
                   }}
                 >
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                  {row.name.charAt(0).toUpperCase()}
+                </Avatar>
 
-                  <TableCell>
-                    <Typography variant='body2'>{row.name}</Typography>
-                  </TableCell>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" color="white">
+                    {row.name}
+                  </Typography>
+                  <Typography variant="body2" color="#888">
+                    {row.email}
+                  </Typography>
+                </Box>
 
-                  <TableCell sx={{ maxWidth: 150 }}>
-                    <Typography variant='body2'>{row.email}</Typography>
-                  </TableCell>
-                  <TableCell sx={{ maxWidth: 200 }}>
-                    <Typography variant='body2'>{row.phone}</Typography>
-                  </TableCell>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: '20px',
+                      backgroundColor: row.status === 'online' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(158, 158, 158, 0.1)',
+                      color: row.status === 'online' ? '#4caf50' : '#888',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      display: { xs: 'none', sm: 'block' }
+                    }}
+                  >
+                    {row.status || 'Offline'}
+                  </Box>
+                  {expandedId === row._id ? <ExpandLessIcon sx={{ color: '#555' }} /> : <ExpandMoreIcon sx={{ color: '#555' }} />}
+                </Box>
+              </Box>
 
-                  <TableCell sx={{ maxWidth: 200 }}>
-                    <Typography variant='body2'>{row.address}</Typography>
-                  </TableCell>
+              {/* Expandable Content */}
+              <Collapse in={expandedId === row._id}>
+                <Box sx={{ p: 3, pt: 1, borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                  <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
+                    <Stack spacing={2} sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <BadgeIcon sx={{ color: '#888', fontSize: 20 }} />
+                        <Typography variant="body2" color="#aaa"><Box component="span" sx={{ color: '#555' }}>Mã nhân viên:</Box> {row._id.slice(-6).toUpperCase()}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <PhoneIcon sx={{ color: '#888', fontSize: 20 }} />
+                        <Typography variant="body2" color="#aaa"><Box component="span" sx={{ color: '#555' }}>Số điện thoại:</Box> {row.phone || 'Chưa cập nhật'}</Typography>
+                      </Box>
+                    </Stack>
+                    <Stack spacing={2} sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <LocationOnIcon sx={{ color: '#888', fontSize: 20 }} />
+                        <Typography variant="body2" color="#aaa"><Box component="span" sx={{ color: '#555' }}>Địa chỉ:</Box> {row.address || 'Chưa cập nhật'}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <EmailIcon sx={{ color: '#888', fontSize: 20 }} />
+                        <Typography variant="body2" color="#aaa">
+                          <Box component="span" sx={{ color: '#555' }}>Đăng ký từ:</Box> {new Date(row.createdAt).toLocaleDateString('vi-VN')}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Stack>
+                </Box>
+              </Collapse>
+            </Box>
+          ))}
 
-                  <TableCell align='center'>
-                    <Box
-                      sx={{
-                        display: 'inline-block',
-                        px: 1,
-                        py: 0.5,
-                        borderRadius: 1,
-                        backgroundColor:
-                          row.status == 'online' ? '#e8f5e8' : '#ffe6e6',
-                        color: row.status == 'online' ? '#2e7d32' : '#d32f2f',
-                        fontSize: '0.75rem',
-                        fontWeight: 'bold',
-                        textAlign: 'center',
-                      }}
-                    >
-                      {row.status == 'online' ? 'Online' : 'Offline'}
-                    </Box>
-                  </TableCell>
-
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          {rows.length === 0 && !loading && (
+            <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>
+              Không tìm thấy nhân viên nào.
+            </Typography>
+          )}
+        </Stack>
+      )}
 
       <TablePageControls
         page={page}
         rowsPerPage={rowsPerPage}
         count={rows.length}
-        onChangePage={handleChangePage}
+        onChangePage={(_, p) => setPage(p)}
       />
+
       <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ marginTop: '46px' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarSeverity}
-          variant='filled'
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
-  );
-};
+    </Box>
+  )
+}
 
-export default TableEmployee;
+export default TableEmployee

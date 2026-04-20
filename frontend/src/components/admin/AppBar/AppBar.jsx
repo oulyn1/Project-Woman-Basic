@@ -1,17 +1,21 @@
-import { Box } from '@mui/material'
-import React from 'react'
+import { Box, Typography } from '@mui/material'
+import React, { useState } from 'react'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import { useNavigate } from 'react-router-dom'
+import EditAccount from '~/pages/AdminPage/AccountPage/EditAccount/EditAccount'
 
 function AppBar() {
   const navigate = useNavigate()
+  const [openProfile, setOpenProfile] = useState(false)
 
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const userName = user?.name || ''
-  const id=user?._id || ''
+  const id = user?._id || ''
+
   const handleEditAccountClick = () => {
-    navigate(`/admin/account/edit-account/${id}`)
+    setOpenProfile(true)
   }
+
   const handleLogout = () => {
     const userStr = localStorage.getItem('user')
     const user = JSON.parse(userStr)
@@ -22,6 +26,7 @@ function AppBar() {
     sessionStorage.removeItem('visited')
     navigate('/login')
   }
+
   return (
     <Box
       sx={{
@@ -46,10 +51,24 @@ function AppBar() {
           cursor: 'pointer',
           '&:hover': { opacity: 0.8 },
         }}
-        onClick={() => handleEditAccountClick()}
+        onClick={handleEditAccountClick}
       >
         Xin chào, {userName}
       </Box>
+
+      {openProfile && id && (
+        <EditAccount
+          open={openProfile}
+          accountId={id}
+          onClose={() => setOpenProfile(false)}
+          onSuccess={() => {
+            setOpenProfile(false)
+            // Optionally refresh user info if name changed
+            window.location.reload() 
+          }}
+        />
+      )}
+
       <Box
         sx={{
           height: '50px',
@@ -64,7 +83,7 @@ function AppBar() {
         }}
         onClick={handleLogout}
       >
-        <LogoutOutlinedIcon sx={{ fontSize: 28 }}/>
+        <LogoutOutlinedIcon sx={{ fontSize: 28 }} />
         Đăng Xuất
       </Box>
     </Box>

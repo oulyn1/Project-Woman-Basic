@@ -1,265 +1,182 @@
 import React, { useEffect, useState } from 'react'
-import Box from '@mui/material/Box'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import Alert from '@mui/material/Alert'
-import Avatar from '@mui/material/Avatar'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar,
+  Stack,
+  Collapse,
+  Avatar,
+  Divider,
+  Rating
+} from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
-import Snackbar from '@mui/material/Snackbar'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import StarIcon from '@mui/icons-material/Star'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import RateReviewIcon from '@mui/icons-material/RateReview'
+
 import { getAllRatingsAPI, searchRatingsAPI, deleteRatingAPI } from '~/apis/ratingAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage'
-const TableRatings = () => {
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
-  const [deletingProductId, setDeletingProductId] = useState(null)
+
+const TableRatings = ({ searchQuery }) => {
   const [rows, setRows] = useState([])
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
+  const [rowsPerPage] = useState(10)
+  const [expandedId, setExpandedId] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Hook debounce để giảm số lần gọi API
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value)
-      }, delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
-  const truncateDescription = (description, maxLength = 50) =>
-    description.length <= maxLength
-      ? description
-      : `${description.substring(0, maxLength)}...`
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchRatings = async () => {
+      setLoading(true)
       try {
-        if (!debouncedSearchQuery) {
-          const data = await getAllRatingsAPI()
-          setRows(data)
-        } else {
-          const data = await searchRatingsAPI(debouncedSearchQuery)
-          setRows(data)
-        }
+        const data = searchQuery
+          ? await searchRatingsAPI(searchQuery)
+          : await getAllRatingsAPI()
+        const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        setRows(sortedData)
       } catch {
         setRows([])
-        setSnackbarMessage(
-          'Không thể tải dữ liệu Đánh giá. Vui lòng thử lại.'
-        )
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
+        setSnackbar({ open: true, message: 'Lỗi khi tải đánh giá!', severity: 'error' })
+      } finally {
+        setLoading(false)
       }
     }
-    fetchUsers()
+    fetchRatings()
+  }, [searchQuery])
 
-  }, [debouncedSearchQuery])
-
-  const handleDelete = (id) => {
-    setDeletingProductId(id)
+  const handleDelete = (event, id) => {
+    event.stopPropagation()
+    setDeletingId(id)
     setOpenDeleteConfirm(true)
   }
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteRatingAPI(deletingProductId)
-      setRows(rows.filter((product) => product._id !== deletingProductId))
-
-      setSnackbarMessage('Đánh giá đã được xóa thành công!')
-      setSnackbarSeverity('success')
+      await deleteRatingAPI(deletingId)
+      setRows(rows.filter(r => r._id !== deletingId))
+      setSnackbar({ open: true, message: 'Đã xóa đánh giá!', severity: 'success' })
     } catch {
-      setSnackbarMessage('Lỗi khi xóa Đánh giá. Vui lòng thử lại.')
-      setSnackbarSeverity('error')
+      setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
-      setOpenSnackbar(true)
       setOpenDeleteConfirm(false)
-      setDeletingProductId(null)
+      setDeletingId(null)
     }
   }
 
-  const handleCloseDeleteConfirm = () => {
-    setOpenDeleteConfirm(false)
-    setDeletingProductId(null)
-  }
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setOpenSnackbar(false)
-    }
-  }
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
 
   return (
-    <>
-      <TableRowsPerPage
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 100]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflowX: 'auto',
-        }}
-      >
-        <Table sx={{ minWidth: 1000 }} aria-label='user table'>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell >STT</TableCell>
-              <TableCell >TÊN SẢN PHẨM</TableCell>
-              <TableCell >SAO</TableCell>
-              <TableCell >ĐÁNH GIÁ CHI TIẾT</TableCell>
-              <TableCell >NGÀY ĐÁNH GIÁ</TableCell>
-              <TableCell >Thao Tác</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row, index) => (
-                <TableRow
-                  key={row._id}
-                  sx={{
-                    '&:last-child td, &:last-child th': { border: 0 },
-                    '&:hover': { backgroundColor: '#fafafa' },
-                  }}
-                >
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar
-                        src={row.image}
-                        alt={row.prodctName}
-                        sx={{ width: 60, height: 60, mr: 2 }}
-                        variant="rounded"
-                      />
-                      <Typography variant="body2" fontWeight="medium">
-                        {row.productName}
-                      </Typography>
-                    </Box>
-                  </TableCell>
-
-                  <TableCell sx={{ maxWidth: 150 }}>
-                    <Typography variant='body2'>{row.star}</Typography>
-                  </TableCell>
-
-                  <TableCell sx={{ maxWidth: 200 }}>
-                    <Tooltip title={row.description} placement="top-start">
-                      <Typography variant="body2">
-                        {truncateDescription(row.description)}
-                      </Typography>
-                    </Tooltip>
-                  </TableCell>
-
-                  <TableCell sx={{ maxWidth: 150 }}>
-                    <Typography variant='body2'>
-                      {new Date(row.createdAt).toLocaleDateString('vi-VN')}
-                    </Typography>
-                  </TableCell>
-
-                  <TableCell align='center'>
-                    <Box
-                      sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}
-                    >
-                      <Tooltip title='Xóa Đánh giá' arrow>
-                        <IconButton
-                          color='error'
-                          size='small'
-                          onClick={() => handleDelete(row._id)}
-                          sx={{
-                            width: 46,
-                            height: 46,
-                            minWidth: 32,
-                            padding: 0,
-                            borderRadius: 1,
-                            backgroundColor: '#ffebee',
-                            '&:hover': { backgroundColor: '#ffcdd2' },
-                          }}
-                        >
-                          <DeleteIcon fontSize='small' />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={rows.length}
-        onChangePage={handleChangePage}
-      />
-
-      <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa Đánh giá này không?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color='primary'>
-            Hủy
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color='error'
-            variant='contained'
+    <Box sx={{ mt: 2 }}>
+      <Stack spacing={2}>
+        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+          <Box
+            key={row._id}
+            sx={{
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.05)',
+                borderColor: 'rgba(255,255,255,0.1)'
+              }
+            }}
           >
-            Xóa
-          </Button>
+            {/* Rating Header */}
+            <Box sx={{ p: 2.5, cursor: 'pointer' }} onClick={() => toggleExpand(row._id)}>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Avatar 
+                  src={row.image} 
+                  variant="rounded" 
+                  sx={{ width: 60, height: 60, bgcolor: 'rgba(255,255,255,0.05)' }}
+                >
+                  <RateReviewIcon />
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" color="white">{row.productName}</Typography>
+                  <Rating 
+                    value={row.star} 
+                    readOnly 
+                    size="small" 
+                    icon={<StarIcon sx={{ color: '#FFD700' }} fontSize="inherit" />}
+                    emptyIcon={<StarIcon sx={{ color: '#333' }} fontSize="inherit" />}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <IconButton onClick={(e) => handleDelete(e, row._id)} sx={{ color: '#f44336', bgcolor: 'rgba(244, 67, 54, 0.05)', '&:hover': { bgcolor: 'rgba(244, 67, 54, 0.1)' } }}>
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                  {expandedId === row._id ? <ExpandLessIcon sx={{ color: '#555' }} /> : <ExpandMoreIcon sx={{ color: '#555' }} />}
+                </Box>
+              </Stack>
+            </Box>
+
+            {/* Expandable Content */}
+            <Collapse in={expandedId === row._id}>
+              <Box sx={{ p: 3, pt: 0, backgroundColor: 'rgba(0,0,0,0.1)' }}>
+                <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
+                <Stack direction="column" spacing={2}>
+                  <Box>
+                    <Typography variant="overline" color="#555" fontWeight="bold">Nội dung đánh giá</Typography>
+                    <Typography variant="body1" color="#ccc" sx={{ mt: 0.5, fontStyle: 'italic', lineHeight: 1.6 }}>
+                      "{row.description}"
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <CalendarTodayIcon sx={{ color: '#555', fontSize: 16 }} />
+                    <Typography variant="caption" color="#555">
+                      Ngày đánh giá: {new Date(row.createdAt).toLocaleString('vi-VN')}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            </Collapse>
+          </Box>
+        ))}
+
+        {rows.length === 0 && !loading && (
+          <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>
+            Chưa có đánh giá nào cho tiêu chí này.
+          </Typography>
+        )}
+      </Stack>
+
+      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
+
+      <Dialog
+        open={openDeleteConfirm}
+        onClose={() => setOpenDeleteConfirm(false)}
+        PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa đánh giá</DialogTitle>
+        <DialogContent sx={{ color: '#aaa' }}>Bạn có chắc muốn xóa vĩnh viễn đánh giá này?</DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ textTransform: 'none' }}>Xóa ngay</Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ marginTop: '46px' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbarSeverity}
-          variant='filled'
-          sx={{ width: '100%' }}
-        >
-          {snackbarMessage}
-        </Alert>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
       </Snackbar>
-    </>
+    </Box>
   )
 }
 

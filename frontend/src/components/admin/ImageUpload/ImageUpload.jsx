@@ -1,83 +1,58 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 
-function ImageUpload({ label, required, onImageChange, error, helperText, currentImageUrl }) {
-  const [preview, setPreview] = useState(currentImageUrl || null)
+function ImageUpload({ label, required, onImageChange, error, helperText, currentImageUrl, multiple }) {
+  const [previews, setPreviews] = useState([])
   const fileInputRef = useRef(null)
 
-  // ✅ Cập nhật preview khi currentImageUrl thay đổi (khi fetch xong product)
   useEffect(() => {
     if (currentImageUrl) {
-      setPreview(currentImageUrl)
+      setPreviews(Array.isArray(currentImageUrl) ? currentImageUrl : [currentImageUrl])
     }
   }, [currentImageUrl])
 
   const handleFileChange = (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      setPreview(URL.createObjectURL(file)) // hiện ảnh vừa chọn
-      onImageChange(file) // báo file lên EditProduct
+    const selectedFiles = Array.from(event.target.files)
+    if (selectedFiles.length > 0) {
+      const newFiles = multiple ? selectedFiles : [selectedFiles[0]]
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+      
+      setPreviews(multiple ? [...previews, ...newPreviews] : newPreviews)
+      onImageChange(multiple ? [...newFiles] : newFiles[0]) 
     }
   }
 
-  const handleClearImage = () => {
-    setPreview(null)
+  const handleClearImages = () => {
+    setPreviews([])
     if (fileInputRef.current) fileInputRef.current.value = ''
-    onImageChange(null) // clear trong EditProduct
+    onImageChange(multiple ? [] : null)
   }
 
   return (
     <Box sx={{ my: 2 }}>
-      <Typography
-        variant="subtitle1"
-        sx={{ mb: 1, color: 'white', display: 'flex', alignItems: 'center', gap: '2px' }}
-      >
-        {label}
-        {required && <span style={{ color: 'red' }}>*</span>}
+      <Typography variant="subtitle1" sx={{ mb: 1, color: 'white', display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {label} {required && <span style={{ color: 'red' }}>*</span>}
       </Typography>
 
-      {/* input file ẩn */}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
+      <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} multiple={multiple} onChange={handleFileChange} />
 
-      {/* nút chọn ảnh */}
-      <Button
-        variant="contained"
-        onClick={() => fileInputRef.current && fileInputRef.current.click()}
-        sx={{ mr: 2 }}
-      >
-        Chọn ảnh
+      <Button variant="contained" onClick={() => fileInputRef.current && fileInputRef.current.click()} sx={{ mr: 2 }}>
+        {multiple ? 'Thêm ảnh' : 'Chọn ảnh'}
       </Button>
 
-      {/* nút xóa ảnh */}
-      {preview && (
-        <Button variant="outlined" color="error" onClick={handleClearImage}>
-          Xóa ảnh
-        </Button>
+      {previews.length > 0 && (
+        <Button variant="outlined" color="error" onClick={handleClearImages}>Xóa tất cả</Button>
       )}
 
-      {/* hiển thị ảnh preview */}
-      {preview && (
-        <Box sx={{ mt: 2 }}>
-          <img
-            src={preview}
-            alt="Preview"
-            style={{ maxWidth: '200px', borderRadius: '8px' }}
-          />
+      {previews.length > 0 && (
+        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {previews.map((src, idx) => (
+            <img key={idx} src={src} alt={`Preview ${idx}`} style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)' }} />
+          ))}
         </Box>
       )}
 
-      {/* báo lỗi */}
-      {error && (
-        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-          {helperText}
-        </Typography>
-      )}
+      {error && <Typography variant="body2" color="error" sx={{ mt: 1 }}>{helperText}</Typography>}
     </Box>
   )
 }

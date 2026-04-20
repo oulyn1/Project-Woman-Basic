@@ -15,11 +15,13 @@ const getCart = async (req, res, next) => {
 const addToCart = async (req, res, next) => {
   try {
     const userId = req.user.userId
-    const { productId, quantity } = req.body
+    const { productId, variantId, quantity } = req.body
 
-    if (!productId) return res.status(400).json({ message: 'productId is required' })
+    if (!productId || !variantId) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'productId and variantId are required' })
+    }
 
-    const cart = await cartService.addToCart(userId, productId, quantity)
+    const cart = await cartService.addToCart(userId, productId, variantId, quantity)
 
     return res.status(StatusCodes.OK).json({
       success: true,
@@ -30,24 +32,18 @@ const addToCart = async (req, res, next) => {
   }
 }
 
-
 const updateQuantity = async (req, res, next) => {
   try {
     const userId = req.user.userId
-    const { productId, quantity } = req.body
+    const { productId, variantId, quantity } = req.body
 
-    if (!productId || quantity == null) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'productId and quantity are required' })
+    if (!productId || !variantId || quantity == null) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'productId, variantId and quantity are required' })
     }
 
-    if (quantity < 1) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Quantity must be at least 1' })
-    }
-
-    const cart = await cartService.updateQuantity(userId, productId, quantity)
-    res.status(StatusCodes.OK).json(cart)
+    const cart = await cartService.updateQuantity(userId, productId, variantId, quantity)
+    res.status(StatusCodes.OK).json({ success: true, data: cart })
   } catch (err) {
-    console.error("LỖI UPDATE QUANTITY:", err)
     next(err)
   }
 }
@@ -55,16 +51,15 @@ const updateQuantity = async (req, res, next) => {
 const removeItem = async (req, res, next) => {
   try {
     const userId = req.user.userId
-    const { productId } = req.body
+    const { productId, variantId } = req.body
 
-    if (!productId) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'productId is required' })
+    if (!productId || !variantId) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'productId and variantId are required' })
     }
 
-    const cart = await cartService.removeItem(userId, productId)
-    res.status(StatusCodes.OK).json(cart)
+    const cart = await cartService.removeItem(userId, productId, variantId)
+    res.status(StatusCodes.OK).json({ success: true, data: cart })
   } catch (err) {
-    console.error("LỖI REMOVE ITEM:", err)
     next(err)
   }
 }

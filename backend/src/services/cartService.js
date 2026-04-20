@@ -21,10 +21,10 @@ const getCart = async (userId) => {
   }
 }
 
-const addToCart = async (userId, productId, quantity = 1) => {
+const addToCart = async (userId, productId, variantId, quantity = 1) => {
   if (quantity < 1) throw new ApiError(StatusCodes.BAD_REQUEST, 'Quantity must be at least 1')
   try {
-    const cart = await cartModel.addToCart(userId, productId, quantity)
+    const cart = await cartModel.addToCart(userId, productId, variantId, quantity)
     return cart
   } catch (error) {
     console.error("LỖI KHI THÊM VÀO CART:", error)
@@ -32,20 +32,19 @@ const addToCart = async (userId, productId, quantity = 1) => {
   }
 }
 
-
-const updateQuantity = async (userId, productId, quantity) => {
+const updateQuantity = async (userId, productId, variantId, quantity) => {
   if (quantity < 1) throw new ApiError(StatusCodes.BAD_REQUEST, 'Quantity must be at least 1')
   try {
-    return await cartModel.updateQuantity(userId, productId, quantity)
+    return await cartModel.updateQuantity(userId, productId, variantId, quantity)
   } catch (error) {
     console.error("LỖI KHI CẬP NHẬT QUANTITY:", error)
     throw new ApiError(StatusCodes.NOT_FOUND, error.message || 'Product not found in cart')
   }
 }
 
-const removeItem = async (userId, productId) => {
+const removeItem = async (userId, productId, variantId) => {
   try {
-    return await cartModel.removeItem(userId, productId)
+    return await cartModel.removeItem(userId, productId, variantId)
   } catch (error) {
     console.error("LỖI KHI XÓA ITEM:", error)
     throw new ApiError(StatusCodes.NOT_FOUND, error.message || 'Product not found in cart')

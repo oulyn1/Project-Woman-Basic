@@ -1,48 +1,115 @@
-import { Box, Button, Tooltip, Typography } from '@mui/material'
-import React from 'react'
+import { Box, Button, Typography, InputBase } from '@mui/material'
+import React, { useState } from 'react'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
+import SearchIcon from '@mui/icons-material/Search'
 import TableProduct from '~/components/admin/TableProduct/TableProduct'
-import { useNavigate } from 'react-router-dom'
+import AddProduct from './AddProduct/AddProduct'
+import EditProduct from './EditProduct/EditProduct'
 
 function ProductPage() {
-  const navigate = useNavigate()
-  const handleAddProductClick = () => {
-    navigate('/admin/product/add-product')
+  const [openAddModal, setOpenAddModal] = useState(false)
+  const [openEditModal, setOpenEditModal] = useState(false)
+  const [selectedProductId, setSelectedProductId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const handleAddProduct = () => setOpenAddModal(true)
+  
+  const handleEditProduct = (productId) => {
+    setSelectedProductId(productId)
+    setOpenEditModal(true)
   }
-  const handleEditProductClick = (productId) => {
-    navigate(`/admin/product/edit-product/${productId}`)
+
+  const handleSuccess = () => {
+    setOpenAddModal(false)
+    setOpenEditModal(false)
+    // TableProduct will refresh via its internal useEffect if we trigger a refresh or just rely on the user
   }
+
   return (
     <Box
       sx={{
         backgroundColor: '#343a40',
-        height: 'auto',
-        overflow: 'auto',
         mx: 5,
         my: 1,
-        borderRadius: '8px'
+        borderRadius: '8px',
+        minHeight: '80vh',
+        pb: 4
       }}
     >
+      {/* Header with Search and Add Button */}
       <Box
         sx={{
-          color: 'white',
-          m: '16px 48px 16px 16px',
+          px: 5,
+          py: 3,
           display: 'flex',
-          justifyContent: 'space-between'
+          alignItems: 'center',
+          gap: 2
         }}
       >
-        <Typography variant='h5'>
-          Quản Lý Sản Phẩm
-        </Typography>
-        <Tooltip title='Thêm sản phẩm'>
-          <Button onClick={handleAddProductClick} sx={{ backgroundColor: '#66FF99', height: '40px', minWidth: '46px' }}>
-            <AddOutlinedIcon sx={{ color: 'white' }}/>
-          </Button>
-        </Tooltip>
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            borderRadius: '8px',
+            px: 2,
+            py: 0.5,
+            border: '1px solid rgba(255,255,255,0.1)'
+          }}
+        >
+          <SearchIcon sx={{ color: '#888', mr: 1 }} />
+          <InputBase
+            placeholder="Tìm theo tên sản phẩm..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{ color: 'white', flex: 1 }}
+          />
+        </Box>
+        
+        <Button
+          variant="outlined"
+          startIcon={<AddOutlinedIcon />}
+          onClick={handleAddProduct}
+          sx={{
+            color: 'white',
+            borderColor: '#333',
+            textTransform: 'none',
+            borderRadius: '8px',
+            height: '46px',
+            px: 3,
+            '&:hover': {
+              borderColor: '#444',
+              backgroundColor: '#1a1a1a'
+            }
+          }}
+        >
+          Thêm sản phẩm
+        </Button>
       </Box>
-      <Box sx={{ px: 6 }}>
-        <TableProduct onEditProduct={handleEditProductClick} />
+
+      <Box sx={{ px: 5 }}>
+        <TableProduct 
+          onEditProduct={handleEditProduct} 
+          searchQuery={searchQuery}
+        />
       </Box>
+
+      {/* Modals */}
+      <AddProduct 
+        open={openAddModal} 
+        onClose={() => setOpenAddModal(false)}
+        onSuccess={handleSuccess}
+      />
+
+      {selectedProductId && (
+        <EditProduct 
+          open={openEditModal}
+          productId={selectedProductId}
+          onClose={() => setOpenEditModal(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
     </Box>
   )
 }

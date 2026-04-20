@@ -1,334 +1,270 @@
 import React, { useEffect, useState } from 'react'
-import Box from '@mui/material/Box'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Avatar from '@mui/material/Avatar'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import Alert from '@mui/material/Alert'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Avatar,
+  Menu,
+  MenuItem,
+  Stack,
+  Collapse,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar
+} from '@mui/material'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import Snackbar from '@mui/material/Snackbar'
 
-import { fetchAllProductsAPI, deleteProductAPI, searchProductsAPI } from '~/apis/productAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage'
+import { fetchAllProductsAPI, deleteProductAPI } from '~/apis/productAPIs'
 import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
 
-const TableProduct = ({ onEditProduct }) => {
-  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
-  const [deletingProductId, setDeletingProductId] = useState(null)
+const TableProduct = ({ onEditProduct, searchQuery }) => {
   const [rows, setRows] = useState([])
-
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
-
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-
-  const [searchQuery, setSearchQuery] = useState('')
-
   const [categories, setCategories] = useState([])
+  const [expandedId, setExpandedId] = useState(null)
+  
+  // Action Menu State
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [menuId, setMenuId] = useState(null)
+
+  // Delete State
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+
+  // Snackbar State
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const data = await fetchAllCategorysAPI()
-      setCategories(data)
-    }
-    fetchCategories()
-  }, [])
-
-  const getCategoryName = (id) => {
-    const category = categories.find(cat => cat._id === id)
-    return category ? category.name : 'Không có'
-  }
-
-  // Hook debounce để giảm số lần gọi API
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value)
-      }, delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
-
-  useEffect(() => {
-    const fetchProducts = async () => {
+    const initData = async () => {
       try {
-        let data
-        if (!debouncedSearchQuery) {
-          data = await fetchAllProductsAPI()
-        } else {
-          data = await searchProductsAPI(debouncedSearchQuery)
-        }
-        const sortedData = data.sort(
-          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        )
-        setRows(sortedData)
-      } catch {
-        setRows([])
-        setSnackbarMessage('Không thể tải dữ liệu sản phẩm. Vui lòng thử lại.')
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
-      }
+        const [cats, prods] = await Promise.all([
+          fetchAllCategorysAPI(),
+          fetchAllProductsAPI({ q: searchQuery })
+        ])
+        setCategories(cats)
+        setRows(prods.data || [])
+      } catch { /* ... */ }
     }
-    fetchProducts()
-  }, [debouncedSearchQuery])
+    initData()
+  }, [searchQuery])
 
-  // Format tiền VND
+  const getCategoryName = (id) => categories.find(cat => cat._id === id)?.name || 'Không có'
+
   const formatCurrency = (amount) =>
-    new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount)
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
 
-  const handleEdit = (id) => {
-    onEditProduct(id)
+  const handleToggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
+
+  const handleOpenMenu = (event, id) => {
+    setAnchorEl(event.currentTarget)
+    setMenuId(id)
   }
 
-  const handleDelete = (id) => {
-    setDeletingProductId(id)
-    setOpenDeleteConfirm(true)
+  const handleCloseMenu = () => {
+    setAnchorEl(null)
+    setMenuId(null)
   }
 
-  const handleConfirmDelete = async () => {
+  const handleAction = (type) => {
+    if (type === 'edit') onEditProduct(menuId)
+    if (type === 'delete') {
+      setDeletingId(menuId)
+      setOpenDeleteConfirm(true)
+    }
+    if (type === 'view') handleToggleExpand(menuId)
+    handleCloseMenu()
+  }
+
+  const confirmDelete = async () => {
     try {
-      await deleteProductAPI(deletingProductId)
-      setRows(rows.filter((product) => product._id !== deletingProductId))
-
-      setSnackbarMessage('Sản phẩm đã được xóa thành công!')
-      setSnackbarSeverity('success')
+      await deleteProductAPI(deletingId)
+      setRows(rows.filter(r => r._id !== deletingId))
+      setSnackbar({ open: true, message: 'Đã xóa sản phẩm!', severity: 'success' })
     } catch {
-      setSnackbarMessage('Lỗi khi xóa sản phẩm. Vui lòng thử lại.')
-      setSnackbarSeverity('error')
+      setSnackbar({ open: true, message: 'Lỗi khi xóa!', severity: 'error' })
     } finally {
-      setOpenSnackbar(true)
       setOpenDeleteConfirm(false)
-      setDeletingProductId(null)
     }
   }
 
-  const handleCloseDeleteConfirm = () => {
-    setOpenDeleteConfirm(false)
-    setDeletingProductId(null)
-  }
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setOpenSnackbar(false)
-    }
-  }
-
-  const truncateDescription = (description, maxLength = 50) =>
-    description.length <= maxLength
-      ? description
-      : `${description.substring(0, maxLength)}...`
-
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
+  // Calculate distinct sizes and colors for the matrix
+  const getMatrixHeader = (variants) => {
+    const colors = []
+    const sizes = []
+    variants.forEach(v => {
+      if (!sizes.includes(v.size)) sizes.push(v.size)
+      if (!colors.find(c => c.hex === v.color.hex)) colors.push(v.color)
+    })
+    return { sizes, colors }
   }
 
   return (
-    <>
-      <TableRowsPerPage
-        rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 100]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {rows.map((product) => {
+        const isExpanded = expandedId === product._id
+        const totalStock = product.variants?.reduce((s, v) => s + (v.stock || 0), 0) || 0
+        const { sizes, colors } = getMatrixHeader(product.variants || [])
 
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflowX: 'auto'
+        return (
+          <Box
+            key={product._id}
+            sx={{
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              overflow: 'hidden',
+              transition: '0.3s',
+              '&:hover': { borderColor: 'rgba(255,255,255,0.2)', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }
+            }}
+          >
+            {/* Card Header Content */}
+            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+               {/* Thumbnail */}
+              <Avatar
+                src={product.images?.[0]}
+                variant="rounded"
+                sx={{ width: 80, height: 80, backgroundColor: '#252525', border: '1px solid #333' }}
+              />
+
+              {/* Main Info */}
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="h6" fontWeight="bold" color="white" sx={{ mb: 0.5 }}>{product.name}</Typography>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                  <Typography variant="body2" color="#888">
+                    {getCategoryName(product.categoryId)} • {sizes.join(', ')} • 
+                  </Typography>
+                  <Stack direction="row" spacing={0.5}>
+                    {colors.map(c => (
+                      <Box key={c.hex} sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: c.hex }} />
+                    ))}
+                  </Stack>
+                </Stack>
+
+                {/* Badges */}
+                <Stack direction="row" spacing={1.5}>
+                  <Box sx={{ bgcolor: '#fffde7', color: '#afb42b', px: 1.5, py: 0.2, borderRadius: '50px', fontSize: '13px', fontWeight: 'bold' }}>
+                    {formatCurrency(product.price)}
+                  </Box>
+                  <Box sx={{ bgcolor: '#e3f2fd', color: '#1976d2', px: 1.5, py: 0.2, borderRadius: '50px', fontSize: '13px' }}>
+                    Đã bán: {product.sold || 0}
+                  </Box>
+                  <Box sx={{ bgcolor: '#fff3e0', color: '#e65100', px: 1.5, py: 0.2, borderRadius: '50px', fontSize: '13px' }}>
+                    Kho: {totalStock}
+                  </Box>
+                </Stack>
+              </Box>
+
+              {/* Actions */}
+              <Stack direction="row" alignItems="center">
+                <IconButton onClick={() => handleToggleExpand(product._id)} sx={{ color: '#888' }}>
+                  {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+                <IconButton onClick={(e) => handleOpenMenu(e, product._id)} sx={{ color: '#888' }}>
+                  <MoreVertIcon />
+                </IconButton>
+              </Stack>
+            </Box>
+
+            {/* Expanded Section (Variants Matrix) */}
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              <Box sx={{ p: 3, pt: 1, borderTop: '1px solid #333' }}>
+                <Typography variant="caption" sx={{ color: '#666', fontWeight: 'bold', mb: 1.5, display: 'block' }}>TỒN KHO THEO BIẾN THẾ</Typography>
+                
+                {product.variants?.length > 0 ? (
+                  <Box sx={{ border: '1px solid #252525', borderRadius: '8px', overflow: 'hidden' }}>
+                    <Table size="small">
+                      <TableHead sx={{ backgroundColor: '#252525' }}>
+                        <TableRow>
+                          <TableCell sx={{ color: '#888', borderBottom: '1px solid #252525' }}>Size \ Màu</TableCell>
+                          {colors.map(c => (
+                            <TableCell key={c.hex} align="center" sx={{ color: '#888', borderBottom: '1px solid #252525' }}>
+                              <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                                <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: c.hex }} />
+                                <Typography variant="caption">{c.name}</Typography>
+                              </Stack>
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {sizes.map(size => (
+                          <TableRow key={size}>
+                            <TableCell sx={{ color: 'white', borderBottom: '1px solid #252525', fontWeight: 'bold' }}>{size}</TableCell>
+                            {colors.map(color => {
+                              const variant = product.variants.find(v => v.size === size && v.color.hex === color.hex)
+                              return (
+                                <TableCell key={color.hex} align="center" sx={{ color: variant ? 'white' : '#444', borderBottom: '1px solid #252525' }}>
+                                  {variant ? variant.stock : '—'}
+                                </TableCell>
+                              )
+                            })}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" sx={{ color: '#666' }}>Không có biến thể khả dụng.</Typography>
+                )}
+                
+                <Typography variant="caption" sx={{ color: '#666', mt: 1.5, display: 'block' }}>
+                  Tổng tồn kho: <strong>{totalStock} sản phẩm</strong> • {product.variants?.length || 0} biến thể
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
+        )
+      })}
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        PaperProps={{
+          sx: { backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160 }
         }}
       >
-        <Table sx={{ minWidth: 1000 }} aria-label="product table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell><strong>STT</strong></TableCell>
-              <TableCell><strong>SẢN PHẨM</strong></TableCell>
-              <TableCell><strong>DANH MỤC</strong></TableCell>
-              <TableCell><strong>MÔ TẢ</strong></TableCell>
-              <TableCell><strong>CHẤT LIỆU</strong></TableCell>
-              <TableCell align="right"><strong>GIÁ</strong></TableCell>
-              <TableCell align="center"><strong>SỐ LƯỢNG</strong></TableCell>
-              <TableCell align="center"><strong>ĐÃ BÁN</strong></TableCell>
-              <TableCell align="center"><strong>THAO TÁC</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
-              <TableRow
-                key={row._id}
-                sx={{
-                  '&:last-child td, &:last-child th': { border: 0 },
-                  '&:hover': { backgroundColor: '#fafafa' }
-                }}
-              >
-                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+        <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}>
+          <EditIcon fontSize="small" /> Chỉnh sửa
+        </MenuItem>
+        <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}>
+          <DeleteIcon fontSize="small" /> Xóa sản phẩm
+        </MenuItem>
+      </Menu>
 
-                <TableCell>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar
-                      src={row.image}
-                      alt={row.name}
-                      sx={{ width: 60, height: 60, mr: 2 }}
-                      variant="rounded"
-                    />
-                    <Typography variant="body2" fontWeight="medium">
-                      {row.name}
-                    </Typography>
-                  </Box>
-                </TableCell>
-
-                <TableCell sx={{ maxWidth: 150 }}>
-                  <Typography variant="body2">
-                    {getCategoryName(row.categoryId)}
-                  </Typography>
-                </TableCell>
-
-                <TableCell sx={{ maxWidth: 200 }}>
-                  <Tooltip title={row.description} placement="top-start">
-                    <Typography variant="body2">
-                      {truncateDescription(row.description)}
-                    </Typography>
-                  </Tooltip>
-                </TableCell>
-
-                <TableCell sx={{ maxWidth: 150 }}>
-                  <Typography variant="body2">{row.material}</Typography>
-                </TableCell>
-
-                <TableCell align="right">
-                  <Typography fontWeight="bold" color="primary">
-                    {formatCurrency(row.price)}
-                  </Typography>
-                </TableCell>
-
-                <TableCell align="center">
-                  <Box
-                    sx={{
-                      display: 'inline-block',
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                      backgroundColor: row.stock > 0 ? '#e8f5e8' : '#ffe6e6',
-                      color: row.stock > 0 ? '#2e7d32' : '#d32f2f',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {row.stock}
-                  </Box>
-                </TableCell>
-
-                <TableCell align="center">{row.sold}</TableCell>
-
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <Tooltip title="Sửa sản phẩm">
-                      <IconButton
-                        color="primary"
-                        size="small"
-                        onClick={() => handleEdit(row._id)}
-                        sx={{
-                          width: 46,
-                          height: 46,
-                          minWidth: 32,
-                          padding: 0,
-                          borderRadius: 1,
-                          backgroundColor: '#e8f5e8',
-                          '&:hover': { backgroundColor: '#c8e6c9' }
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="Xóa sản phẩm">
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(row._id)}
-                        sx={{
-                          width: 46,
-                          height: 46,
-                          minWidth: 32,
-                          padding: 0,
-                          borderRadius: 1,
-                          backgroundColor: '#ffebee',
-                          '&:hover': { backgroundColor: '#ffcdd2' }
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={rows.length}
-        onChangePage={handleChangePage}
-      />
-
-      <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
+      {/* Delete Confirm */}
+      <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)} PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white' } }}>
         <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa sản phẩm này không?</Typography>
-        </DialogContent>
+        <DialogContent>Bạn có chắc chắn muốn xóa sản phẩm này? Thao tác này không thể hoàn tác.</DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color="primary">
-            Hủy
-          </Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">
-            Xóa
-          </Button>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={confirmDelete} color="error" variant="contained">Xóa ngay</Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ marginTop: '46px' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} variant="filled" sx={{ width: '100%' }}>
-          {snackbarMessage}
-        </Alert>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
       </Snackbar>
-    </>
+    </Box>
   )
 }
 

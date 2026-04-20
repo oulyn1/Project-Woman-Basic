@@ -19,13 +19,13 @@ function ListProduct() {
   // Load products, categories, promotions
   useEffect(() => {
     const loadData = async () => {
-      const [cats, prods, promos] = await Promise.all([
+      const [cats, prodRes, promos] = await Promise.all([ // prodRes instead of prods
         fetchAllCategorysAPI(),
         fetchAllProductsAPI(),
         fetchAllPromotionsAPI()
       ])
       setCategories(cats)
-      setAllProducts(prods)
+      setAllProducts(prodRes.data || []) // Extract .data
       setPromotions(promos)
     }
     loadData()
@@ -44,8 +44,11 @@ function ListProduct() {
     const targetCat = categories.find(c => c.slug === categorySlug)
     if (!targetCat) return []
 
-    // Lọc sản phẩm đúng category và còn stock
-    return allProducts.filter(p => p.categoryId === targetCat._id && p.stock > 0)
+    // Lọc sản phẩm đúng category và còn stock (tổng các biến thể > 0)
+    return allProducts.filter(p => 
+      p.categoryId === targetCat._id && 
+      (p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0)
+    )
   }, [categories, allProducts, categorySlug])
 
   // Banner theo category slug
@@ -126,7 +129,7 @@ function ListProduct() {
                 <CardMedia
                   component="img"
                   sx={{ width: 292, height: 292, objectFit: 'cover' }}
-                  image={product.image}
+                  image={product.images?.[0] || ''}
                   alt={product.name}
                 />
 

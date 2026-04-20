@@ -1,187 +1,191 @@
 import React, { useEffect, useState } from 'react'
-import Box from '@mui/material/Box'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
-import Paper from '@mui/material/Paper'
-import Typography from '@mui/material/Typography'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import Alert from '@mui/material/Alert'
+import {
+  Box,
+  Typography,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Alert,
+  Snackbar,
+  Stack,
+  Menu,
+  MenuItem
+} from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import Snackbar from '@mui/material/Snackbar'
+import MoreVertIcon from '@mui/icons-material/MoreVert'
+import CategoryIcon from '@mui/icons-material/Category'
 
 import { fetchAllCategorysAPI, deleteCategoryAPI, searchCategorysAPI } from '~/apis/categoryAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
-import TableRowsPerPage from '../TableRowsPerPage/TableRowsPerPage'
 
-const TableCategory = ({ onEditCategory }) => {
+const TableCategory = ({ onEditCategory, searchQuery }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingCategoryId, setDeletingCategoryId] = useState(null)
   const [rows, setRows] = useState([])
-
   const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [rowsPerPage] = useState(10)
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
 
-  const [openSnackbar, setOpenSnackbar] = useState(false)
-  const [snackbarMessage, setSnackbarMessage] = useState('')
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
-
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Debounce để giảm số lần gọi API
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
-    useEffect(() => {
-      const handler = setTimeout(() => setDebouncedValue(value), delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
     const fetchCategorys = async () => {
       try {
-        const data = !debouncedSearchQuery
+        const data = !searchQuery
           ? await fetchAllCategorysAPI()
-          : await searchCategorysAPI(debouncedSearchQuery)
-
+          : await searchCategorysAPI(searchQuery)
         setRows(data)
       } catch {
         setRows([])
-        setSnackbarMessage('Không thể tải dữ liệu danh mục. Vui lòng thử lại.')
-        setSnackbarSeverity('error')
-        setOpenSnackbar(true)
+        setSnackbar({ open: true, message: 'Lỗi khi tải dữ liệu!', severity: 'error' })
       }
     }
-
     fetchCategorys()
-  }, [debouncedSearchQuery])
+  }, [searchQuery])
 
+  const handleOpenMenu = (event, id) => {
+    setAnchorEl(event.currentTarget)
+    setSelectedId(id)
+  }
 
-  const handleEdit = (id) => onEditCategory(id)
+  const handleCloseMenu = () => {
+    setAnchorEl(null)
+    setSelectedId(null)
+  }
 
-  const handleDelete = (id) => {
-    setDeletingCategoryId(id)
-    setOpenDeleteConfirm(true)
+  const handleAction = (type) => {
+    if (type === 'edit') onEditCategory(selectedId)
+    else if (type === 'delete') {
+      setDeletingCategoryId(selectedId)
+      setOpenDeleteConfirm(true)
+    }
+    handleCloseMenu()
   }
 
   const handleConfirmDelete = async () => {
     try {
       await deleteCategoryAPI(deletingCategoryId)
       setRows(rows.filter(cat => cat._id !== deletingCategoryId))
-      setSnackbarMessage('Danh mục đã được xóa thành công!')
-      setSnackbarSeverity('success')
+      setSnackbar({ open: true, message: 'Đã xóa danh mục!', severity: 'success' })
     } catch {
-      setSnackbarMessage('Lỗi khi xóa danh mục. Vui lòng thử lại.')
-      setSnackbarSeverity('error')
+      setSnackbar({ open: true, message: 'Lỗi khi xóa!', severity: 'error' })
     } finally {
-      setOpenSnackbar(true)
       setOpenDeleteConfirm(false)
-      setDeletingCategoryId(null)
     }
   }
 
-  const handleCloseDeleteConfirm = () => {
-    setOpenDeleteConfirm(false)
-    setDeletingCategoryId(null)
-  }
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') setOpenSnackbar(false)
-  }
-
-  const handleChangePage = (_, newPage) => setPage(newPage)
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
-
   return (
-    <>
-      <TableRowsPerPage
+    <Box sx={{ mt: 2 }}>
+      <Stack spacing={2}>
+        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+          <Box
+            key={row._id}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              p: 2,
+              backgroundColor: 'rgba(255,255,255,0.03)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.05)',
+              transition: 'all 0.2s',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                transform: 'translateY(-2px)',
+                borderColor: 'rgba(255,255,255,0.1)'
+              }
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#888'
+                }}
+              >
+                <CategoryIcon />
+              </Box>
+              <Typography variant="body1" fontWeight="600" color="white">
+                {row.name}
+              </Typography>
+            </Stack>
+
+            <IconButton onClick={(e) => handleOpenMenu(e, row._id)} sx={{ color: '#888' }}>
+              <MoreVertIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {rows.length === 0 && (
+          <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>
+            Không tìm thấy danh mục nào.
+          </Typography>
+        )}
+      </Stack>
+
+      <TablePageControls
+        page={page}
         rowsPerPage={rowsPerPage}
-        rowsPerPageOptions={[10, 25, 100]}
-        onChangeRowsPerPage={handleChangeRowsPerPage}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        count={rows.length}
+        onChangePage={(_, p) => setPage(p)}
       />
 
-      <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }} aria-label="category table">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell><strong>STT</strong></TableCell>
-              <TableCell><strong>DANH MỤC</strong></TableCell>
-              <TableCell align="center"><strong>THAO TÁC</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
-              <TableRow key={row._id} sx={{ '&:last-child td, &:last-child th': { border: 0 }, '&:hover': { backgroundColor: '#fafafa' } }}>
-                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="medium">{row.name}</Typography>
-                </TableCell>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleCloseMenu}
+        PaperProps={{
+          sx: { backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160 }
+        }}
+      >
+        <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}>
+          <EditIcon fontSize="small" /> Chỉnh sửa
+        </MenuItem>
+        <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}>
+          <DeleteIcon fontSize="small" /> Xóa danh mục
+        </MenuItem>
+      </Menu>
 
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
-                    <Tooltip title="Sửa danh mục">
-                      <IconButton
-                        color="primary"
-                        size="small"
-                        onClick={() => handleEdit(row._id)}
-                        sx={{ width: 46, height: 46, minWidth: 32, padding: 0, borderRadius: 1, backgroundColor: '#e8f5e8', '&:hover': { backgroundColor: '#c8e6c9' } }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Xóa danh mục">
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(row._id)}
-                        sx={{ width: 46, height: 46, minWidth: 32, padding: 0, borderRadius: 1, backgroundColor: '#ffebee', '&:hover': { backgroundColor: '#ffcdd2' } }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={handleChangePage} />
-
-      <Dialog open={openDeleteConfirm} onClose={handleCloseDeleteConfirm}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa danh mục này không?</Typography>
+      <Dialog
+        open={openDeleteConfirm}
+        onClose={() => setOpenDeleteConfirm(false)}
+        PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white' } }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
+        <DialogContent sx={{ color: '#aaa' }}>
+          Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác.
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteConfirm} color="primary">Hủy</Button>
-          <Button onClick={handleConfirmDelete} color="error" variant="contained">Xóa</Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ textTransform: 'none' }}>
+            Xóa vĩnh viễn
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={openSnackbar} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} sx={{ marginTop: '46px' }}>
-        <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} variant="filled" sx={{ width: '100%' }}>
-          {snackbarMessage}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
         </Alert>
       </Snackbar>
-    </>
+    </Box>
   )
 }
 

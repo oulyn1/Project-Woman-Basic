@@ -36,71 +36,56 @@ const CartProvider = ({ children }) => {
     fetchCart()
   }, [])
 
-  const addToCart = async (product, quantity = 1) => {
-    if (!product?._id) return
+  const addToCart = async (product, variantId, quantity = 1) => {
+    if (!product?._id || !variantId) return
     try {
-      const res = await addToCartAPI(product._id.toString(), quantity)
+      const res = await addToCartAPI(product._id.toString(), variantId, quantity)
       if (res.success) {
         setCartItems(res.data?.items || [])
       }
-    } catch {
-      //
-    }
+    } catch { /* ... */ }
   }
 
-  const updateQuantity = async (productId, newQuantity) => {
+  const updateQuantity = async (productId, variantId, newQuantity) => {
     try {
-      const item = cartItems.find(i => i.productId === productId)
+      const item = cartItems.find(i => i.productId === productId && i.variantId === variantId)
       if (!item) return
 
-      const maxQuantity = item.product?.stock || Infinity
-      if (newQuantity > maxQuantity) {
-        newQuantity = maxQuantity
-      }
+      const maxQuantity = item.variant?.stock || Infinity
+      if (newQuantity > maxQuantity) newQuantity = maxQuantity
       if (newQuantity < 1) newQuantity = 1
 
-      const res = await updateQuantityAPI(productId, newQuantity)
+      const res = await updateQuantityAPI(productId, variantId, newQuantity)
       if (res.success) {
-        setCartItems(prev =>
-          prev.map(i =>
-            i.productId === productId ? { ...i, quantity: newQuantity } : i
-          )
-        )
+        setCartItems(res.data?.items || [])
       }
-    } catch {
-      //
-    }
+    } catch { /* ... */ }
   }
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (productId, variantId) => {
     try {
-      await removeItemAPI(productId)
-
-      setCartItems((prev) => prev.filter(item => item.productId !== productId))
-    } catch {
-      //
-    }
+      const res = await removeItemAPI(productId, variantId)
+      if (res.success) {
+        setCartItems(res.data?.items || [])
+      }
+    } catch { /* ... */ }
   }
-
 
   const clearCart = async () => {
     try {
       const res = await clearCartAPI()
       if (res.success) setCartItems(res.data?.items || [])
-    } catch {
-      //
-    }
+    } catch { /* ... */ }
   }
 
-  const removeManyFromCart = async (productIds = []) => {
+  const removeManyFromCart = async (items = []) => {
     try {
-      for (const productId of productIds) {
-        await removeItemAPI(productId)
+      // items are expected to be { productId, variantId } objects
+      for (const item of items) {
+        await removeItemAPI(item.productId, item.variantId)
       }
-      setCartItems(prev => prev.filter(i => !productIds.includes(i.productId)))
-    } catch {
-      //
-    }
+      fetchCart() // Refresh to be safe
+    } catch { /* ... */ }
   }
 
 

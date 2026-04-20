@@ -4,17 +4,19 @@ import {
   Button,
   Typography,
   Snackbar,
-  Alert
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
-import { useNavigate } from 'react-router-dom'
 import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
 import { createUserAPI } from '~/apis/userAPIs'
 
-function AddAccount() {
-  const navigate = useNavigate()
-
-  // State dữ liệu form
+function AddAccount({ open, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,20 +25,12 @@ function AddAccount() {
     phone: '',
     address: ''
   })
-
   const [errors, setErrors] = useState({})
-
-  // Snackbar
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  })
+  const [loading, setLoading] = useState(false)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
   const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setSnackbar((prev) => ({ ...prev, open: false }))
-    }
+    if (reason !== 'clickaway') setSnackbar((prev) => ({ ...prev, open: false }))
   }
 
   const handleChange = (e) => {
@@ -53,163 +47,90 @@ function AddAccount() {
       role: formData.role ? '' : 'Vui lòng chọn vai trò.',
       phone: formData.phone 
         ? (/^[0-9]{9,11}$/.test(formData.phone) ? '' : 'SĐT không hợp lệ.')
-        : '' // nếu hong nhập thì cho pass
+        : ''
     }
     setErrors(tempErrors)
     return Object.values(tempErrors).every(x => x === '')
   }
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!validate()) return
-  
+    setLoading(true)
+
     try {
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        phone: formData.phone,
-        address: formData.address
-      }
-  
-      await createUserAPI(userData)
-  
-      setSnackbar({
-        open: true,
-        message: 'Người dùng đã được thêm thành công!',
-        severity: 'success'
-      })
-  
-      setTimeout(() => navigate('/admin/account'), 800)
-      setErrors({})
+      await createUserAPI(formData)
+      setSnackbar({ open: true, message: 'Người dùng đã được thêm thành công!', severity: 'success' })
+      setFormData({ name: '', email: '', password: '', role: '', phone: '', address: '' })
+      setTimeout(() => onSuccess(), 500)
     } catch (error) {
-      const backendMsg = error.response?.data?.message || 'Có lỗi xảy ra khi thêm người dùng. Vui lòng thử lại!'
-      setSnackbar({
-        open: true,
-        message: backendMsg,
-        severity: 'error'
-      })
+      const backendMsg = error.response?.data?.message || 'Có lỗi xảy ra!'
+      setSnackbar({ open: true, message: backendMsg, severity: 'error' })
+    } finally {
+      setLoading(false)
     }
   }
-  
 
   return (
-    <Box
-      sx={{
-        backgroundColor: '#343a40',
-        mx: 5,
-        my: 1,
-        borderRadius: '8px',
-        overflow: 'auto'
-      }}
-    >
-      <Box
-        sx={{
-          color: 'white',
-          m: '16px 48px 16px 16px',
-          display: 'flex',
-          justifyContent: 'space-between'
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px', border: '1px solid #333' }
         }}
       >
-        <Typography variant="h5">Thêm tài khoản</Typography>
-      </Box>
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" fontWeight="bold">Thêm tài khoản mới</Typography>
+          <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
+        </DialogTitle>
 
-      <Box component="form" onSubmit={handleSubmit} sx={{ px: 6 }}>
-        <FieldCustom
-          label="Họ tên"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          name="name"
-          error={!!errors.name}
-          helperText={errors.name}
-        />
-        <FieldCustom
-          label="Email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          name="email"
-          error={!!errors.email}
-          helperText={errors.email}
-        />
-        <FieldCustom
-          label="Mật khẩu"
-          type="password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          name="password"
-          error={!!errors.password}
-          helperText={errors.password}
-        />
-        <FieldCustom
-          label="Vai trò"
-          required
-          select
-          options={[
-            { value: 'customer', label: 'Khách hàng' },
-            { value: 'admin', label: 'Quản trị viên' },
-            { value: 'employee', label: 'Nhân viên' }
-          ]}
-          value={formData.role}
-          onChange={handleChange}
-          name="role"
-          error={!!errors.role}
-          helperText={errors.role}
-        />
-        <FieldCustom
-          label="Số điện thoại"
+        <DialogContent sx={{ p: 3, pt: 4 }}>
+          <Box component="form" spacing={2} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <FieldCustom label="Họ tên" required value={formData.name} onChange={handleChange} name="name" error={!!errors.name} helperText={errors.name} />
+            <FieldCustom label="Email" required value={formData.email} onChange={handleChange} name="email" error={!!errors.email} helperText={errors.email} />
+            <FieldCustom label="Mật khẩu" type="password" required value={formData.password} onChange={handleChange} name="password" error={!!errors.password} helperText={errors.password} />
+            <FieldCustom
+              label="Vai trò" required select
+              options={[
+                { value: 'customer', label: 'Khách hàng' },
+                { value: 'admin', label: 'Quản trị viên' },
+                { value: 'employee', label: 'Nhân viên' }
+              ]}
+              value={formData.role} onChange={handleChange} name="role" error={!!errors.role} helperText={errors.role}
+            />
+            <FieldCustom label="Số điện thoại" value={formData.phone} onChange={handleChange} name="phone" error={!!errors.phone} helperText={errors.phone} />
+            <FieldCustom label="Địa chỉ" multiline rows={2} value={formData.address} onChange={handleChange} name="address" error={!!errors.address} helperText={errors.address} />
+          </Box>
+        </DialogContent>
 
-          value={formData.phone}
-          onChange={handleChange}
-          name="phone"
-          error={!!errors.phone}
-          helperText={errors.phone}
-        />
-        <FieldCustom
-          label="Địa chỉ"
-
-          multiline
-          rows={2}
-          value={formData.address}
-          onChange={handleChange}
-          name="address"
-          error={!!errors.address}
-          helperText={errors.address}
-        />
-
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
+          <Button onClick={onClose} sx={{ color: '#888', textTransform: 'none' }}>Hủy</Button>
           <Button
-            type="submit"
+            onClick={handleSubmit}
             variant="contained"
+            disabled={loading}
             startIcon={<AddOutlinedIcon />}
-            sx={{ my: 2, gap: 1, textTransform: 'none', fontSize: '18px' }}
+            sx={{ backgroundColor: '#e8f5e9', color: '#2e7d32', textTransform: 'none', fontWeight: 'bold', px: 3, '&:hover': { backgroundColor: '#c8e6c9' } }}
           >
-            Thêm tài khoản
+            {loading ? 'Đang thêm...' : 'Thêm ngay'}
           </Button>
-        </Box>
-      </Box>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
+        autoHideDuration={4000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: '46px' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </>
   )
 }
 

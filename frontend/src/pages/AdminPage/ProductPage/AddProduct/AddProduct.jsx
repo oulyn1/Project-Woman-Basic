@@ -1,13 +1,41 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   Box,
   Button,
   Typography,
   Snackbar,
-  Alert
+  Alert,
+  IconButton,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Chip,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
-import { useNavigate } from 'react-router-dom'
+
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL']
+const COLOR_PALETTE = [
+  { name: 'Đen', hex: '#000000' },
+  { name: 'Trắng', hex: '#ffffff' },
+  { name: 'Đỏ', hex: '#ff0000' },
+  { name: 'Xanh dương', hex: '#0000ff' },
+  { name: 'Xanh lá', hex: '#00ff00' },
+  { name: 'Vàng', hex: '#ffff00' },
+  { name: 'Cam', hex: '#ff8c00' },
+  { name: 'Hồng', hex: '#ffc0cb' },
+  { name: 'Tím', hex: '#800080' },
+  { name: 'Xám', hex: '#808080' }
+]
 
 import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
 import ImageUpload from '~/components/admin/ImageUpload/ImageUpload'
@@ -17,10 +45,24 @@ import {
 } from '~/apis/productAPIs'
 import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
 
-function AddProduct() {
-  const navigate = useNavigate()
-
+function AddProduct({ open, onClose, onSuccess }) {
   const [productCategories, setProductCategories] = useState([])
+  const [formData, setFormData] = useState({
+    categoryId: '',
+    name: '',
+    price: '',
+    description: '',
+    tags: '',
+    files: []
+  })
+
+  const [selectedSizes, setSelectedSizes] = useState([])
+  const [selectedColors, setSelectedColors] = useState([]) // Array of color objects from PALETTE
+  const [variantsMatrix, setVariantsMatrix] = useState({})
+
+  const [errors, setErrors] = useState({})
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -28,250 +70,352 @@ function AddProduct() {
         const data = await fetchAllCategorysAPI()
         const options = data.map(cat => ({ value: cat._id, label: cat.name }))
         setProductCategories(options)
-      } catch {
-        //
-      }
+      } catch { /* ... */ }
     }
-    fetchCategories()
-  }, [])
+    if (open) fetchCategories()
+  }, [open])
 
-
-  // State dữ liệu form
-  const [formData, setFormData] = useState({
-    category: '',
-    name: '',
-    price: '',
-    material: '',
-    quantity: '',
-    description: '',
-    image: null
-  })
-
-  // State lỗi validation
-  const [errors, setErrors] = useState({})
-
-  // State Snackbar
-  const [snackbar, setSnackbar] = useState({
-    open: false,
-    message: '',
-    severity: 'success'
-  })
-
-  // Hàm đóng Snackbar
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason !== 'clickaway') {
-      setSnackbar((prev) => ({ ...prev, open: false }))
-    }
+  const handleSizeChange = (event, newSizes) => {
+    setSelectedSizes(newSizes)
   }
 
-  // Xử lý thay đổi input text
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-    setErrors((prev) => ({ ...prev, [name]: '' }))
+  const handleColorToggle = (color) => {
+    setSelectedColors(prev => {
+      const isSelected = prev.find(c => c.hex === color.hex)
+      if (isSelected) return prev.filter(c => c.hex !== color.hex)
+      return [...prev, color]
+    })
   }
 
-  // Xử lý thay đổi ảnh
-  const handleImageChange = (file) => {
-    setFormData((prev) => ({ ...prev, image: file }))
-    setErrors((prev) => ({ ...prev, image: '' }))
+  const currentVariants = useMemo(() => {
+    const matrix = []
+    selectedSizes.forEach(size => {
+      selectedColors.forEach(color => {
+        matrix.push({ size, color })
+      })
+    })
+    return matrix
+  }, [selectedSizes, selectedColors])
+
+  const handleStockChange = (size, colorHex, value) => {
+    setVariantsMatrix(prev => ({
+      ...prev,
+      [`${size}-${colorHex}`]: value
+    }))
   }
 
-  // Validate dữ liệu
-  const validate = () => {
-    const tempErrors = {
-      category: formData.category ? '' : 'Vui lòng chọn danh mục.',
-      name: formData.name ? '' : 'Vui lòng nhập tên sản phẩm.',
-      price:
-        /^[0-9]+$/.test(formData.price) && formData.price
-          ? ''
-          : 'Giá phải là số và không được để trống.',
-      material: formData.material ? '' : 'Vui lòng nhập chất liệu.',
-      quantity:
-        /^[0-9]+$/.test(formData.quantity) && formData.quantity
-          ? ''
-          : 'Số lượng phải là số và không được để trống.',
-      description: formData.description ? '' : 'Vui lòng nhập mô tả.',
-      image: formData.image ? '' : 'Vui lòng chọn một ảnh.'
-    }
-
-    setErrors(tempErrors)
-    return Object.values(tempErrors).every((x) => x === '')
+  const generateSkuPrefix = (name) => {
+    return name
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z]/g, '')
+      .substring(0, 3)
+      .toUpperCase()
   }
 
-  // Xử lý submit form
+  const generateObjectId = () => {
+    const timestamp = (new Date().getTime() / 1000 | 0).toString(16)
+    return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, () => {
+      return (Math.random() * 16 | 0).toString(16)
+    }).toLowerCase()
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!validate()) return
+    // Simple validation
+    if (!formData.name || !formData.price || !formData.categoryId) {
+      setSnackbar({ open: true, message: 'Vui lòng điền các trường bắt buộc', severity: 'error' })
+      return
+    }
 
+    setSubmitting(true)
     try {
-      let imageUrl = null
-      if (formData.image) {
-        const uploadResponse = await uploadImageToCloudinaryAPI(formData.image)
-        imageUrl = uploadResponse.secure_url
+      const imageUrls = await Promise.all(
+        formData.files.map(file => uploadImageToCloudinaryAPI(file).then(res => res.secure_url))
+      )
+
+      const skuPrefix = generateSkuPrefix(formData.name)
+
+      const payload = {
+        categoryId: formData.categoryId,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        slug: formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+        price: Number(formData.price),
+        images: imageUrls,
+        tags: formData.tags.split(',').map(tag => tag.trim()).filter(t => t),
+        variants: currentVariants.map(v => ({
+          _id: generateObjectId(),
+          size: v.size,
+          color: v.color,
+          stock: Number(variantsMatrix[`${v.size}-${v.color.hex}`] || 0),
+          sku: `${skuPrefix}-${v.size}-${v.color.name.toUpperCase().substring(0, 3)}`
+        }))
       }
 
-      const productData = {
-        categoryId: formData.category,
-        name: formData.name,
-        description: formData.description,
-        price: parseInt(formData.price, 10),
-        stock: parseInt(formData.quantity, 10),
-        material: formData.material,
-        image: imageUrl
-      }
-
-      await createProductAPI(productData)
-
-      setSnackbar({
-        open: true,
-        message: 'Sản phẩm đã được thêm thành công!',
-        severity: 'success'
-      })
-
-      setTimeout(() => navigate('/admin/product'), 500)
-      setErrors({})
-    } catch {
-      setSnackbar({
-        open: true,
-        message: 'Có lỗi xảy ra khi thêm sản phẩm. Vui lòng thử lại!',
-        severity: 'error'
-      })
+      await createProductAPI(payload)
+      setSnackbar({ open: true, message: 'Thêm sản phẩm thành công!', severity: 'success' })
+      onSuccess()
+    } catch (err) {
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Có lỗi xảy ra', severity: 'error' })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <Box
-      sx={{
-        backgroundColor: '#343a40',
-        mx: 5,
-        my: 1,
-        borderRadius: '8px',
-        overflow: 'auto'
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          color: 'white',
-          m: '16px 48px 16px 16px',
-          display: 'flex',
-          justifyContent: 'space-between'
+    <>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1a1a1a',
+            color: 'white',
+            borderRadius: '12px',
+            border: '1px solid #333'
+          }
         }}
       >
-        <Typography variant="h5">Thêm sản phẩm</Typography>
-      </Box>
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" fontWeight="bold">Thêm sản phẩm mới</Typography>
+          <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
+        </DialogTitle>
 
-      {/* Form */}
-      <Box component="form" onSubmit={handleSubmit} sx={{ px: 6 }}>
-        <FieldCustom
-          label="Danh mục sản phẩm"
-          required={true}
-          options={productCategories}
-          value={formData.category}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            category: e.target.value
-          }))}
-          name="category"
-          error={!!errors.category}
-          helperText={errors.category}
-        />
-        <FieldCustom
-          label="Tên sản phẩm"
-          required
-          placeholder="Nhập tên sản phẩm..."
-          value={formData.name}
-          onChange={handleChange}
-          name="name"
-          error={!!errors.name}
-          helperText={errors.name}
-        />
-        <FieldCustom
-          label="Giá sản phẩm"
-          required
-          placeholder="Nhập giá sản phẩm..."
-          value={formData.price}
-          onChange={handleChange}
-          name="price"
-          error={!!errors.price}
-          helperText={errors.price}
-        />
-        <FieldCustom
-          label="Chất liệu sản phẩm"
-          required
-          placeholder="Nhập chất liệu sản phẩm..."
-          value={formData.material}
-          onChange={handleChange}
-          name="material"
-          error={!!errors.material}
-          helperText={errors.material}
-        />
-        <FieldCustom
-          label="Số lượng sản phẩm"
-          required
-          placeholder="Nhập số lượng sản phẩm..."
-          value={formData.quantity}
-          onChange={handleChange}
-          name="quantity"
-          error={!!errors.quantity}
-          helperText={errors.quantity}
-        />
-        <FieldCustom
-          label="Mô tả sản phẩm"
-          required
-          multiline
-          rows={3}
-          placeholder="Nhập mô tả sản phẩm..."
-          value={formData.description}
-          onChange={handleChange}
-          name="description"
-          error={!!errors.description}
-          helperText={errors.description}
-        />
-        <ImageUpload
-          label="Ảnh sản phẩm"
-          required
-          onImageChange={handleImageChange}
-          error={!!errors.image}
-          helperText={errors.image}
-        />
+        <DialogContent sx={{ p: 4 }}>
+          {/* Row 1: Name and Category */}
+          <Stack direction="row" spacing={3} mt={2}>
+            <FieldCustom
+              label="Tên sản phẩm"
+              required
+              name="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Nhập tên sản phẩm..."
+            />
+            <FieldCustom
+              label="Danh mục"
+              required
+              select
+              options={productCategories}
+              value={formData.categoryId}
+              onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+            />
+          </Stack>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          {/* Row 2: Price and Slug (auto-preview) */}
+          <Stack direction="row" spacing={3}>
+            <FieldCustom
+              label="Giá (VNĐ)"
+              required
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+              placeholder="0"
+            />
+            <FieldCustom
+              label="Slug"
+              disabled
+              value={formData.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')}
+              placeholder="auto-generated-slug"
+            />
+          </Stack>
+
+          {/* Row 3: Description */}
+          <Box sx={{ mt: 1 }}>
+            <FieldCustom
+              label="Mô tả sản phẩm"
+              required
+              multiline
+              rows={4}
+              name="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Nhập mô tả chi tiết sản phẩm..."
+            />
+          </Box>
+
+          {/* Row 4: Tags */}
+          <Box sx={{ mt: 1 }}>
+            <FieldCustom
+              label="Tags (phân cách bởi dấu phẩy)"
+              name="tags"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              placeholder="áo thun, mùa hè, mới"
+            />
+          </Box>
+
+          {/* Size Selection */}
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc' }}>Size hỗ trợ</Typography>
+            <ToggleButtonGroup
+              value={selectedSizes}
+              onChange={handleSizeChange}
+              aria-label="device"
+              sx={{ gap: 1, flexWrap: 'wrap' }}
+            >
+              {SIZE_OPTIONS.map(size => (
+                <ToggleButton
+                  key={size}
+                  value={size}
+                  sx={{
+                    borderRadius: '50px !important',
+                    border: '1px solid #333 !important',
+                    color: 'white',
+                    px: 3,
+                    py: 0.5,
+                    textTransform: 'none',
+                    '&.Mui-selected': {
+                      backgroundColor: '#e8f5e9 !important',
+                      color: '#2e7d32 !important',
+                      borderColor: '#2e7d32 !important'
+                    }
+                  }}
+                >
+                  {size}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+          </Box>
+
+          {/* Color Selection */}
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc' }}>Màu sắc</Typography>
+            <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+              {COLOR_PALETTE.map(color => (
+                <Box
+                  key={color.hex}
+                  onClick={() => handleColorToggle(color)}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    backgroundColor: color.hex,
+                    borderRadius: '50%',
+                    border: selectedColors.find(c => c.hex === color.hex) ? '2px solid #2e7d32' : '2px solid transparent',
+                    boxShadow: '0 0 0 1px #444',
+                    cursor: 'pointer',
+                    transition: '0.2s',
+                    '&:hover': { transform: 'scale(1.1)' }
+                  }}
+                />
+              ))}
+            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {selectedColors.map(color => (
+                <Chip
+                  key={color.hex}
+                  label={color.name}
+                  onDelete={() => handleColorToggle(color)}
+                  size="small"
+                  sx={{
+                    backgroundColor: '#333',
+                    color: 'white',
+                    borderRadius: '4px',
+                    '& .MuiChip-deleteIcon': { color: '#888' }
+                  }}
+                  icon={<Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: color.hex, ml: 1 }} />}
+                />
+              ))}
+            </Stack>
+          </Box>
+
+          {/* Variant Matrix */}
+          <Box sx={{ mt: 5 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, color: '#ccc' }}>Tồn kho theo biến thể (size × màu)</Typography>
+            {currentVariants.length > 0 ? (
+              <Box sx={{ border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+                <Table size="small">
+                  <TableHead sx={{ backgroundColor: '#252525' }}>
+                    <TableRow>
+                      <TableCell sx={{ color: '#888', borderBottom: '1px solid #333' }}>Size \ Màu</TableCell>
+                      {selectedColors.map(c => (
+                        <TableCell key={c.hex} align="center" sx={{ color: '#888', borderBottom: '1px solid #333' }}>
+                          <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="center">
+                            <Box sx={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: c.hex }} />
+                            <Typography variant="caption">{c.name}</Typography>
+                          </Stack>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {selectedSizes.map(size => (
+                      <TableRow key={size}>
+                        <TableCell sx={{ color: 'white', borderBottom: '1px solid #333', fontWeight: 'bold' }}>{size}</TableCell>
+                        {selectedColors.map(color => (
+                          <TableCell key={color.hex} align="center" sx={{ borderBottom: '1px solid #333' }}>
+                            <Box
+                              component="input"
+                              type="number"
+                              value={variantsMatrix[`${size}-${color.hex}`] || ''}
+                              onChange={(e) => handleStockChange(size, color.hex, e.target.value)}
+                              sx={{
+                                width: 50,
+                                backgroundColor: '#1a1a1a',
+                                border: '1px solid #444',
+                                borderRadius: '4px',
+                                color: 'white',
+                                textAlign: 'center',
+                                py: 0.5,
+                                '&:focus': { outline: 'none', borderColor: '#2e7d32' }
+                              }}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            ) : (
+              <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#666' }}>
+                Chọn ít nhất một size và một màu để nhập tồn kho.
+              </Typography>
+            )}
+          </Box>
+
+          <Box sx={{ mt: 4 }}>
+             <ImageUpload
+              multiple
+              onImageChange={(files) => setFormData(p => ({ ...p, files }))}
+              label="Ảnh sản phẩm"
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
+          <Button onClick={onClose} sx={{ color: '#888', textTransform: 'none' }}>Hủy</Button>
           <Button
-            type="submit"
+            onClick={handleSubmit}
             variant="contained"
-            startIcon={<AddOutlinedIcon />}
+            disabled={submitting}
             sx={{
-              my: 2,
-              gap: 1,
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
               textTransform: 'none',
-              fontSize: '18px'
+              fontWeight: 'bold',
+              px: 4,
+              '&:hover': { backgroundColor: '#c8e6c9' }
             }}
           >
-            Thêm sản phẩm
+            {submitting ? 'Đang lưu...' : 'Lưu sản phẩm'}
           </Button>
-        </Box>
-      </Box>
+        </DialogActions>
+      </Dialog>
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ mt: '46px' }}
       >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
       </Snackbar>
-    </Box>
+    </>
   )
 }
 

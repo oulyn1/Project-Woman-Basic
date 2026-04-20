@@ -5,42 +5,21 @@ import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const createNew = async (req, res, next) => {
     const correctCondition = Joi.object({
-      name: Joi.string().required().min(3).max(255).trim().messages({
-        'any.required': 'Product name is required!',
-        'string.empty': 'Product name cannot be empty!',
-        'string.max': 'Product name must be less than or equal to 50 characters long',
-        'string.min': 'Product name must be at least 3 characters long',
-        'string.trim': 'Product name must not have leading or trailing whitespace'
-      }),
-      description: Joi.string().required().min(3).max(1000).trim().messages({
-        'any.required': 'Description is required!',
-        'string.empty': 'Description cannot be empty!',
-        'string.max': 'Description must be less than or equal to 255 characters long',
-        'string.min': 'Description must be at least 3 characters long'
-      }),
-      price: Joi.number().required().min(0).messages({
-        'any.required': 'Price is required!',
-        'number.base': 'Price must be a number',
-        'number.min': 'Price must be greater than or equal to 0'
-      }),
-      stock: Joi.number().integer().min(0).default(0).messages({
-        'number.base': 'Stock must be a number',
-        'number.min': 'Stock must be greater than or equal to 0'
-      }),
-      image: Joi.string().uri().required().messages({
-        'any.required': 'Image URL is required!',
-        'string.uri': 'Image must be a valid URL'
-      }),
-      material: Joi.string().required().min(3).trim().messages({
-        'any.required': 'Image URL is required!'
-      }),
-      categoryId: Joi.string()
-      .pattern(/^[0-9a-fA-F]{24}$/)
-      .required()
-      .messages({
-        'any.required': 'Category ID is required!',
-        'string.pattern.base': 'Category ID must be a valid MongoDB ObjectId (24 hex chars)'
-      })
+      categoryId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE).required(),
+      name: Joi.string().required().min(3).max(255).trim(),
+      description: Joi.string().required().min(3).max(1000).trim(),
+      price: Joi.number().required().min(0),
+      images: Joi.array().items(Joi.string().uri()).min(1).required(),
+      tags: Joi.array().items(Joi.string().trim()).default([]),
+
+      variants: Joi.array().items(Joi.object({
+        size: Joi.string().valid('XS', 'S', 'M', 'L', 'XL').required(),
+        color: Joi.object({
+          name: Joi.string().required().trim(),
+          hex: Joi.string().pattern(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).required()
+        }).required(),
+        stock: Joi.number().integer().min(0).required()
+      })).min(1).required()
     })
 
     try {
@@ -56,6 +35,31 @@ const createNew = async (req, res, next) => {
     }
   }
 
+const updateOne = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    categoryId: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
+    name: Joi.string().min(3).max(255).trim(),
+    description: Joi.string().min(3).max(1000).trim(),
+    price: Joi.number().min(0),
+    images: Joi.array().items(Joi.string().uri()).min(1),
+    tags: Joi.array().items(Joi.string().trim()),
+    isDeleted: Joi.boolean()
+  })
+
+  try {
+    const value = await correctCondition.validateAsync(req.body, { 
+      abortEarly: false,
+      allowUnknown: true,
+      stripUnknown: true
+    })
+    req.body = value
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 export const productValidation = {
-  createNew
+  createNew,
+  updateOne
 }
