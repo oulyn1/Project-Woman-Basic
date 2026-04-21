@@ -1,120 +1,99 @@
-import { Box, Container, Grid, Typography, Link, Button, Avatar } from '@mui/material'
 import React from 'react'
+import { Box, Container, Grid, Typography, Link, IconButton, Button, Divider } from '@mui/material'
+import FacebookIcon from '@mui/icons-material/Facebook'
+import InstagramIcon from '@mui/icons-material/Instagram'
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import LogoWB from '~/assets/logo_wb.png'
+import CertBCT from '~/assets/cert_bct.png'
 
 function Footer() {
-  const imageUrls = [
-    {
-      imageUrl: 'https://cdn.pnj.io/images/image-update/footer/facebook.svg',
-      linkUrl: 'https://www.facebook.com/PNJ.COM.VN'
-    },
-    {
-      imageUrl: 'https://cdn.pnj.io/images/image-update/footer/instagram.svg',
-      linkUrl: 'https://www.instagram.com/pnj_jewelry/'
-    },
-    {
-      imageUrl: 'https://cdn.pnj.io/images/image-update/footer/youtube.svg',
-      linkUrl: 'https://www.youtube.com/user/PhuNhuanJewelry'
-    },
-    {
-      imageUrl: 'https://cdn.pnj.io/images/image-update/footer/email.svg',
-      linkUrl: 'https://www.youtube.com/user/PhuNhuanJewelry'
-    },
-  ]
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
-    <Box sx={{
-      py: 4,
-    }}>
-      <Container maxWidth="lg" sx={{ borderTop: '1px solid #696969' }}>
-        <img src="https://cdn.pnj.io/images/logo/pnj.com.vn.png" alt="" style={{ height: '100px', marginBottom: '24px', marginTop: '24px' }} />
-        <Grid container spacing={8}>
-          <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4' } }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              © 2017 Công Ty Cổ Phần Vàng Bạc Đá Quý Phú Nhuận
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              170E Phan Đăng Lưu, Phường Đức Nhuận, TP.Hồ Chí Minh
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              ĐT: 028 3995 1703 - Fax: 028 3995 1702
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Giấy chứng nhận đăng ký doanh nghiệp: 0300521758
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Tổng đài hỗ trợ (08:00-21:00, miễn phí gọi)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Gọi mua: 1800545457 (phím 1)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Khiếu nại: 1800545457 (phím 2)
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Email góp ý: cskh@pnj.com.vn
-            </Typography>
+    <Box sx={{ bgcolor: 'white', pt: 8, pb: 4, borderTop: '1px solid #eee' }}>
+      <Container maxWidth="lg">
+        <Grid container justifyContent="space-around" spacing={4}>
+          {/* Brand and Certification */}
+          <Grid item xs={12} sm={6} md={2.5}>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <img src={LogoWB} alt="Woman Basic" style={{ height: '35px' }} />
+              <img src={CertBCT} alt="Bộ Công Thương" style={{ height: '30px' }} />
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+              <IconButton sx={{ border: '1px solid #333', borderRadius: '4px', p: 0.5 }}>
+                <FacebookIcon fontSize="small" />
+              </IconButton>
+              <IconButton sx={{ border: '1px solid #333', borderRadius: '4px', p: 0.5 }}>
+                <InstagramIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            <Button 
+              variant="contained" 
+              sx={{ 
+                bgcolor: 'black', color: 'white', px: 2, py: 1.5,
+                borderRadius: 1, fontWeight: 'bold', fontSize: '0.8rem',
+                '&:hover': { bgcolor: '#333' }
+              }}
+            >
+              HOTLINE: 0965715289
+            </Button>
           </Grid>
 
-          <Grid sx={{ gridColumn: { xs: 'span 6', sm: 'span 4', md: 'span 2' } }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5 }}>
-              VỀ PNJ
-            </Typography>
-            {['Quan hệ cổ đông (IR)', 'Tuyển dụng', 'Xuất khẩu', 'Kinh doanh sỉ'].map((text) => (
-              <Typography key={text} color="text.secondary" display="block" variant="body2" sx={{ mb: 0.5 }}>
-                {text}
-              </Typography>
-            ))}
-          </Grid>
-
-          <Grid sx={{ gridColumn: { xs: 'span 6', sm: 'span 4', md: 'span 3' } }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5 }}>
-              DỊCH VỤ KHÁCH HÀNG
-              </Typography>
-              {['Hướng dẫn đo size trang sức', 'Mua hàng trả góp', 'Hướng dẫn mua hàng và thanh toán', 'Tổng Hợp Các Chính Sách PNJ'].map((text) => (
-                <Typography key={text} color="text.secondary" display="block" variant="body2" sx={{ mb: 0.5 }}>
-                  {text}
-                </Typography>
-              ))}
+          {/* About Links */}
+          <Grid item xs={12} sm={6} md={2}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Giới thiệu</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Về Woman Basic</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Tin Tức</Link>
             </Box>
           </Grid>
 
-          <Grid sx={{ gridColumn: { xs: 'span 6', sm: 'span 4', md: 'span 3' } }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1.5 }}>
-              KẾT NỐI VỚI CHÚNG TÔI
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              {imageUrls.map((item, index) => (
-                <a
-                  key={index}
-                  href={item.linkUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ textDecoration: 'none' }}
-                >
-                  <Avatar
-                    alt={`Ảnh đại diện ${index + 1}`}
-                    src={item.imageUrl}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      '&:hover': {
-                        opacity: 0.8,
-                        cursor: 'pointer',
-                      }
-                    }}
-                  />
-                </a>
-              ))}
-            </Box>
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                CHỨNG NHẬN
-              </Typography>
-              <img src="https://cdn.pnj.io/images/image-update/op-da-thong-bao-bo-cong-thuong-183x60.png" alt="" style={{ height: '38px' }}/>
+          {/* Customer Service Links */}
+          <Grid item xs={12} sm={6} md={3.5}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Dịch vụ khách hàng</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Chính sách điều khoản</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Hướng dẫn mua hàng</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Hướng dẫn chọn size</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Chính sách thanh toán</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Chính sách bảo hành và đổi trả</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Chính sách giao nhận vận chuyển</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Q&A</Link>
             </Box>
           </Grid>
 
+          {/* Contact Links */}
+          <Grid item xs={12} sm={6} md={2}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Liên hệ</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Email</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Messenger</Link>
+              <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Liên hệ</Link>
+            </Box>
+          </Grid>
         </Grid>
+
+        <Divider sx={{ mt: 8, mb: 4 }} />
+
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+          <IconButton 
+            onClick={scrollToTop}
+            sx={{ 
+              position: 'absolute', left: 0,
+              bgcolor: 'black', color: 'white',
+              borderRadius: 1, '&:hover': { bgcolor: '#333' }
+            }}
+          >
+            <KeyboardArrowUpIcon />
+          </IconButton>
+          <Typography variant="body2" color="text.secondary">
+            © WomanBasic All rights reserved
+          </Typography>
+        </Box>
       </Container>
     </Box>
   )
