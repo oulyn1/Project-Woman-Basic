@@ -11,6 +11,7 @@ function ProductPage() {
   const [openEditModal, setOpenEditModal] = useState(false)
   const [selectedProductId, setSelectedProductId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [fetchTrigger, setFetchTrigger] = useState(0)
 
   const handleAddProduct = () => setOpenAddModal(true)
   
@@ -22,7 +23,7 @@ function ProductPage() {
   const handleSuccess = () => {
     setOpenAddModal(false)
     setOpenEditModal(false)
-    // TableProduct will refresh via its internal useEffect if we trigger a refresh or just rely on the user
+    setFetchTrigger(prev => prev + 1)
   }
 
   return (
@@ -92,6 +93,7 @@ function ProductPage() {
         <TableProduct 
           onEditProduct={handleEditProduct} 
           searchQuery={searchQuery}
+          fetchTrigger={fetchTrigger}
         />
       </Box>
 

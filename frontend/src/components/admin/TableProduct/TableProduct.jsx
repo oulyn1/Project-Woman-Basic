@@ -31,7 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { fetchAllProductsAPI, deleteProductAPI } from '~/apis/productAPIs'
 import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
 
-const TableProduct = ({ onEditProduct, searchQuery }) => {
+const TableProduct = ({ onEditProduct, searchQuery, fetchTrigger }) => {
   const [rows, setRows] = useState([])
   const [categories, setCategories] = useState([])
   const [expandedId, setExpandedId] = useState(null)
@@ -39,6 +39,7 @@ const TableProduct = ({ onEditProduct, searchQuery }) => {
   // Action Menu State
   const [anchorEl, setAnchorEl] = useState(null)
   const [menuId, setMenuId] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   // Delete State
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
@@ -49,6 +50,7 @@ const TableProduct = ({ onEditProduct, searchQuery }) => {
 
   useEffect(() => {
     const initData = async () => {
+      setLoading(true)
       try {
         const [cats, prods] = await Promise.all([
           fetchAllCategorysAPI(),
@@ -57,9 +59,10 @@ const TableProduct = ({ onEditProduct, searchQuery }) => {
         setCategories(cats)
         setRows(prods.data || [])
       } catch { /* ... */ }
+      finally { setLoading(false) }
     }
     initData()
-  }, [searchQuery])
+  }, [searchQuery, fetchTrigger])
 
   const getCategoryName = (id) => categories.find(cat => cat._id === id)?.name || 'Không có'
 

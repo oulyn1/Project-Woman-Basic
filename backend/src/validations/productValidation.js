@@ -43,7 +43,17 @@ const updateOne = async (req, res, next) => {
     price: Joi.number().min(0),
     images: Joi.array().items(Joi.string().uri()).min(1),
     tags: Joi.array().items(Joi.string().trim()),
-    isDeleted: Joi.boolean()
+    isDeleted: Joi.boolean(),
+    variants: Joi.array().items(Joi.object({
+      _id: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
+      size: Joi.string().valid('XS', 'S', 'M', 'L', 'XL'),
+      color: Joi.object({
+        name: Joi.string().trim(),
+        hex: Joi.string().pattern(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+      }),
+      stock: Joi.number().integer().min(0),
+      sku: Joi.string().trim()
+    }))
   })
 
   try {

@@ -119,6 +119,12 @@ const updateOne = async (productId, updateData) => {
     })
 
     if (updateData.categoryId) updateData.categoryId = new ObjectId(updateData.categoryId)
+    if (updateData.variants) {
+      updateData.variants = updateData.variants.map(v => ({
+        ...v,
+        _id: new ObjectId(v._id)
+      }))
+    }
     updateData.updatedAt = Date.now()
 
     const result = await GET_DB()
