@@ -3,6 +3,16 @@ import { API_ROOT } from '../util/constants'
 
 // Thêm đánh giá mới
 export const addRatingAPI = async (ratingData) => {
+  // Ensure userId is provided if user object exists in localStorage
+  if (!ratingData.userId) {
+    try {
+      const userStr = localStorage.getItem('user')
+      const user = userStr ? JSON.parse(userStr) : null
+      if (user && user._id) ratingData.userId = user._id
+    } catch {
+      // ignore
+    }
+  }
   const request = await axios.post(`${API_ROOT}/v1/ratings/add`, ratingData)
   return request.data
 }

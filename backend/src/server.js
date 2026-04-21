@@ -2,6 +2,7 @@
 import express from 'express'
 import cors from 'cors'
 import exitHook from 'async-exit-hook'
+import { ratingModel } from '~/models/ratingModel.js'
 
 import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 
@@ -34,6 +35,10 @@ const START_SERVER = () => {
   try {
     await CONNECT_DB()
     console.log('Connect to Database')
+    // Ensure rating index uniqueness
+    if (ratingModel?.ensureUniqueIndex) {
+      await ratingModel.ensureUniqueIndex()
+    }
     START_SERVER()
   } catch (error) {
     console.error(error)

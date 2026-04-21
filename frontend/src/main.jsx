@@ -3,10 +3,7 @@ import { createRoot } from 'react-dom/client'
 import CssBaseline from '@mui/material/CssBaseline'
 import theme from './theme'
 import { ThemeProvider } from '@mui/material'
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from 'react-router'
+import { createBrowserRouter, RouterProvider } from 'react-router'
 import AdminPage from './pages/AdminPage/AdminPage.jsx'
 import HomePage from './pages/CustomerPage/HomePage/HomePage.jsx'
 import CustomerPage from './pages/CustomerPage/CustomerPage.jsx'
@@ -24,7 +21,6 @@ import Login from './pages/CustomerPage/Login/Login.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
 import RoleGate from './components/RoleGate.jsx'
 import StoryPage from './pages/CustomerPage/StoryPage/StoryPage.jsx'
-import CartProvider from './context/Cart/CartProvider.jsx'
 import CartPage from './pages/CustomerPage/CartPage/CartPage.jsx'
 import Checkout from './pages/CustomerPage/Checkout/Checkout.jsx'
 import ThankYou from './pages/CustomerPage/ThankYou/ThankYou.jsx'
@@ -39,118 +35,58 @@ import PromotionPage from './pages/AdminPage/PromotionPage/PromotionPage.jsx'
 import EditPromotion from './pages/AdminPage/PromotionPage/EditPromotion/EditPromotion.jsx'
 import Dashboard from './pages/AdminPage/DashBoard/DashBoard.jsx'
 import Customer from './pages/AdminPage/Customer/Customer'
+import CartProvider from './context/Cart/CartProvider.jsx'
 
+// Build routes (same as original)
 let router = createBrowserRouter([
   {
     path: '/',
-    element: <RoleGate />,
+    element: <RoleGate />, 
     children: [
       {
-        element: <CustomerPage />,
+        element: <CustomerPage />, 
         children: [
-          {
-            index: true,
-            element: <HomePage />
-          },
-          {
-            path: 'editprofile',
-            element: <CreateInformation />,
-          },
-          {
-            path: 'story',
-            element: <StoryPage />,
-          },
-          {
-            path: 'cart',
-            element: <CartPage />,
-          },
-          {
-            path: 'checkout',
-            element: <Checkout />,
-          },
-          {
-            path: 'thank-you',
-            element: <ThankYou />,
-          },
-          {
-            path: 'myorders',
-            element: <MyOrders />,
-          },
-          {
-            path: 'listproduct/:categorySlug',
-            element: <ListProduct />,
-          },
-          {
-            path: 'productdetail/:productId',
-            element: <ProductDetail />,
-          },
+          { index: true, element: <HomePage /> },
+          { path: 'editprofile', element: <CreateInformation /> },
+          { path: 'story', element: <StoryPage /> },
+          { path: 'cart', element: <CartPage /> },
+          { path: 'checkout', element: <Checkout /> },
+          { path: 'thank-you', element: <ThankYou /> },
+          { path: 'myorders', element: <MyOrders /> },
+          { path: 'listproduct/:categorySlug', element: <ListProduct /> },
+          { path: 'productdetail/:productId', element: <ProductDetail /> },
         ]
       }
     ]
   },
   {
     path: '/admin',
-    element: <PrivateRoute allowedRoles={['admin', 'employee']} />,
+    element: <PrivateRoute allowedRoles={['admin', 'employee']} />, 
     children: [
       {
-        element: <AdminPage />,
+        element: <AdminPage />, 
         children: [
-          {
-            index: true,
-            element: <Dashboard />
-          },
-          {
-            path: 'dashboard',
-            element: <Dashboard />,
-          },
-          {
-            path: 'product',
-            element: <ProductPage />,
-          },
-          {
-            path: 'category',
-            element: <CategoryPage />,
-          },
-          {
-            path: 'order',
-            element: <OrderPage />,
-          },
-          {
-            path: 'account',
-            element: <AccountPage />,
-          },
-          {
-            path: 'rating',
-            element: <RatingsPage />,
-          },
-          {
-            path: 'promotion',
-            element: <PromotionPage />,
-          },
-          {
-            path: 'customer',
-            element: <Customer/>,
-          },
+          { index: true, element: <Dashboard /> },
+          { path: 'dashboard', element: <Dashboard /> },
+          { path: 'product', element: <ProductPage /> },
+          { path: 'category', element: <CategoryPage /> },
+          { path: 'order', element: <OrderPage /> },
+          { path: 'account', element: <AccountPage /> },
+          { path: 'rating', element: <RatingsPage /> },
+          { path: 'promotion', element: <PromotionPage /> },
+          { path: 'customer', element: <Customer /> },
         ]
       }
     ]
   },
-  {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/register',
-    element: <Register />,
-  },
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> }
 ])
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider
-      theme={theme}
-      disableTransitionOnChange>
-      <CssBaseline enableColorScheme/>
+    <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
       <CartProvider>
         <RouterProvider router={router} />
       </CartProvider>

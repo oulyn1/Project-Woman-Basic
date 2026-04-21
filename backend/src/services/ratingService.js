@@ -4,16 +4,29 @@ import { StatusCodes } from 'http-status-codes'
 
 // Thêm đánh giá mới
 const addRating = async (data) => {
-    // Tạo đánh giá mới
-    const createdRating = await ratingModel.createNew(data)
-    if (!createdRating?.insertedId) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, 'Thêm đánh giá thất bại')
+  // If userId/productId provided, enforce uniqueness conditionally
+  if (data?.userId && data?.productId) {
+    if (data?.orderId) {
+      const existing = await ratingModel.findByComposite(data.userId, data.orderId, data.productId)
+      if (existing) {
+        throw new ApiError(StatusCodes.CONFLICT, 'Bạn đã đánh giá sản phẩm này cho đơn hàng này')
+      }
+    } else {
+      const existing = await ratingModel.findByUserProduct(data.userId, data.productId)
+      if (existing) {
+        throw new ApiError(StatusCodes.CONFLICT, 'Bạn đã đánh giá sản phẩm này')
+      }
     }
-  
-    // Lấy document vừa tạo
-    const newRating = await ratingModel.findOneId(createdRating.insertedId)
-    return newRating
   }
+  // Tạo đánh giá mới
+  const createdRating = await ratingModel.createNew(data)
+  if (!createdRating?.insertedId) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Thêm đánh giá thất bại')
+  }
+  // Lấy document vừa tạo
+  const newRating = await ratingModel.findOneId(createdRating.insertedId)
+  return newRating
+}
 
 // Lấy tất cả đánh giá
 const getAllRatings = async () => {
