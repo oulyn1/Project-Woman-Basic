@@ -63,7 +63,7 @@ function TopBar() {
           onClick={handleStoryClick}
         >
           <AutoStoriesOutlinedIcon />
-          Câu Chuyện PNJ
+          Về Woman Basic
         </Button>
       </Box>
       <Box

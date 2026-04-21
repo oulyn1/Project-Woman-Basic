@@ -1,65 +1,161 @@
-import * as React from 'react'
-import Card from '@mui/material/Card'
-import CardMedia from '@mui/material/CardMedia'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
+import React, { useState, useEffect, useMemo } from 'react'
+import { Card, CardMedia, CardContent, Typography, Box, Chip, Rating } from '@mui/material'
+import StarIcon from '@mui/icons-material/Star'
+import { getRatingsByProductId } from '~/apis/ratingAPIs'
 
-const ProductCard = ({ product, promotions = [], isNew }) => {
+const ProductCard = ({ product, promotions = [] }) => {
+  const [avgRating, setAvgRating] = useState(0)
+  
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const ratings = await getRatingsByProductId(product._id)
+        if (ratings?.length > 0) {
+          const total = ratings.reduce((sum, r) => sum + r.star, 0)
+          setAvgRating(total / ratings.length)
+        }
+      } catch (err) { /* silent error */ }
+    }
+    fetchRating()
+  }, [product._id])
+
   const now = new Date()
-  const appliedPromotions = promotions.filter(promo =>
-    promo.productIds?.includes(product._id) &&
-    new Date(promo.startDate) <= now &&
-    new Date(promo.endDate) >= now
-  )
+  const highestPromotion = useMemo(() => {
+    const active = promotions.filter(promo =>
+      promo.productIds?.includes(product._id) &&
+      new Date(promo.startDate) <= now &&
+      new Date(promo.endDate) >= now
+    )
+    if (active.length === 0) return null
+    return active.reduce((prev, curr) => (prev.discountPercent > curr.discountPercent) ? prev : curr)
+  }, [product._id, promotions])
+
+  const discountPercent = highestPromotion ? highestPromotion.discountPercent : 0
+  const finalPrice = discountPercent > 0 
+    ? Math.round(product.price * (1 - discountPercent / 100))
+    : product.price
+
+  const uniqueColors = useMemo(() => {
+    const colors = []
+    const seen = new Set()
+    product.variants?.forEach(v => {
+      if (v.color?.hex && !seen.has(v.color.hex)) {
+        seen.add(v.color.hex)
+        colors.push(v.color.hex)
+      }
+    })
+    return colors
+  }, [product.variants])
 
   return (
-    <Card sx={{ maxWidth: 400, borderRadius: 2, position: 'relative', m: 1, cursor: 'pointer', minHeight: '360px' }}>
-      {isNew && (
+    <Card sx={{ 
+      maxWidth: 300, 
+      borderRadius: 1, 
+      position: 'relative', 
+      m: 1, 
+      cursor: 'pointer', 
+      boxShadow: 'none',
+      '&:hover': {
+        '& .MuiCardMedia-root': { transform: 'scale(1.05)' }
+      },
+      transition: '0.3s'
+    }}>
+      {/* Discount Badge */}
+      {discountPercent > 0 && (
         <Box sx={{
           position: 'absolute',
-          top: 10,
-          right: 10,
-          bgcolor: 'white',
-          p: 0.5,
-          borderRadius: '50%',
-          boxShadow: 1
+          top: 8,
+          left: 8,
+          bgcolor: '#ad2a36',
+          color: 'white',
+          px: 1,
+          py: 0.2,
+          borderRadius: 0.5,
+          zIndex: 1,
+          fontSize: '0.75rem',
+          fontWeight: 'bold'
         }}>
-          <Typography variant="caption" sx={{ color: '#143765', fontWeight: 'bold' }}>
-            NEW
-          </Typography>
+          -{discountPercent}%
         </Box>
       )}
 
-      <CardMedia
-        component="img"
-        width='168px'
-        height='168px'
-        image={product.images?.[0] || ''}
-        alt={product.name}
-        sx={{ objectFit: 'contain', bgcolor: '#f9f9f9' }}
-      />
-      <CardContent sx={{ pb: '4px !important' }}>
-        <Typography sx={{ fontSize: '14px', color: '#5A5A5A', textAlign: 'center', minHeight: '63px' }}>
+      <Box sx={{ overflow: 'hidden', bgcolor: '#f7f7f7', borderRadius: 1 }}>
+        <CardMedia
+          component="img"
+          image={product.images?.[0] || 'https://via.placeholder.com/300'}
+          alt={product.name}
+          sx={{ 
+            height: 300, 
+            width: '100%', 
+            objectFit: 'cover', 
+            transition: '0.5s transform ease'
+          }}
+        />
+      </Box>
+
+      <CardContent sx={{ px: 1, pt: 2, pb: '8px !important' }}>
+        {/* Title */}
+        <Typography 
+          sx={{ 
+            fontSize: '0.95rem', 
+            fontWeight: 500, 
+            color: '#1a1a1a', 
+            minHeight: '2.8rem',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            mb: 1
+          }}
+        >
           {product.name}
         </Typography>
-        <Typography sx={{ fontSize: '16px', color: '#c48c46', textAlign: 'center', mt: 1 }}>
-          {product.price?.toLocaleString()} ₫
-        </Typography>
 
-        {/* Hiển thị promotion nếu có và đang áp dụng */}
-        {appliedPromotions.map((promo, index) => (
-          <Typography
-            key={index}
-            sx={{ fontSize: '10px', color: '#DC2626', textAlign: 'center', mt: 1 }}
-          >
-            {promo.title} giảm {promo.discountPercent}%
+        {/* Color Swatches */}
+        <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+          {uniqueColors.slice(0, 5).map((hex, idx) => (
+            <Box 
+              key={idx}
+              sx={{ 
+                width: 12, 
+                height: 12, 
+                borderRadius: '50%', 
+                bgcolor: hex, 
+                border: '1px solid #ddd' 
+              }}
+            />
+          ))}
+          {uniqueColors.length > 5 && (
+            <Typography variant="caption" color="text.secondary">+{uniqueColors.length - 5}</Typography>
+          )}
+        </Box>
+
+        {/* Rating & Sold */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <StarIcon sx={{ fontSize: 14, color: '#FFD700' }} />
+            <Typography variant="caption" fontWeight="bold" sx={{ ml: 0.5 }}>
+              {avgRating > 0 ? avgRating.toFixed(1) : '5.0'}
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary">|</Typography>
+          <Typography variant="caption" color="text.secondary">
+            {product.sold || 0} đã bán
           </Typography>
-        ))}
+        </Box>
 
-        <Typography sx={{ fontSize: '10px', color: '#5A5A5A', textAlign: 'right', mt: 1 }}>
-          {product.sold} đã bán
-        </Typography>
+        {/* Pricing */}
+        <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+          <Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#ad2a36' }}>
+            {finalPrice.toLocaleString()} ₫
+          </Typography>
+          {discountPercent > 0 && (
+            <Typography sx={{ fontSize: '0.85rem', color: '#999', textDecoration: 'line-through' }}>
+              {product.price.toLocaleString()} ₫
+            </Typography>
+          )}
+        </Box>
       </CardContent>
     </Card>
   )

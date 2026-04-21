@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import {
-  Box, Grid, Typography, Card,
-  CardMedia, CardContent
+  Box, Grid, Typography, Container
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
 import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
+import ProductCard from '~/components/customer/ProductHome/ProductCard/ProductCard'
 
 function ListProduct() {
   const navigate = useNavigate()
@@ -39,17 +39,42 @@ function ListProduct() {
 
   // Lọc sản phẩm theo category
   const filteredProducts = useMemo(() => {
-    if (!categories.length || !allProducts.length) return []
+    if (!allProducts.length) return []
 
+    // 1. HÀNG MỚI VỀ: Tất cả sản phẩm còn hàng, mới nhất lên đầu
+    if (categorySlug === 'newest') {
+      return [...allProducts]
+        .filter(p => (p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }
+
+    // 2. FLASH SALE: Chỉ hiện các sản phẩm có khuyến mãi còn hiệu lực
+    if (categorySlug === 'sale') {
+      const now = new Date()
+      return allProducts.filter(p => 
+        promotions.some(promo => 
+          promo.productIds?.includes(p._id) &&
+          new Date(promo.startDate) <= now &&
+          new Date(promo.endDate) >= now
+        )
+      )
+    }
+
+    // 3. TẤT CẢ SẢN PHẨM: Mặc định
+    if (categorySlug === 'all') {
+      return allProducts.filter(p => (p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0))
+    }
+
+    if (!categories.length) return []
     const targetCat = categories.find(c => c.slug === categorySlug)
     if (!targetCat) return []
 
-    // Lọc sản phẩm đúng category và còn stock (tổng các biến thể > 0)
+    // Lọc sản phẩm đúng category và còn stock
     return allProducts.filter(p => 
       p.categoryId === targetCat._id && 
       (p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0)
     )
-  }, [categories, allProducts, categorySlug])
+  }, [categories, allProducts, categorySlug, promotions])
 
   // Banner theo category slug
   const bannerData = [
@@ -59,10 +84,8 @@ function ListProduct() {
   ]
   const banner = bannerData.find(b => b.slug === categorySlug)
 
-  const now = new Date()
-
   return (
-    <Box sx={{ mt: 3 }}>
+    <Box sx={{ mt: 3, pb: 8 }}>
       <Box sx={{ px: 18.5 }}>
         {/* Banner */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
@@ -70,95 +93,32 @@ function ListProduct() {
             <img
               src={banner.imageUrl}
               alt={banner.altText}
-              style={{ width: '100%' }}
+              style={{ width: '100%', borderRadius: '8px' }}
             />
           )}
         </Box>
       </Box>
 
       {/* Danh sách sản phẩm */}
-      <Grid container spacing={2} justifyContent="center">
-        {filteredProducts.length === 0 && (
-          <Typography variant="h6" color="error">
-            Không có sản phẩm phù hợp
-          </Typography>
-        )}
+      <Container maxWidth="xl">
+        <Grid container spacing={2}>
+          {filteredProducts.length === 0 && (
+            <Box sx={{ width: '100%', textAlign: 'center', py: 10 }}>
+              <Typography variant="h6" color="text.secondary">
+                Không có sản phẩm phù hợp
+              </Typography>
+            </Box>
+          )}
 
-        {filteredProducts.map(product => {
-          const isNew = newProducts.some(np => np._id === product._id)
-
-          // Lọc khuyến mãi đang áp dụng cho sản phẩm
-          const appliedPromotions = promotions.filter(promo =>
-            promo.productIds?.includes(product._id) &&
-            new Date(promo.startDate) <= now &&
-            new Date(promo.endDate) >= now
-          )
-
-          return (
-            <Grid item key={product._id}>
-              <Card
-                sx={{
-                  width: 292,
-                  height: 450,
-                  borderRadius: 2,
-                  position: 'relative',
-                  cursor: 'pointer',
-                  boxShadow: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}
-                onClick={() => navigate(`/productdetail/${product._id}`)}
-              >
-                {isNew && (
-                  <Box sx={{
-                    position: 'absolute',
-                    top: 10,
-                    right: 10,
-                    bgcolor: 'white',
-                    p: 0.5,
-                    borderRadius: '50%',
-                    boxShadow: 1
-                  }}>
-                    <Typography variant="caption" sx={{ color: '#143765', fontWeight: 'bold' }}>
-                      NEW
-                    </Typography>
-                  </Box>
-                )}
-
-                <CardMedia
-                  component="img"
-                  sx={{ width: 292, height: 292, objectFit: 'cover' }}
-                  image={product.images?.[0] || ''}
-                  alt={product.name}
-                />
-
-                <CardContent sx={{ p: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
-                  <Box>
-                    <Typography sx={{ fontSize: 14, color: '#5A5A5A', textAlign: 'center', minHeight: '63px' }}>
-                      {product.name}
-                    </Typography>
-                    <Typography sx={{ fontSize: 16, color: '#c48c46', textAlign: 'center', mt: 1 }}>
-                      {product.price.toLocaleString()} ₫
-                    </Typography>
-
-                    {/* Hiển thị promotion nếu có */}
-                    {appliedPromotions.map((promo, idx) => (
-                      <Typography key={idx} sx={{ fontSize: 11, color: '#DC2626', textAlign: 'center', mt: 1 }}>
-                        {promo.title} giảm {promo.discountPercent}%
-                      </Typography>
-                    ))}
-                  </Box>
-
-                  <Typography sx={{ fontSize: 10, color: '#5A5A5A', textAlign: 'right', mt: 1 }}>
-                    {product.sold || 0} đã bán
-                  </Typography>
-                </CardContent>
-              </Card>
+          {filteredProducts.map(product => (
+            <Grid item xs={12} sm={6} md={4} lg={2.4} key={product._id}>
+              <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
+                <ProductCard product={product} promotions={promotions} />
+              </Box>
             </Grid>
-          )
-        })}
-      </Grid>
+          ))}
+        </Grid>
+      </Container>
     </Box>
   )
 }

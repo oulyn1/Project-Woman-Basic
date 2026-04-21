@@ -1,7 +1,7 @@
 import { Box, Container } from '@mui/material'
 import Banner from '~/components/customer/Banner/Banner'
-import Service from '~/components/customer/Service/Service'
 import ProductHome from '~/components/customer/ProductHome/ProductHome'
+import TrustBanner from '~/components/customer/Service/TrustBanner'
 
 function HomePage() {
   const bannerData = [
@@ -12,8 +12,10 @@ function HomePage() {
   return (
     <>
       <Banner banners={bannerData} />
+      <Box sx={{ my: 4, position: 'relative', zIndex: 100, bgcolor: 'white' }}>
+        <TrustBanner />
+      </Box>
       <Container sx={{ mt: 3 }}>
-        <Service />
         <ProductHome />
       </Container>
     </>

@@ -19,7 +19,9 @@ function Banner({ banners }) {
     <Box
       sx={{
         width: '100%',
-        height: '490px',
+        height: { xs: 'auto', md: '490px' },
+        overflow: 'hidden',
+        position: 'relative',
         '& .slick-dots': {
           bottom: '36px'
         },
@@ -31,7 +33,8 @@ function Banner({ banners }) {
         '& .slick-dots li.slick-active button:before': {
           color: 'white',
         },
-        cursor: 'pointer'
+        cursor: 'pointer',
+        overflow: 'hidden'
       }}
     >
       <Slider {...settings}>

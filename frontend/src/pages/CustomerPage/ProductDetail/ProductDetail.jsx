@@ -3,7 +3,6 @@ import StarIcon from '@mui/icons-material/Star'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import React, { useEffect, useState, useMemo } from 'react'
-import ServiceDetail from '~/components/customer/ServiceDetail/ServiceDetail'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getProductDetailAPI } from '~/apis/productAPIs'
 import { getRatingsByProductId } from '~/apis/ratingAPIs'
@@ -288,7 +287,6 @@ function ProductDetail() {
           </Box>
 
           <Divider sx={{ my: 4 }} />
-          <ServiceDetail />
         </Grid>
       </Grid>
 
