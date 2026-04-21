@@ -14,6 +14,7 @@ import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined'
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined'
 import StarIcon from '@mui/icons-material/Star'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import LogoWB from '~/assets/logo_wb.png'
 
 // ==== Component con để load rating ====
 function StarRating({ productId }) {
@@ -107,8 +108,8 @@ function Header() {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           
           {/* Logo */}
-          <Box sx={{ cursor: 'pointer', height: 50 }} onClick={() => navigate('/')}>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: 'black', letterSpacing: '-2px' }}>WB</Typography>
+          <Box sx={{ cursor: 'pointer', height: 45, display: 'flex', alignItems: 'center' }} onClick={() => navigate('/')}>
+            <img src={LogoWB} alt="Woman Basic Logo" style={{ height: '100%', objectFit: 'contain' }} />
           </Box>
 
           {/* Navigation Menu */}
