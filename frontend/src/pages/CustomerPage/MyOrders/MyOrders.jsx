@@ -326,11 +326,21 @@ const MyOrders = () => {
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2">Sản phẩm</Typography>
                 <Stack spacing={1} sx={{ mt: 1 }}>
-                  {detailDialog.order.items.map((it, idx) => (
+                  {detailDialog.order.items.map((it, idx) => {
+                    const variantLabel = [
+                      it.variant?.size || it.size,
+                      it.variant?.color?.name || it.color
+                    ].filter(Boolean).join(' / ')
+                    return (
                     <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                       <Avatar src={it.product?.image} variant="rounded" sx={{ width: 56, height: 56 }} />
                       <Box sx={{ flex: 1 }}>
                         <Typography>{it.product?.name || it.productId}</Typography>
+                        {variantLabel && (
+                          <Typography variant="caption" color="text.secondary" display="block">
+                            Phân loại: {variantLabel}
+                          </Typography>
+                        )}
                         <Typography variant="caption" color="text.secondary">
                           {it.quantity} x {Number(it.price).toLocaleString('vi-VN')}₫
                         </Typography>
@@ -347,7 +357,8 @@ const MyOrders = () => {
                         </Tooltip>
                       )}
                     </Box>
-                  ))}
+                    )
+                  })}
                 </Stack>
               </Box>
 

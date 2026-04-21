@@ -104,7 +104,13 @@ function ProductDetail() {
     if (!token) { navigate('/login'); return }
     if (currentVariant && !isOutOfStock) {
       setIsAdding(true)
-      const res = await addToCart(product, currentVariant._id, quantity)
+      const res = await addToCart(
+        product,
+        currentVariant._id,
+        quantity,
+        currentVariant.color?.name || '',
+        currentVariant.size || ''
+      )
       setIsAdding(false)
       
       if (res?.success) {

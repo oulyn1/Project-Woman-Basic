@@ -42,9 +42,14 @@ const requestGetCartByUserAPI = async (fn) => {
 export const getCartByUserAPI = () =>
   requestGetCartByUserAPI(() => api.get('/cart'))
 
-export const addToCartAPI = (productId, variantId, quantity = 1) =>
-  request(() => api.post('/cart/items', { productId, variantId, quantity }))
-
+export const addToCartAPI = (productId, variantId, quantity = 1, color = '', size = '') =>
+  request(() => api.post('/cart/items', {
+    productId,
+    variantId,
+    color,
+    size,
+    quantity
+  }))
 export const updateQuantityAPI = (productId, variantId, quantity) =>
   request(() => api.put('/cart/items', { productId, variantId, quantity }))
 
@@ -59,3 +64,4 @@ export const getAllCartsAPI = () =>
 
 export const deleteCartAPI = (cartId) =>
   request(() => api.delete(`/cart/admin/${cartId}`))
+

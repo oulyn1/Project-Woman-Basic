@@ -36,10 +36,10 @@ const CartProvider = ({ children }) => {
     fetchCart()
   }, [])
 
-  const addToCart = async (product, variantId, quantity = 1) => {
+  const addToCart = async (product, variantId, quantity = 1, color = '', size = '') => {
     if (!product?._id || !variantId) return
     try {
-      const res = await addToCartAPI(product._id.toString(), variantId, quantity)
+      const res = await addToCartAPI(product._id.toString(), variantId, quantity, color, size)
       if (res.success) {
         setCartItems(res.data?.items || [])
       }

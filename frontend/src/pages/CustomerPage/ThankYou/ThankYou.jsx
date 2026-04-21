@@ -46,14 +46,28 @@ function ThankYou() {
         </Typography>
 
         <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Sản phẩm đã đặt:</Typography>
-        {order.items?.map((item) => (
-          <Box key={item.productId} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2">{item.product?.name || item.productId} x {item.quantity}</Typography>
-            <Typography variant="body2" sx={{ color: '#cc3300' }}>
-              {(item.price * item.quantity).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-            </Typography>
-          </Box>
-        ))}
+        {order.items?.map((item, idx) => {
+          const variantLabel = [
+            item.variant?.size || item.size,
+            item.variant?.color?.name || item.variant?.color || item.color
+          ].filter(Boolean).join(' / ')
+
+          return (
+            <Box key={`${item.productId}-${item.variantId || idx}`} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Box>
+                <Typography variant="body2">{item.product?.name || item.productId} x {item.quantity}</Typography>
+                {variantLabel && (
+                  <Typography variant="caption" color="text.secondary">
+                    Phân loại: {variantLabel}
+                  </Typography>
+                )}
+              </Box>
+              <Typography variant="body2" sx={{ color: '#cc3300' }}>
+                {(item.price * item.quantity).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
+              </Typography>
+            </Box>
+          )
+        })}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, borderTop: '1px solid #eee', pt: 2 }}>
           <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Tổng tiền:</Typography>

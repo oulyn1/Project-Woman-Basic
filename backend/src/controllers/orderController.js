@@ -90,7 +90,6 @@ const confirmOrder = async (req, res, next) => {
 
 const getMyOrders = async (req, res, next) => {
   try {
-    console.log('hi')
     const userId = req.user.userId
     const myOrders = await orderService.getMyOrders(userId)
     res.status(StatusCodes.OK).json(myOrders)

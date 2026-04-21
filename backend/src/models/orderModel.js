@@ -16,6 +16,9 @@ export const ORDER_COLLECTION_SCHEMA = Joi.object({
   items: Joi.array().items(
     Joi.object({
       productId: Joi.string().required(),
+      variantId: Joi.string().optional().allow(null, ''),
+      size: Joi.string().optional().allow(null, ''),
+      color: Joi.string().optional().allow(null, ''),
       price: Joi.number().min(0).required(),
       quantity: Joi.number().integer().min(1).required()
     })
@@ -39,7 +42,8 @@ const createNew = async (data) => {
   validData.userId = new ObjectId(validData.userId)
   validData.items = validData.items.map(item => ({
     ...item,
-    productId: new ObjectId(item.productId)
+    productId: new ObjectId(item.productId),
+    variantId: item.variantId ? new ObjectId(item.variantId) : null
   }))
 
   const createdOrder = await GET_DB().collection(ORDER_COLLECTION_NAME).insertOne(validData)
@@ -76,9 +80,29 @@ const getDetailsWithProducts = async (id) => {
         items: {
           $push: {
             productId: "$items.productId",
+            variantId: "$items.variantId",
+            size: "$items.size",
+            color: "$items.color",
             quantity: "$items.quantity",
             price: "$items.price",
-            product: "$productData"
+            product: "$productData",
+            variant: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$productData.variants",
+                    as: "v",
+                    cond: {
+                      $or: [
+                        { $eq: [{ $toString: "$$v._id" }, { $toString: "$items.variantId" }] },
+                        { $eq: [{ $toString: "$$v.variantId" }, { $toString: "$items.variantId" }] }
+                      ]
+                    }
+                  }
+                },
+                0
+              ]
+            }
           }
         }
       }
@@ -115,9 +139,29 @@ const getAllWithProducts = async (filter = {}) => {
         items: {
           $push: {
             productId: "$items.productId",
+            variantId: "$items.variantId",
+            size: "$items.size",
+            color: "$items.color",
             quantity: "$items.quantity",
             price: "$items.price",
-            product: "$productData"
+            product: "$productData",
+            variant: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$productData.variants",
+                    as: "v",
+                    cond: {
+                      $or: [
+                        { $eq: [{ $toString: "$$v._id" }, { $toString: "$items.variantId" }] },
+                        { $eq: [{ $toString: "$$v.variantId" }, { $toString: "$items.variantId" }] }
+                      ]
+                    }
+                  }
+                },
+                0
+              ]
+            }
           }
         }
       }

@@ -113,6 +113,8 @@ function CartPage() {
                 new Date(promo.endDate) >= now
               )
               const finalPrice = getDiscountedPrice(item.product)
+              const resolvedSize = item.variant?.size || item.size || '--'
+              const resolvedColor = item.variant?.color?.name || item.variant?.color || item.color || '--'
               return (
                 <Box key={getUniqueKey(item)} sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                   <Checkbox
@@ -133,6 +135,9 @@ function CartPage() {
                     </Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
                       Mã: {item.product?.name.split(' ').pop()}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                      Size: {resolvedSize} | Màu: {resolvedColor}
                     </Typography>
 
                     <Box sx={{ display: 'flex', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', width: '120px' }}>

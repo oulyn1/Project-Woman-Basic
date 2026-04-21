@@ -1,16 +1,16 @@
-import express from "express"
-import { cartController } from '~/controllers/cartController'
-import { authMiddleware } from '~/middlewares/authMiddleware'
+import express from "express";
+import { cartController } from "~/controllers/cartController";
+import { authMiddleware } from "~/middlewares/authMiddleware";
 
-const Router = express.Router()
+const Router = express.Router();
 
-Router.route('/')
+Router.route("/")
   .get(authMiddleware, cartController.getCart)
-  .delete(authMiddleware, cartController.clearCart)
+  .delete(authMiddleware, cartController.clearCart);
 
-Router.route('/items')
+Router.route("/items")
   .post(authMiddleware, cartController.addToCart)
   .put(authMiddleware, cartController.updateQuantity)
-  .delete(authMiddleware, cartController.removeItem)
+  .delete(authMiddleware, cartController.removeItem);
 
-export const cartRoute = Router
+export const cartRoute = Router;

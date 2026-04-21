@@ -5,7 +5,7 @@ import { GET_DB } from "~/config/mongodb"
 
 const CART_COLLECTION_NAME = "carts"
 
-// Schema cho từng item
+// Schema cho từng item (thêm color, size)
 const CART_ITEM_SCHEMA = Joi.object({
   productId: Joi.string()
     .pattern(OBJECT_ID_RULE)
@@ -15,7 +15,9 @@ const CART_ITEM_SCHEMA = Joi.object({
     .pattern(OBJECT_ID_RULE)
     .message(OBJECT_ID_RULE_MESSAGE)
     .required(),
-  quantity: Joi.number().integer().min(1).default(1)
+  quantity: Joi.number().integer().min(1).default(1),
+  color: Joi.string().allow("", null).optional(),
+  size: Joi.string().allow("", null).optional()
 })
 
 // Schema cho giỏ hàng
@@ -40,6 +42,32 @@ const createNew = async (data) => {
   return await GET_DB()
     .collection(CART_COLLECTION_NAME)
     .insertOne(validData)
+}
+
+const resolveVariantMeta = async (productId, variantId) => {
+  try {
+    const product = await GET_DB()
+      .collection("products")
+      .findOne(
+        { _id: new ObjectId(productId) },
+        { projection: { variants: 1 } }
+      )
+    if (!product?.variants?.length) return { color: "", size: "" }
+
+    const matched = product.variants.find((v) => {
+      const dbId = v?._id ? String(v._id) : ""
+      const legacyId = v?.variantId ? String(v.variantId) : ""
+      const targetId = String(variantId)
+      return dbId === targetId || legacyId === targetId
+    })
+
+    return {
+      color: matched?.color?.name || matched?.color || "",
+      size: matched?.size || ""
+    }
+  } catch {
+    return { color: "", size: "" }
+  }
 }
 
 // Lấy cart theo userId (có populate chi tiết sản phẩm và biến thể)
@@ -73,6 +101,8 @@ const findByUserId = async (userId) => {
               productId: "$$i.productId",
               variantId: "$$i.variantId",
               quantity: "$$i.quantity",
+              color: "$$i.color",
+              size: "$$i.size",
               product: {
                 $arrayElemAt: [
                   {
@@ -106,7 +136,22 @@ const findByUserId = async (userId) => {
                     $filter: {
                       input: "$$item.product.variants",
                       as: "v",
-                      cond: { $eq: ["$$v.variantId", "$$item.variantId"] }
+                      cond: {
+                        $or: [
+                          {
+                            $eq: [
+                              { $toString: "$$v._id" },
+                              { $toString: "$$item.variantId" }
+                            ]
+                          },
+                          {
+                            $eq: [
+                              { $toString: "$$v.variantId" },
+                              { $toString: "$$item.variantId" }
+                            ]
+                          }
+                        ]
+                      }
                     }
                   },
                   0
@@ -118,6 +163,30 @@ const findByUserId = async (userId) => {
                 price: "$$item.product.price",
                 image: { $arrayElemAt: ["$$item.product.images", 0] },
                 slug: "$$item.product.slug"
+              },
+              color: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$$item.color", null] },
+                      { $ne: ["$$item.color", ""] }
+                    ]
+                  },
+                  "$$item.color",
+                  { $ifNull: ["$$item.variant.color.name", "$$item.variant.color"] }
+                ]
+              },
+              size: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$$item.size", null] },
+                      { $ne: ["$$item.size", ""] }
+                    ]
+                  },
+                  "$$item.size",
+                  "$$item.variant.size"
+                ]
               }
             }
           }
@@ -130,32 +199,52 @@ const findByUserId = async (userId) => {
   return result[0] || null
 }
 
-const addToCart = async (userId, productId, variantId, quantity = 1) => {
-  let cart = await GET_DB().collection(CART_COLLECTION_NAME).findOne({ userId })
+// Thêm item vào giỏ (nếu có color/size sẽ lưu)
+const addToCart = async (userId, productId, variantId, quantity = 1, color = "", size = "") => {
+  if (quantity < 1) throw new ApiError(StatusCodes.BAD_REQUEST, 'Quantity must be at least 1')
+  try {
+    const resolvedMeta =
+      (!color || !size) ? await resolveVariantMeta(productId, variantId) : { color: "", size: "" }
+    const finalColor = color || resolvedMeta.color || ""
+    const finalSize = size || resolvedMeta.size || ""
 
-  if (!cart) {
-    await createNew({ userId, items: [{ productId, variantId, quantity }] })
-    return await findByUserId(userId)
-  }
+    let cart = await GET_DB().collection(CART_COLLECTION_NAME).findOne({ userId })
 
-  const index = cart.items.findIndex(i => i.productId === productId && i.variantId === variantId)
-  if (index >= 0) {
-    cart.items[index].quantity += quantity
-  } else {
-    cart.items.push({ productId, variantId, quantity })
-  }
+    if (!cart) {
+      await createNew({ userId, items: [{ productId, variantId, quantity, color: finalColor, size: finalSize }] })
+      return await findByUserId(userId)
+    }
 
-  await GET_DB().collection(CART_COLLECTION_NAME)
-    .findOneAndUpdate(
+    const index = cart.items.findIndex(
+      (i) => i.productId === productId && i.variantId === variantId
+    )
+    if (index >= 0) {
+      cart.items[index].quantity += quantity
+      if (!cart.items[index].color && finalColor) {
+        cart.items[index].color = finalColor
+      }
+      if (!cart.items[index].size && finalSize) {
+        cart.items[index].size = finalSize
+      }
+    } else {
+      cart.items.push({ productId, variantId, quantity, color: finalColor, size: finalSize })
+    }
+
+    await GET_DB().collection(CART_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(cart._id) },
       { $set: { items: cart.items, updatedAt: Date.now() } }
     )
 
-  return await findByUserId(userId)
+    return await findByUserId(userId)
+  } catch (error) {
+    console.error("LỖI KHI THÊM VÀO CART:", error)
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, error.message || 'Failed to add to cart')
+  }
 }
 
+// Cập nhật quantity (giữ nguyên color/size hiện có)
 const updateQuantity = async (userId, productId, variantId, quantity) => {
-  if (quantity < 1) throw new Error("Quantity must be at least 1")
+  if (quantity < 1) throw new ApiError(StatusCodes.BAD_REQUEST, 'Quantity must be at least 1')
   const cart = await GET_DB().collection(CART_COLLECTION_NAME).findOne({ userId })
   if (!cart) throw new Error("Cart not found")
 
@@ -172,6 +261,7 @@ const updateQuantity = async (userId, productId, variantId, quantity) => {
   return await findByUserId(userId)
 }
 
+// Xóa 1 item, giữ nguyên các item còn lại (bao gồm color/size)
 const removeItem = async (userId, productId, variantId) => {
   const cart = await GET_DB().collection(CART_COLLECTION_NAME).findOne({ userId })
   if (!cart) throw new Error("Cart not found")
@@ -194,7 +284,7 @@ const clearCart = async (userId) => {
     { $set: { items: [], updatedAt: Date.now() } },
     { returnDocument: "after" }
   )
-  return await findByUserId(userId) // 🔑 gọi lại để populate
+  return await findByUserId(userId) // gọi lại để populate
 }
 
 // Lấy tất cả cart

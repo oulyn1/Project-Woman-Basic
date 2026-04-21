@@ -155,7 +155,13 @@ const TableOrder = ({ searchQuery }) => {
                       <Stack spacing={1.5} sx={{ mt: 1 }}>
                         {order.items.map((item, i) => (
                           <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" color="#aaa">{item.product?.name || 'N/A'} x{item.quantity}</Typography>
+                            <Typography variant="body2" color="#aaa">
+                              {item.product?.name || 'N/A'}
+                              {(item.variant?.size || item.size || item.variant?.color?.name || item.color)
+                                ? ` (${[item.variant?.size || item.size, item.variant?.color?.name || item.color].filter(Boolean).join(' / ')})`
+                                : ''}
+                              {` x${item.quantity}`}
+                            </Typography>
                             <Typography variant="body2" color="#fff">{(item.price * item.quantity).toLocaleString('vi-VN')}₫</Typography>
                           </Box>
                         ))}

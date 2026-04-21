@@ -3,6 +3,13 @@ import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { productModel } from '~/models/productModel'
 
+const normalizeId = (value) => {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'object' && value.toString) return value.toString()
+  return String(value)
+}
+
 const createNew = async (reqBody, userFromToken) => {
   const newOrder = {
     userId: reqBody.userId || userFromToken?._id || userFromToken?.id || null,
@@ -61,18 +68,75 @@ const confirmOrder = async (orderId) => {
   if (!order) throw new ApiError(StatusCodes.NOT_FOUND, 'Order not found')
   if (order.status !== 'pending') throw new ApiError(StatusCodes.BAD_REQUEST, 'Chỉ đơn pending mới confirm')
 
-  // Trừ stock tất cả sản phẩm
-  const stockResults = await Promise.allSettled(
-    order.items.map(item =>
-      // dùng item.product._id cho chắc chắn trùng DB
-      productModel.decreaseStock(item.product._id, item.quantity)
-    )
-  )
+  // Pre-check biến thể và tồn kho đúng theo item trong đơn
+  await Promise.all(order.items.map(async (item) => {
+    if (!item.variantId) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Thiếu variantId cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
 
-  // Kiểm tra nếu có sản phẩm không đủ stock
-  const stockError = stockResults.find(r => r.status === 'rejected')
-  if (stockError) {
-    throw new ApiError(StatusCodes.BAD_REQUEST, 'Có sản phẩm không đủ stock để xác nhận')
+    const product = await productModel.getDetails(item.productId)
+    if (!product) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        `Không tìm thấy sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
+
+    const targetVariant = (product.variants || []).find((variant) =>
+      normalizeId(variant._id) === normalizeId(item.variantId)
+    )
+
+    if (!targetVariant) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Biến thể không hợp lệ cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
+
+    if (item.size && targetVariant.size !== item.size) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Sai kích thước biến thể cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
+
+    const variantColorName = targetVariant.color?.name || targetVariant.color
+    if (item.color && variantColorName !== item.color) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Sai màu biến thể cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
+
+    if ((targetVariant.stock || 0) < item.quantity) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
+  }))
+
+  if (!order.items.length) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, 'Đơn hàng không có sản phẩm hợp lệ để xác nhận')
+  }
+
+  // Trừ stock theo đúng variantId của từng item
+  for (const item of order.items) {
+    const updatedProduct = await productModel.updateVariantStock(
+      item.productId,
+      item.variantId,
+      item.quantity
+    )
+
+    if (!updatedProduct) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`
+      )
+    }
   }
 
   // Cập nhật trạng thái đơn hàng

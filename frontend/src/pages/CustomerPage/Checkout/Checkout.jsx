@@ -31,6 +31,8 @@ function Checkout() {
     if (fromBuyNow) {
       return buyNowState.map(p => ({
         productId: p._id,
+        variantId: p.variantId || p.selectedVariant?._id || null,
+        variant: p.selectedVariant || null,
         product: p,
         quantity: p.quantity || 1
       }))
@@ -80,14 +82,14 @@ function Checkout() {
     }
   }, [])
 
-  const handleQuantityChange = (productId, newQty) => {
+  const handleQuantityChange = (productId, variantId, newQty) => {
     if (newQty < 1) return
     if (fromBuyNow) {
       setBuyNowState(prev =>
         prev.map(p => (p._id === productId ? { ...p, quantity: newQty } : p))
       )
     } else {
-      updateQuantity(productId, newQty)
+      updateQuantity(productId, variantId, newQty)
     }
   }
 
@@ -110,6 +112,9 @@ function Checkout() {
         buyerInfo,
         items: products.map((p) => ({
           productId: p.productId || p._id,
+          variantId: p.variantId || null,
+          size: p.variant?.size || p.size || null,
+          color: p.variant?.color?.name || p.color || null,
           quantity: p.quantity,
           price: getDiscountedPrice(p.product)
         })),
@@ -120,7 +125,10 @@ function Checkout() {
 
       if (orderRes && (orderRes._id || orderRes.data?._id)) {
         if (!fromBuyNow) {
-          await removeManyFromCart(products.map((p) => p.productId))
+          await removeManyFromCart(products.map((p) => ({
+            productId: p.productId,
+            variantId: p.variantId
+          })))
         }
         alert('Đặt hàng thành công!')
         navigate('/thank-you', { state: { order: orderRes.data || orderRes } })
@@ -165,20 +173,29 @@ function Checkout() {
                 new Date(promo.endDate) >= now
               )
               const finalPrice = getDiscountedPrice(item.product)
+              const variantLabel = [
+                item.variant?.size || item.size,
+                item.variant?.color?.name || item.color
+              ].filter(Boolean).join(' / ')
               return (
-                <Box key={item.productId} sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
+                <Box key={`${item.productId}-${item.variantId || 'default'}`} sx={{ display: 'flex', alignItems: 'flex-start', mb: 3 }}>
                   <Box component="img" src={item.product?.image} alt={item.product?.name} sx={{ width: 80, height: 80, objectFit: 'cover', mr: 2, border: '1px solid #eee' }} />
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="body2" sx={{ fontWeight: 500, color: '#0066cc', mb: 0.5 }}>{item.product?.name}</Typography>
                     <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>Mã: {item.product?.name?.split(' ').pop()}</Typography>
+                    {variantLabel && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                        Phân loại: {variantLabel}
+                      </Typography>
+                    )}
 
                     {/* Số lượng */}
                     <Box sx={{ display: 'flex', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', width: '120px' }}>
-                      <IconButton onClick={() => handleQuantityChange(item.productId, item.quantity - 1)} size="small" sx={{ borderRadius: 0, borderRight: '1px solid #ccc', p: '4px 8px' }} disabled={item.quantity <= 1}>
+                      <IconButton onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity - 1)} size="small" sx={{ borderRadius: 0, borderRight: '1px solid #ccc', p: '4px 8px' }} disabled={item.quantity <= 1}>
                         <RemoveIcon fontSize="small" />
                       </IconButton>
                       <Typography variant='body2' sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.quantity}</Typography>
-                      <IconButton onClick={() => handleQuantityChange(item.productId, item.quantity + 1)} size="small" sx={{ borderRadius: 0, borderLeft: '1px solid #ccc', p: '4px 8px' }} disabled={item.quantity >= (item.product?.stock ?? Infinity)}>
+                      <IconButton onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity + 1)} size="small" sx={{ borderRadius: 0, borderLeft: '1px solid #ccc', p: '4px 8px' }} disabled={item.quantity >= (item.variant?.stock ?? item.product?.stock ?? Infinity)}>
                         <AddIcon fontSize="small" />
                       </IconButton>
                     </Box>
