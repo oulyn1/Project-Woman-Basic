@@ -26,11 +26,13 @@ import PercentIcon from '@mui/icons-material/Percent'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import DescriptionIcon from '@mui/icons-material/Description'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import { Chip } from '@mui/material'
 
-import { fetchAllPromotionsAPI, deletePromotionAPI, searchPromotionsAPI } from '~/apis/promotionAPIs'
+import { fetchAllPromotionsAPI, deletePromotionAPI, clonePromotionAPI } from '~/apis/promotionAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
-const TablePromotion = ({ onEditPromotion, searchQuery }) => {
+const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }) => {
   const [rows, setRows] = useState([])
   const [page, setPage] = useState(0)
   const [rowsPerPage] = useState(10)
@@ -45,12 +47,12 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
     const fetchPromotions = async () => {
       setLoading(true)
       try {
-        const data = searchQuery
-          ? await searchPromotionsAPI(searchQuery)
-          : await fetchAllPromotionsAPI()
-        const sortedData = data.sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
-        setRows(sortedData)
-      } catch {
+        const query = { search: searchQuery }
+        if (computedStatus !== 'ALL') query.computedStatus = computedStatus
+        const response = await fetchAllPromotionsAPI(query)
+        setRows(response.items || [])
+        setPage(0)
+      } catch (error) {
         setRows([])
         setSnackbar({ open: true, message: 'Lỗi khi tải khuyến mãi!', severity: 'error' })
       } finally {
@@ -58,7 +60,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
       }
     }
     fetchPromotions()
-  }, [searchQuery])
+  }, [searchQuery, computedStatus])
 
   const handleOpenMenu = (event, id) => {
     event.stopPropagation()
@@ -68,13 +70,29 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
 
   const handleCloseMenu = () => {
     setAnchorEl(null)
-    setSelectedId(null)
+    // Removed setSelectedId(null) here because it's needed for the delete confirm dialog
   }
 
-  const handleAction = (type) => {
-    if (type === 'edit') onEditPromotion(selectedId)
-    else if (type === 'delete') setOpenDeleteConfirm(true)
-    handleCloseMenu()
+  const handleAction = async (type) => {
+    if (type === 'edit') {
+      onEditPromotion(selectedId)
+      handleCloseMenu()
+    }
+    else if (type === 'delete') {
+      setOpenDeleteConfirm(true)
+      setAnchorEl(null) // Only close the menu, keep selectedId
+    }
+    else if (type === 'clone') {
+      try {
+        await clonePromotionAPI(selectedId)
+        const response = await fetchAllPromotionsAPI({ search: searchQuery })
+        setRows(response.items || [])
+        setSnackbar({ open: true, message: 'Nhân bản thành công!', severity: 'success' })
+      } catch (error) {
+        setSnackbar({ open: true, message: 'Lỗi nhân bản!', severity: 'error' })
+      }
+      handleCloseMenu()
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -85,6 +103,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
     } catch {
       setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
+      setSelectedId(null)
       setOpenDeleteConfirm(false)
     }
   }
@@ -115,8 +134,28 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Avatar sx={{ bgcolor: '#ff4081', color: 'white' }}><PercentIcon /></Avatar>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" color="white">{promo.title}</Typography>
-                  <Typography variant="body2" color="#888">Giảm {promo.discountPercent}% • {promo.productIds?.length || 0} sản phẩm</Typography>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="subtitle1" fontWeight="bold" color="white">{promo.title}</Typography>
+                    <Chip 
+                      label={promo.computedStatus.toUpperCase()} 
+                      size="small" 
+                      color={
+                        promo.computedStatus === 'active' ? 'success' : 
+                        promo.computedStatus === 'scheduled' ? 'info' : 
+                        promo.computedStatus === 'ended' ? 'error' : 'default'
+                      }
+                      sx={{ height: 20, fontSize: '10px', fontWeight: 'bold' }}
+                    />
+                    <Chip 
+                      label={promo.type === 'product' ? 'SẢN PHẨM' : 'ĐƠN HÀNG'} 
+                      size="small" 
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: '10px', color: '#888', borderColor: '#444' }}
+                    />
+                  </Stack>
+                  <Typography variant="body2" color="#888">
+                    Giảm {promo.discountValue}{promo.discountType === 'percent' ? '%' : 'đ'} • {promo.type === 'product' ? `${promo.productIds?.length || 0} sản phẩm` : `Min: ${promo.minOrderValue.toLocaleString()}đ`}
+                  </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <IconButton onClick={(e) => handleOpenMenu(e, promo._id)} sx={{ color: '#888' }}>
@@ -178,18 +217,25 @@ const TablePromotion = ({ onEditPromotion, searchQuery }) => {
         PaperProps={{ sx: { backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160 } }}
       >
         <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}><EditIcon fontSize="small" /> Chỉnh sửa</MenuItem>
+        <MenuItem onClick={() => handleAction('clone')} sx={{ gap: 1.5 }}><ContentCopyIcon fontSize="small" /> Nhân bản</MenuItem>
         <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}><DeleteIcon fontSize="small" /> Xóa khuyến mãi</MenuItem>
       </Menu>
 
       <Dialog
         open={openDeleteConfirm}
-        onClose={() => setOpenDeleteConfirm(false)}
+        onClose={() => {
+          setOpenDeleteConfirm(false)
+          setSelectedId(null)
+        }}
         PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}
       >
         <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
         <DialogContent sx={{ color: '#aaa' }}>Hành động này không thể hoàn tác. Bạn có chắc muốn xóa?</DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={() => {
+            setOpenDeleteConfirm(false)
+            setSelectedId(null)
+          }} sx={{ color: '#888' }}>Hủy</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" sx={{ textTransform: 'none' }}>Xóa vĩnh viễn</Button>
         </DialogActions>
       </Dialog>

@@ -1,15 +1,23 @@
-import express from "express"
-import { promotionController } from '~/controllers/promotionController'
+import express from 'express';
+import { promotionController } from '~/controllers/promotionController';
+import { checkPromoEditable } from '~/middlewares/checkPromoEditable';
 
-const Router = express.Router()
+const Router = express.Router();
 
+// CRUD + Search
 Router.route('/')
-  .get(promotionController.getAll)
-  .post(promotionController.createNew)
+  .get(promotionController.getPromotions)
+  .post(promotionController.createPromotion);
 
 Router.route('/:id')
-  .get(promotionController.getDetails)
-  .put(promotionController.updateOne)
-  .delete(promotionController.deleteOne)
+  .get(promotionController.getPromotionById)
+  .put(checkPromoEditable, promotionController.updatePromotion)
+  .delete(promotionController.deletePromotion);
 
-export const promotionRoute = Router
+Router.post('/:id/clone', promotionController.clonePromotion);
+
+// Checkout service
+Router.get('/order/eligible', promotionController.getEligibleOrderPromos);
+Router.post('/apply', promotionController.applyPromotions);
+
+export const promotionRoute = Router;

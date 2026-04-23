@@ -1,119 +1,65 @@
-import Joi from 'joi'
-import { GET_DB } from '~/config/mongodb'
-import { ObjectId } from 'mongodb'
+import mongoose from 'mongoose'
 
-// Tên collection
-const RATING_COLLECTION_NAME = 'ratings'
-
-// Schema validate
-export const RATING_COLLECTION_SCHEMA = Joi.object({
-  userId: Joi.string().required(),
-  orderId: Joi.string().allow(null).optional(),
-  productId: Joi.string().required(),
-  productName: Joi.string().min(1).max(100).required(),
-  image: Joi.string().uri().allow(''), // URL ảnh, có thể để trống
-  star: Joi.number().min(1).max(5).required(), // số sao từ 1-5
-  description: Joi.string().max(500).required(), // mô tả có thể để trống
-  createdAt: Joi.date().timestamp('javascript').default(Date.now),
+const ratingSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  productName: { type: String, required: true },
+  image: { type: String, default: '' },
+  star: { type: Number, required: true, min: 1, max: 5 },
+  description: { type: String, required: true, maxLength: 500 }
+}, {
+  timestamps: { createdAt: true, updatedAt: false }, // Ratings usually only have createdAt
+  collection: 'ratings'
 })
 
-const validateBeforeCreate = async (data) => {
-  return await RATING_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
-}
+// Unique index for (userId, orderId, productId)
+ratingSchema.index({ userId: 1, orderId: 1, productId: 1 }, { unique: true, sparse: true })
 
-// Tạo rating mới
-const createNew = async (data) => {
-  const validData = await validateBeforeCreate(data)
-  const result = await GET_DB().collection(RATING_COLLECTION_NAME).insertOne(validData)
-  return result
-}
+const Rating = mongoose.model('Rating', ratingSchema)
 
-// Đảm bảo chỉ có tối đa 1 rating cho (userId, orderId, productId)
-const ensureUniqueIndex = async () => {
-  const coll = GET_DB().collection(RATING_COLLECTION_NAME)
-  try {
-    // Use sparse index to support optional orderId
-    await coll.createIndex({ userId: 1, orderId: 1, productId: 1 }, { unique: true, sparse: true })
-  } catch {
-    // ignore index creation errors
-  }
-}
-
-// Lấy tất cả rating
-const getAll = async () => {
-  return await GET_DB().collection(RATING_COLLECTION_NAME).find().toArray()
-}
-
-// Tìm rating theo productName
-const searchByProductName = async (productName) => {
-    try {
-      const regex = new RegExp(productName, 'i') // 'i' để không phân biệt hoa thường
-      const result = await GET_DB()
-        .collection(RATING_COLLECTION_NAME)
-        .find({ productName: regex })
-        .toArray()
-      return result
-    } catch (error) {
-      throw new Error(error)
-    }
-  }
-// Tìm rating theo productName
-const findOneId = async (id) => {
-    return await GET_DB().collection(RATING_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
-  }
-// Cập nhật rating theo _id
-const updateOne = async (id, updateData) => {
-  const result = await GET_DB().collection(RATING_COLLECTION_NAME)
-    .findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: { ...updateData, updatedAt: Date.now() } },
-      { returnDocument: 'after' }
-    )
-  return result.value
-}
-
-// Xoá rating theo _id
-const deleteOne = async (id) => {
-  const result = await GET_DB().collection(RATING_COLLECTION_NAME).deleteOne({ _id: new ObjectId(id) })
-  return result
-}
-
-const findByProductId = async (productId) => {
-    return await GET_DB().collection(RATING_COLLECTION_NAME).find({ productId }).toArray()
-  }
-  
 export const ratingModel = {
-  RATING_COLLECTION_NAME,
-  RATING_COLLECTION_SCHEMA,
-  createNew,
-  ensureUniqueIndex,
-  getAll,
-  searchByProductName,
-  updateOne,
-  deleteOne,
-  findOneId,
-  findByProductId,
-  // find if a rating exists for a given user/product (no orderId)
-  findByUserProduct: async (userId, productId) => {
-    const c = GET_DB().collection(RATING_COLLECTION_NAME)
-    try {
-      const r = await c.findOne({ userId, productId })
-      return r
-    } catch {
-      return null
-    }
+  RATING_COLLECTION_NAME: 'ratings',
+  
+  createNew: async (data) => {
+    return await Rating.create(data)
   },
+
+  getAll: async () => {
+    return await Rating.find()
+  },
+
+  searchByProductName: async (productName) => {
+    const regex = new RegExp(productName, 'i')
+    return await Rating.find({ productName: regex })
+  },
+
+  findOneId: async (id) => {
+    return await Rating.findById(id)
+  },
+
+  updateOne: async (id, updateData) => {
+    return await Rating.findByIdAndUpdate(id, { $set: updateData }, { new: true })
+  },
+
+  deleteOne: async (id) => {
+    return await Rating.findByIdAndDelete(id)
+  },
+
+  findByProductId: async (productId) => {
+    return await Rating.find({ productId })
+  },
+
+  findByUserProduct: async (userId, productId) => {
+    return await Rating.findOne({ userId, productId })
+  },
+
   findByComposite: async (userId, orderId, productId) => {
-    // helper to find if a rating already exists for a user/order/product
-    const c = GET_DB().collection(RATING_COLLECTION_NAME)
-    try {
-      const query = { userId, productId }
-      if (orderId) query.orderId = orderId
-      else query.orderId = { $exists: false }
-      const r = await c.findOne(query)
-      return r
-    } catch {
-      return null
-    }
+    const query = { userId, productId }
+    if (orderId) query.orderId = orderId
+    else query.orderId = null
+    return await Rating.findOne(query)
   }
 }
+
+export default Rating

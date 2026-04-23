@@ -16,8 +16,10 @@ function CartPage() {
 
   useEffect(() => {
     const loadPromotions = async () => {
-      const allPromos = await fetchAllPromotionsAPI()
-      setPromotions(allPromos)
+      try {
+        const res = await fetchAllPromotionsAPI({ type: 'product', computedStatus: 'active' })
+        setPromotions(res.items || [])
+      } catch (err) { console.error(err) }
     }
     loadPromotions()
   }, [])
@@ -41,14 +43,17 @@ function CartPage() {
   }
 
   const getDiscountedPrice = (product) => {
-    const now = new Date()
     const applied = promotions.find(promo =>
-      promo.productIds?.includes(product._id) &&
-      new Date(promo.startDate) <= now &&
-      new Date(promo.endDate) >= now
+      (promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)) &&
+      promo.computedStatus === 'active'
     )
     if (applied) {
-      return Math.round(product.price * (1 - applied.discountPercent / 100))
+      const val = parseFloat(applied.discountValue || 0)
+      if (applied.discountType === 'percent') {
+        return Math.round(product.price * (1 - val / 100))
+      } else {
+        return Math.max(0, product.price - val)
+      }
     }
     return product.price
   }
@@ -176,7 +181,7 @@ function CartPage() {
                     </Box>
                     {applied && (
                       <Typography sx={{ fontSize: 12, color: '#DC2626', mt: 0.5 }}>
-                        Giảm {applied.discountPercent}% - {applied.title}
+                        Giảm {applied.discountValue}{applied.discountType === 'percent' ? '%' : 'đ'} - {applied.title}
                       </Typography>
                     )}
                   </Box>

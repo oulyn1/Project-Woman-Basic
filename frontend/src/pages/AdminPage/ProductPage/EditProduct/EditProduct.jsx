@@ -191,8 +191,14 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
         }))
       }
 
-      await updateProductAPI(productId, payload)
+      const updatedProduct = await updateProductAPI(productId, payload)
       setSnackbar({ open: true, message: 'Cập nhật thành công!', severity: 'success' })
+      // Optimistic UI: notify other admin components about the updated product
+      try {
+        window.dispatchEvent(new CustomEvent('PRODUCT_UPDATED', { detail: updatedProduct }))
+      } catch {
+        // ignore if event dispatch fails
+      }
       onSuccess()
     } catch (err) {
       setSnackbar({ open: true, message: 'Lỗi khi cập nhật!', severity: 'error' })

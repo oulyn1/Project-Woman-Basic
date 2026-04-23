@@ -1,26 +1,27 @@
-import { GET_DB } from '~/config/mongodb'
-import { ObjectId } from 'mongodb'
-
-const USER_COLLECTION = 'users'
+import User from './userModel'
 
 const findAll = async () => {
-  return GET_DB().collection(USER_COLLECTION)
-    .find({ role: 'customer' })
-    .project({ password: 0 })
-    .toArray()
+  return User.find({ role: 'customer' }).select('-password')
 }
 
 const search = async (q) => {
   const regex = new RegExp(q, 'i')
-  return GET_DB().collection(USER_COLLECTION)
-    .find({ role: 'customer', $or: [{ name: regex }, { fullName: regex }, { email: regex }] })
-    .project({ password: 0 })
-    .toArray()
+  const users = await User.find({
+    role: 'customer',
+    $or: [{ name: regex }, { email: regex }]
+  }).select('_id name email avatar')
+
+  // Map 'name' to 'fullName' as requested by user
+  return users.map(u => ({
+    _id: u._id,
+    fullName: u.name,
+    email: u.email,
+    avatar: u.avatar
+  }))
 }
 
 const findById = async (id) => {
-  return GET_DB().collection(USER_COLLECTION)
-    .findOne({ _id: new ObjectId(id), role: 'customer' }, { projection: { password: 0 } })
+  return User.findOne({ _id: id, role: 'customer' }).select('-password')
 }
 
 export const customerModel = { findAll, search, findById }

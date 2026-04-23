@@ -204,7 +204,7 @@ function Register() {
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{ marginTop: '46px' }}
+        sx={{ marginTop: '80px' }}
       >
         <Alert
           onClose={handleCloseSnackbar}

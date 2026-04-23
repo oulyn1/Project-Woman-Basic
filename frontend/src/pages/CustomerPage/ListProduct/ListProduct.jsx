@@ -33,7 +33,7 @@ function ListProduct() {
         ])
         setCategories(cats)
         setAllProducts(prodRes.data || [])
-        setPromotions(promos)
+        setPromotions(promos.items || [])
       } catch (err) { console.error(err) }
     }
     loadData()
@@ -57,12 +57,10 @@ function ListProduct() {
       //handled in sort later, but only in-stock
       result = result.filter(p => (p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0))
     } else if (categorySlug === 'sale') {
-      const now = new Date()
       result = result.filter(p => 
         promotions.some(promo => 
-          promo.productIds?.includes(p._id) &&
-          new Date(promo.startDate) <= now &&
-          new Date(promo.endDate) >= now
+          promo.computedStatus === 'active' &&
+          (promo.productIds?.includes('ALL') || promo.productIds?.includes(p._id))
         )
       )
     } else if (categorySlug && categorySlug !== 'all') {

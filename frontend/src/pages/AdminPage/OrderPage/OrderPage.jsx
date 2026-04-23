@@ -1,10 +1,11 @@
-import { Box, Typography, InputBase } from '@mui/material'
+import { Box, Typography, InputBase, FormControl, Select, MenuItem } from '@mui/material'
 import React, { useState } from 'react'
 import SearchIcon from '@mui/icons-material/Search'
 import TableOrder from '~/components/admin/TableOrder/TableOrder'
 
 function OrderPage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedStatus, setSelectedStatus] = useState('ALL')
 
   return (
     <Box
@@ -17,7 +18,7 @@ function OrderPage() {
         pb: 4
       }}
     >
-      {/* Header with Search */}
+      {/* Header with Search and Filter */}
       <Box sx={{ px: 5, py: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
           sx={{
@@ -39,10 +40,32 @@ function OrderPage() {
             sx={{ color: 'white', flex: 1 }}
           />
         </Box>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <Select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            displayEmpty
+            sx={{
+              color: 'white',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#66FF99' }
+            }}
+          >
+            <MenuItem value="ALL">Tất cả trạng thái</MenuItem>
+            <MenuItem value="pending">Chờ xác nhận</MenuItem>
+            <MenuItem value="confirmed">Đã xác nhận</MenuItem>
+            <MenuItem value="shipped">Đang giao</MenuItem>
+            <MenuItem value="delivered">Đã giao</MenuItem>
+            <MenuItem value="cancelled">Đã hủy</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       <Box sx={{ px: 5 }}>
-        <TableOrder searchQuery={searchQuery} />
+        <TableOrder searchQuery={searchQuery} statusFilter={selectedStatus} />
       </Box>
     </Box>
   )

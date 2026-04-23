@@ -32,7 +32,7 @@ import {
 } from '~/apis/orderAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
-const TableOrder = ({ searchQuery }) => {
+const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
   const [orders, setOrders] = useState([])
   const [page, setPage] = useState(0)
   const [rowsPerPage] = useState(10)
@@ -50,6 +50,7 @@ const TableOrder = ({ searchQuery }) => {
           : await fetchAllOrdersAPI()
         const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         setOrders(sortedData)
+        setPage(0)
       } catch {
         setOrders([])
         setSnackbar({ open: true, message: 'Lỗi khi tải đơn hàng!', severity: 'error' })
@@ -59,6 +60,11 @@ const TableOrder = ({ searchQuery }) => {
     }
     fetchOrders()
   }, [searchQuery])
+
+  const filteredOrders = React.useMemo(() => {
+    if (statusFilter === 'ALL') return orders
+    return orders.filter(o => o.status === statusFilter)
+  }, [orders, statusFilter])
 
   const handleAction = (event, orderId, action) => {
     event.stopPropagation()
@@ -97,7 +103,7 @@ const TableOrder = ({ searchQuery }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {orders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => {
+        {filteredOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => {
           const statusStyle = getStatusStyle(order.status)
           return (
             <Box
@@ -150,23 +156,57 @@ const TableOrder = ({ searchQuery }) => {
                 <Box sx={{ p: 3, pt: 0, backgroundColor: 'rgba(0,0,0,0.1)' }}>
                   <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
-                    <Box sx={{ flex: 1.5 }}>
-                      <Typography variant="overline" color="#555" fontWeight="bold">Sản phẩm đã đặt</Typography>
-                      <Stack spacing={1.5} sx={{ mt: 1 }}>
-                        {order.items.map((item, i) => (
-                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" color="#aaa">
-                              {item.product?.name || 'N/A'}
-                              {(item.variant?.size || item.size || item.variant?.color?.name || item.color)
-                                ? ` (${[item.variant?.size || item.size, item.variant?.color?.name || item.color].filter(Boolean).join(' / ')})`
-                                : ''}
-                              {` x${item.quantity}`}
-                            </Typography>
-                            <Typography variant="body2" color="#fff">{(item.price * item.quantity).toLocaleString('vi-VN')}₫</Typography>
+                        <Box sx={{ flex: 1.5 }}>
+                          <Typography variant="overline" color="#555" fontWeight="bold">Sản phẩm đã đặt</Typography>
+                          <Stack spacing={1.5} sx={{ mt: 1 }}>
+                            {order.items.map((item, i) => (
+                              <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <Box>
+                                  <Typography variant="body2" color="#aaa" sx={{ fontWeight: 500 }}>
+                                    {item.product?.name || 'N/A'} x{item.quantity}
+                                  </Typography>
+                                  <Typography variant="caption" color="#666" display="block">
+                                    {[item.size, item.color].filter(Boolean).join(' / ')}
+                                  </Typography>
+                                </Box>
+                                <Box sx={{ textAlign: 'right' }}>
+                                  {item.originalPrice > item.price && (
+                                    <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#555', display: 'block' }}>
+                                      {(item.originalPrice * item.quantity).toLocaleString()}đ
+                                    </Typography>
+                                  )}
+                                  <Typography variant="body2" color="#fff" sx={{ fontWeight: 'bold' }}>
+                                    {(item.price * item.quantity).toLocaleString()}đ
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            ))}
+                          </Stack>
+
+                          {/* Price Breakdown for Admin */}
+                          <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="caption" color="#555">Tạm tính:</Typography>
+                              <Typography variant="caption" color="#aaa">{(order.originalSubtotal || order.total).toLocaleString()}đ</Typography>
+                            </Box>
+                            {order.totalItemDiscount > 0 && (
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="caption" color="#555">Giảm giá sản phẩm:</Typography>
+                                <Typography variant="caption" color="#ef5350">-{order.totalItemDiscount.toLocaleString()}đ</Typography>
+                              </Box>
+                            )}
+                            {order.orderDiscount > 0 && (
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                <Typography variant="caption" color="#555">Mã giảm giá đơn:</Typography>
+                                <Typography variant="caption" color="#ef5350">-{order.orderDiscount.toLocaleString()}đ</Typography>
+                              </Box>
+                            )}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                              <Typography variant="body2" fontWeight="bold" color="#888">TỔNG CỘNG:</Typography>
+                              <Typography variant="body2" fontWeight="bold" color="#4caf50">{order.total.toLocaleString()}đ</Typography>
+                            </Box>
                           </Box>
-                        ))}
-                      </Stack>
-                    </Box>
+                        </Box>
 
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="overline" color="#555" fontWeight="bold">Thông tin giao hàng</Typography>
@@ -220,7 +260,7 @@ const TableOrder = ({ searchQuery }) => {
         })}
       </Stack>
 
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={orders.length} onChangePage={(_, p) => setPage(p)} />
+      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={filteredOrders.length} onChangePage={(_, p) => setPage(p)} />
 
       {/* Confirm Dialog */}
       <Dialog

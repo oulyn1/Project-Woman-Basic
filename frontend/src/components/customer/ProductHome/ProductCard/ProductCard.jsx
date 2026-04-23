@@ -21,19 +21,30 @@ const ProductCard = ({ product, promotions = [] }) => {
 
   const now = new Date()
   const highestPromotion = useMemo(() => {
-    const active = promotions.filter(promo =>
-      promo.productIds?.includes(product._id) &&
-      new Date(promo.startDate) <= now &&
-      new Date(promo.endDate) >= now
-    )
-    if (active.length === 0) return null
-    return active.reduce((prev, curr) => (prev.discountPercent > curr.discountPercent) ? prev : curr)
-  }, [product._id, promotions])
+    const active = promotions.filter(promo => {
+      const isTargeted = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id);
+      return isTargeted && promo.computedStatus === 'active';
+    });
 
-  const discountPercent = highestPromotion ? highestPromotion.discountPercent : 0
-  const finalPrice = discountPercent > 0 
-    ? Math.round(product.price * (1 - discountPercent / 100))
-    : product.price
+    if (active.length === 0) return null;
+
+    // Logic: Find the one that gives the maximum absolute discount
+    return active.reduce((prev, curr) => {
+      const getVal = (p) => p.discountType === 'percent' 
+        ? (product.price * p.discountValue / 100) 
+        : p.discountValue;
+      return getVal(prev) > getVal(curr) ? prev : curr;
+    });
+  }, [product._id, product.price, promotions])
+
+  const discountAmount = useMemo(() => {
+    if (!highestPromotion) return 0;
+    return highestPromotion.discountType === 'percent'
+      ? Math.round(product.price * (highestPromotion.discountValue / 100))
+      : highestPromotion.discountValue;
+  }, [highestPromotion, product.price])
+
+  const finalPrice = product.price - discountAmount;
 
   const uniqueColors = useMemo(() => {
     const colors = []
@@ -61,7 +72,7 @@ const ProductCard = ({ product, promotions = [] }) => {
       transition: '0.3s'
     }}>
       {/* Discount Badge */}
-      {discountPercent > 0 && (
+      {highestPromotion && (
         <Box sx={{
           position: 'absolute',
           top: 8,
@@ -75,7 +86,9 @@ const ProductCard = ({ product, promotions = [] }) => {
           fontSize: '0.75rem',
           fontWeight: 'bold'
         }}>
-          -{discountPercent}%
+          -{highestPromotion.discountType === 'percent' 
+            ? `${highestPromotion.discountValue}%` 
+            : `${(highestPromotion.discountValue/1000)}k`}
         </Box>
       )}
 
@@ -150,7 +163,7 @@ const ProductCard = ({ product, promotions = [] }) => {
           <Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#ad2a36' }}>
             {finalPrice.toLocaleString()} ₫
           </Typography>
-          {discountPercent > 0 && (
+          {highestPromotion && (
             <Typography sx={{ fontSize: '0.85rem', color: '#999', textDecoration: 'line-through' }}>
               {product.price.toLocaleString()} ₫
             </Typography>

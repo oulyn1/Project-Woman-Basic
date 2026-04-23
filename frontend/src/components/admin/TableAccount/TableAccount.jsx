@@ -29,7 +29,7 @@ import ShieldIcon from '@mui/icons-material/Shield'
 import { AllUsersAPI, searchUserAPI, deleteUserAPI } from '~/apis/userAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
-const TableAccount = ({ onEditAccount, searchQuery }) => {
+const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTrigger = 0 }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [rows, setRows] = useState([])
@@ -49,13 +49,19 @@ const TableAccount = ({ onEditAccount, searchQuery }) => {
           ? await AllUsersAPI(token)
           : await searchUserAPI(searchQuery, token)
         setRows(data)
+        setPage(0) // Reset page on new data
       } catch {
         setRows([])
         setSnackbar({ open: true, message: 'Lỗi khi tải dữ liệu!', severity: 'error' })
       }
     }
     fetchUsers()
-  }, [searchQuery, token])
+  }, [searchQuery, token, fetchTrigger])
+
+  const filteredRows = React.useMemo(() => {
+    if (roleFilter === 'ALL') return rows
+    return rows.filter(r => r.role === roleFilter)
+  }, [rows, roleFilter])
 
   const handleOpenMenu = (event, id) => {
     event.stopPropagation()
@@ -94,7 +100,7 @@ const TableAccount = ({ onEditAccount, searchQuery }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+        {filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
           <Box
             key={row._id}
             sx={{
@@ -191,7 +197,7 @@ const TableAccount = ({ onEditAccount, searchQuery }) => {
           </Box>
         ))}
 
-        {rows.length === 0 && (
+        {filteredRows.length === 0 && (
           <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>
             Không tìm thấy tài khoản nào.
           </Typography>
@@ -201,7 +207,7 @@ const TableAccount = ({ onEditAccount, searchQuery }) => {
       <TablePageControls
         page={page}
         rowsPerPage={rowsPerPage}
-        count={rows.length}
+        count={filteredRows.length}
         onChangePage={(_, p) => setPage(p)}
       />
 

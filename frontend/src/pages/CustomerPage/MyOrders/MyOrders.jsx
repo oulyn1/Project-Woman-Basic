@@ -327,36 +327,45 @@ const MyOrders = () => {
                 <Typography variant="subtitle2">Sản phẩm</Typography>
                 <Stack spacing={1} sx={{ mt: 1 }}>
                   {detailDialog.order.items.map((it, idx) => {
-                    const variantLabel = [
-                      it.variant?.size || it.size,
-                      it.variant?.color?.name || it.color
-                    ].filter(Boolean).join(' / ')
+                    const variantLabel = [it.size, it.color].filter(Boolean).join(' / ')
                     return (
-                    <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                      <Avatar src={it.product?.image} variant="rounded" sx={{ width: 56, height: 56 }} />
-                      <Box sx={{ flex: 1 }}>
-                        <Typography>{it.product?.name || it.productId}</Typography>
-                        {variantLabel && (
-                          <Typography variant="caption" color="text.secondary" display="block">
-                            Phân loại: {variantLabel}
-                          </Typography>
-                        )}
-                        <Typography variant="caption" color="text.secondary">
-                          {it.quantity} x {Number(it.price).toLocaleString('vi-VN')}₫
+                      <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
+                        <Avatar src={it.product?.image} variant="rounded" sx={{ width: 56, height: 56 }} />
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" fontWeight="500">{it.product?.name || it.productId}</Typography>
+                          {variantLabel && (
+                            <Typography variant="caption" color="text.secondary" display="block">
+                              Phân loại: {variantLabel}
+                            </Typography>
+                          )}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              {it.quantity} x
+                            </Typography>
+                            {it.originalPrice > it.price && (
+                              <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#999' }}>
+                                {it.originalPrice?.toLocaleString()}đ
+                              </Typography>
+                            )}
+                            <Typography variant="caption" fontWeight="bold" sx={{ color: '#ad2a36' }}>
+                              {it.price?.toLocaleString()}đ
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                          {(it.quantity * it.price).toLocaleString()}đ
                         </Typography>
+                        {detailDialog.order.status === 'confirmed' && (
+                          <Tooltip title="Đánh giá sản phẩm này">
+                            <IconButton
+                              onClick={() => setRatingDialog({ open: true, productId: it.productId, productName: it.product?.name, image: it.product?.image })}
+                              sx={{ ml: 1, p: 0 }}
+                            >
+                              <StarIcon sx={{ color: 'gray', '&:hover': { color: 'gold' } }} fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
-                      <Typography sx={{ fontWeight: 700 }}>{(it.quantity * it.price).toLocaleString('vi-VN')}₫</Typography>
-                      {detailDialog.order.status === 'confirmed' && (
-                        <Tooltip title="Đánh giá sản phẩm này">
-                          <IconButton
-                            onClick={() => setRatingDialog({ open: true, productId: it.productId, productName: it.product?.name, image: it.product?.image })}
-                            sx={{ ml: 1, p: 0, bgcolor: 'transparent' }}
-                          >
-                            <StarIcon sx={{ color: 'gray', '&:hover': { color: 'gold' } }} fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
                     )
                   })}
                 </Stack>
@@ -364,14 +373,34 @@ const MyOrders = () => {
 
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2">Người nhận</Typography>
-                <Typography>{detailDialog.order.buyerInfo?.name}</Typography>
-                <Typography variant="caption" color="text.secondary">{detailDialog.order.buyerInfo?.phone}</Typography>
+                <Typography variant="body2">{detailDialog.order.buyerInfo?.name}</Typography>
+                <Typography variant="caption" color="text.secondary" display="block">{detailDialog.order.buyerInfo?.phone}</Typography>
                 <Typography variant="caption" color="text.secondary" display="block">{detailDialog.order.buyerInfo?.address}</Typography>
               </Box>
 
-              <Box sx={{ mb: 1 }}>
-                <Typography variant="subtitle2">Tổng tiền</Typography>
-                <Typography variant="h6" sx={{ color: '#cc3300' }}>{Number(detailDialog.order.total).toLocaleString('vi-VN')}₫</Typography>
+              <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed #ddd' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary">Tạm tính:</Typography>
+                  <Typography variant="body2">{(detailDialog.order.originalSubtotal || detailDialog.order.total).toLocaleString()}đ</Typography>
+                </Box>
+                {detailDialog.order.totalItemDiscount > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Giảm giá sản phẩm:</Typography>
+                    <Typography variant="body2" color="#ad2a36">-{detailDialog.order.totalItemDiscount.toLocaleString()}đ</Typography>
+                  </Box>
+                )}
+                {detailDialog.order.orderDiscount > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary">Mã giảm giá đơn:</Typography>
+                    <Typography variant="body2" color="#ad2a36">-{detailDialog.order.orderDiscount.toLocaleString()}đ</Typography>
+                  </Box>
+                )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1.5 }}>
+                  <Typography variant="subtitle1" fontWeight="bold">Tổng cộng:</Typography>
+                  <Typography variant="subtitle1" fontWeight="bold" sx={{ color: '#ad2a36' }}>
+                    {detailDialog.order.total?.toLocaleString()}đ
+                  </Typography>
+                </Box>
               </Box>
             </>
           )}
@@ -394,7 +423,7 @@ const MyOrders = () => {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} sx={{ mt: '80px' }}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>

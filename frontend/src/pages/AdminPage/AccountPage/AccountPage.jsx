@@ -1,4 +1,4 @@
-import { Box, Button, Typography, InputBase } from '@mui/material'
+import { Box, Button, Typography, InputBase, MenuItem, Select, FormControl, InputLabel } from '@mui/material'
 import React, { useState } from 'react'
 import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
 import SearchIcon from '@mui/icons-material/Search'
@@ -11,6 +11,9 @@ function AccountPage() {
   const [openEditModal, setOpenEditModal] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedRole, setSelectedRole] = useState('ALL')
+
+  const [fetchTrigger, setFetchTrigger] = useState(0)
 
   const handleAddClick = () => setOpenAddModal(true)
   
@@ -22,6 +25,7 @@ function AccountPage() {
   const handleSuccess = () => {
     setOpenAddModal(false)
     setOpenEditModal(false)
+    setFetchTrigger(prev => prev + 1)
   }
 
   return (
@@ -35,7 +39,7 @@ function AccountPage() {
         pb: 4
       }}
     >
-      {/* Header with Search and Add Button */}
+      {/* Header with Search, Filter and Add Button */}
       <Box sx={{ px: 5, py: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
         <Box
           sx={{
@@ -57,6 +61,26 @@ function AccountPage() {
             sx={{ color: 'white', flex: 1 }}
           />
         </Box>
+
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <Select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            displayEmpty
+            sx={{
+              color: 'white',
+              backgroundColor: 'rgba(255,255,255,0.05)',
+              '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#66FF99' }
+            }}
+          >
+            <MenuItem value="ALL">Tất cả vai trò</MenuItem>
+            <MenuItem value="admin">Quản trị viên</MenuItem>
+            <MenuItem value="employee">Nhân viên</MenuItem>
+            <MenuItem value="customer">Khách hàng</MenuItem>
+          </Select>
+        </FormControl>
         
         <Button
           variant="outlined"
@@ -67,7 +91,7 @@ function AccountPage() {
             borderColor: '#333',
             textTransform: 'none',
             borderRadius: '8px',
-            height: '46px',
+            height: '40px',
             px: 3,
             '&:hover': { borderColor: '#444', backgroundColor: '#1a1a1a' }
           }}
@@ -80,6 +104,8 @@ function AccountPage() {
         <TableAccount 
           onEditAccount={handleEditClick} 
           searchQuery={searchQuery}
+          roleFilter={selectedRole}
+          fetchTrigger={fetchTrigger}
         />
       </Box>
 

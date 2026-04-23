@@ -5,6 +5,8 @@ import exitHook from 'async-exit-hook'
 import { ratingModel } from '~/models/ratingModel.js'
 
 import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
+import { CONNECT_MONGOOSE, CLOSE_MONGOOSE } from '~/config/mongoose'
+
 
 import { env } from '~/config/environment'
 import { APIs_V1 } from '~/routes/v1'
@@ -27,6 +29,7 @@ const START_SERVER = () => {
 
   exitHook(() => {
     CLOSE_DB()
+    CLOSE_MONGOOSE()
   })
 }
 
@@ -34,6 +37,7 @@ const START_SERVER = () => {
 (async () => {
   try {
     await CONNECT_DB()
+    await CONNECT_MONGOOSE()
     console.log('Connect to Database')
     // Ensure rating index uniqueness
     if (ratingModel?.ensureUniqueIndex) {
@@ -53,4 +57,3 @@ const START_SERVER = () => {
 //     console.error(error)
 //     process.exit(0)
 //   })
-

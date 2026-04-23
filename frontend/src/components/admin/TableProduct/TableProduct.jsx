@@ -31,7 +31,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import { fetchAllProductsAPI, deleteProductAPI } from '~/apis/productAPIs'
 import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
 
-const TableProduct = ({ onEditProduct, searchQuery, fetchTrigger }) => {
+const TableProduct = ({ onEditProduct, searchQuery, categoryId = 'ALL', fetchTrigger }) => {
   const [rows, setRows] = useState([])
   const [categories, setCategories] = useState([])
   const [expandedId, setExpandedId] = useState(null)
@@ -54,7 +54,7 @@ const TableProduct = ({ onEditProduct, searchQuery, fetchTrigger }) => {
       try {
         const [cats, prods] = await Promise.all([
           fetchAllCategorysAPI(),
-          fetchAllProductsAPI({ q: searchQuery })
+          fetchAllProductsAPI({ q: searchQuery, limit: 200 }) // load all, filter client-side
         ])
         setCategories(cats)
         setRows(prods.data || [])
@@ -63,6 +63,39 @@ const TableProduct = ({ onEditProduct, searchQuery, fetchTrigger }) => {
     }
     initData()
   }, [searchQuery, fetchTrigger])
+
+  // Listen for optimistic updates from add/edit operations
+  useEffect(() => {
+    const handleAdded = (e) => {
+      const newProduct = e.detail
+      if (!newProduct) return
+      // Prepend new product to the list, avoid duplicates
+      setRows(prev => {
+        const exists = prev.find(p => p._id === newProduct._id)
+        if (exists) return prev.map(p => p._id === newProduct._id ? newProduct : p)
+        return [newProduct, ...prev]
+      })
+    }
+
+    const handleUpdated = (e) => {
+      const updated = e.detail
+      if (!updated) return
+      setRows(prev => prev.map(p => (p._id === updated._id ? updated : p)))
+    }
+
+    window.addEventListener('PRODUCT_ADDED', handleAdded)
+    window.addEventListener('PRODUCT_UPDATED', handleUpdated)
+    return () => {
+      window.removeEventListener('PRODUCT_ADDED', handleAdded)
+      window.removeEventListener('PRODUCT_UPDATED', handleUpdated)
+    }
+  }, [])
+
+  // Client-side category filter
+  const filteredRows = React.useMemo(() => {
+    if (categoryId === 'ALL') return rows
+    return rows.filter(p => p.categoryId?.toString() === categoryId.toString())
+  }, [rows, categoryId])
 
   const getCategoryName = (id) => categories.find(cat => cat._id === id)?.name || 'Không có'
 
@@ -116,7 +149,10 @@ const TableProduct = ({ onEditProduct, searchQuery, fetchTrigger }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      {rows.map((product) => {
+      {filteredRows.length === 0 && (
+        <Typography sx={{ color: '#888', textAlign: 'center', py: 4 }}>Không tìm thấy sản phẩm nào.</Typography>
+      )}
+      {filteredRows.map((product) => {
         const isExpanded = expandedId === product._id
         const totalStock = product.variants?.reduce((s, v) => s + (v.stock || 0), 0) || 0
         const { sizes, colors } = getMatrixHeader(product.variants || [])

@@ -50,12 +50,10 @@ function ProductDetail() {
           setAverageStar(total / ratingsData.length)
         }
 
-        const now = new Date()
-        const appliedPromos = promos.filter(
-          p => p.productIds?.includes(prodData._id) &&
-               new Date(p.startDate) <= now &&
-               new Date(p.endDate) >= now
-        )
+        const appliedPromos = promos.items?.filter(
+          p => (p.productIds?.includes('ALL') || p.productIds?.includes(prodData._id)) &&
+               p.computedStatus === 'active'
+        ) || []
         setPromotions(appliedPromos)
       } catch { /* error handled in layout */ }
       setLoading(false)
@@ -137,11 +135,24 @@ function ProductDetail() {
     })
   }
 
+  const bestPromotion = useMemo(() => {
+    if (!promotions.length || !product) return null
+    return promotions.reduce((prev, curr) => {
+      const getVal = (p) => p.discountType === 'percent' 
+        ? (product.price * p.discountValue / 100) 
+        : p.discountValue;
+      return getVal(prev) > getVal(curr) ? prev : curr;
+    })
+  }, [promotions, product])
+
   const finalPrice = useMemo(() => {
     if (!product) return 0
-    if (!promotions.length) return product.price
-    return Math.round(product.price * (1 - promotions[0].discountPercent / 100))
-  }, [product, promotions])
+    if (!bestPromotion) return product.price
+    const discount = bestPromotion.discountType === 'percent' 
+      ? Math.round(product.price * (bestPromotion.discountValue / 100))
+      : bestPromotion.discountValue
+    return product.price - discount
+  }, [product, bestPromotion])
 
   if (loading || !product) {
     return (
@@ -195,8 +206,13 @@ function ProductDetail() {
                 <Typography sx={{ textDecoration: 'line-through', color: '#999' }}>{formatCurrency(product.price)}</Typography>
               )}
             </Box>
-            {promotions[0] && (
-              <Chip label={`Giảm ${promotions[0].discountPercent}% - ${promotions[0].title}`} color="error" size="small" sx={{ mt: 1, fontWeight: 'bold' }} />
+            {bestPromotion && (
+              <Chip 
+                label={`Giảm ${bestPromotion.discountValue}${bestPromotion.discountType === 'percent' ? '%' : 'đ'} - ${bestPromotion.title}`} 
+                color="error" 
+                size="small" 
+                sx={{ mt: 1, fontWeight: 'bold' }} 
+              />
             )}
           </Box>
 
@@ -320,6 +336,7 @@ function ProductDetail() {
         autoHideDuration={3000} 
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ mt: '80px' }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbar.message}

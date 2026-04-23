@@ -153,8 +153,14 @@ function AddProduct({ open, onClose, onSuccess }) {
         }))
       }
 
-      await createProductAPI(payload)
+      const createdProduct = await createProductAPI(payload)
       setSnackbar({ open: true, message: 'Thêm sản phẩm thành công!', severity: 'success' })
+      // Optimistic UI: notify other admin components about the new product
+      try {
+        window.dispatchEvent(new CustomEvent('PRODUCT_ADDED', { detail: createdProduct }))
+      } catch {
+        // ignore if event dispatch fails
+      }
       onSuccess()
     } catch (err) {
       setSnackbar({ open: true, message: err.response?.data?.message || 'Có lỗi xảy ra', severity: 'error' })

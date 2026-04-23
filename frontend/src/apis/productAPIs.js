@@ -20,7 +20,11 @@ export const uploadImageToCloudinaryAPI = async (file) => {
 }
 
 export const fetchAllProductsAPI = async (queryParams = {}) => {
-  const params = new URLSearchParams(queryParams).toString()
+  // Filter out undefined/null values so they don't get serialized as "undefined"
+  const cleanParams = Object.fromEntries(
+    Object.entries(queryParams).filter(([_, v]) => v !== undefined && v !== null && v !== '')
+  )
+  const params = new URLSearchParams(cleanParams).toString()
   const request = await axios.get(`${API_ROOT}/v1/product/?${params}`)
   return request.data
 }

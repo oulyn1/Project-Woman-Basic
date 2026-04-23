@@ -47,33 +47,62 @@ function ThankYou() {
 
         <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>Sản phẩm đã đặt:</Typography>
         {order.items?.map((item, idx) => {
+          const product = item.product || { name: 'Sản phẩm' }
           const variantLabel = [
-            item.variant?.size || item.size,
-            item.variant?.color?.name || item.variant?.color || item.color
+            item.size,
+            item.color
           ].filter(Boolean).join(' / ')
 
           return (
-            <Box key={`${item.productId}-${item.variantId || idx}`} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Box key={`${item.productId}-${item.variantId || idx}`} sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
               <Box>
-                <Typography variant="body2">{item.product?.name || item.productId} x {item.quantity}</Typography>
+                <Typography variant="body2" fontWeight="500">{product.name} x {item.quantity}</Typography>
                 {variantLabel && (
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" display="block">
                     Phân loại: {variantLabel}
                   </Typography>
                 )}
               </Box>
-              <Typography variant="body2" sx={{ color: '#cc3300' }}>
-                {(item.price * item.quantity).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-              </Typography>
+              <Box textAlign="right">
+                {item.originalPrice > item.price && (
+                  <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#999', display: 'block' }}>
+                    {(item.originalPrice * item.quantity).toLocaleString()}đ
+                  </Typography>
+                )}
+                <Typography variant="body2" sx={{ color: '#ad2a36', fontWeight: 'bold' }}>
+                  {(item.price * item.quantity).toLocaleString()}đ
+                </Typography>
+              </Box>
             </Box>
           )
         })}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3, borderTop: '1px solid #eee', pt: 2 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Tổng tiền:</Typography>
-          <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#cc3300' }}>
-            {order.total.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
-          </Typography>
+        <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed #ddd' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="body2" color="text.secondary">Tạm tính:</Typography>
+            <Typography variant="body2">{(order.originalSubtotal || order.total).toLocaleString()}đ</Typography>
+          </Box>
+          
+          {(order.totalItemDiscount > 0) && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">Giảm giá sản phẩm:</Typography>
+              <Typography variant="body2" color="#ad2a36">-{order.totalItemDiscount.toLocaleString()}đ</Typography>
+            </Box>
+          )}
+
+          {(order.orderDiscount > 0) && (
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary">Mã giảm giá đơn:</Typography>
+              <Typography variant="body2" color="#ad2a36">-{order.orderDiscount.toLocaleString()}đ</Typography>
+            </Box>
+          )}
+
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Tổng cộng:</Typography>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#ad2a36' }}>
+              {order.total.toLocaleString()}đ
+            </Typography>
+          </Box>
         </Box>
 
         <Button

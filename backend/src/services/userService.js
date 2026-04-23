@@ -14,7 +14,7 @@ const register = async (data) => {
   if (existed) throw new ApiError(StatusCodes.CONFLICT, 'Email đã tồn tại')
 
   const createdUser = await userModel.createNew(data)
-  const newUser = await userModel.findOneId(createdUser.insertedId)
+  const newUser = await userModel.findOneId(createdUser._id)
 
   // Ẩn password trước khi trả về
   delete newUser.password
@@ -106,11 +106,9 @@ const createUser = async (data) => {
   if (!data.password) {
     data.password = '123456'
   }
-  data.role = data.role || 'user' // gán role mặc định nếu chưa có
+  data.role = data.role || 'customer' // gán role mặc định nếu chưa có
   const createdUser = await userModel.createNew(data)
-  const newUser = await userModel.findOneId(createdUser.insertedId)
-  delete newUser.password
-  return newUser
+  return createdUser
 }
 const deleteOne = async (productId) => {
   try {

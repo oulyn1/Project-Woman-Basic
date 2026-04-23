@@ -1,235 +1,131 @@
-import Joi from 'joi'
-import { ObjectId } from 'mongodb'
-import { GET_DB } from '~/config/mongodb'
+import mongoose from 'mongoose'
 
-const ORDER_COLLECTION_NAME = 'orders'
+const orderItemSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  variantId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  size: { type: String, default: '' },
+  color: { type: String, default: '' },
+  originalPrice: { type: Number, default: 0 },
+  price: { type: Number, required: true, min: 0 }, // This is finalPrice
+  quantity: { type: Number, required: true, min: 1 },
+  appliedPromoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Promotion', default: null }
+}, { _id: false })
 
-// Schema validate với Joi
-export const ORDER_COLLECTION_SCHEMA = Joi.object({
-  userId: Joi.string().allow(null, '').optional(),
-  buyerInfo: Joi.object({
-    name: Joi.string().required(),
-    phone: Joi.string().required(),
-    email: Joi.string().email().required(),
-    address: Joi.string().required()
-  }).required(),
-  items: Joi.array().items(
-    Joi.object({
-      productId: Joi.string().required(),
-      variantId: Joi.string().optional().allow(null, ''),
-      size: Joi.string().optional().allow(null, ''),
-      color: Joi.string().optional().allow(null, ''),
-      price: Joi.number().min(0).required(),
-      quantity: Joi.number().integer().min(1).required()
-    })
-  ).min(1).required(),
-  total: Joi.number().min(0).required(),
-  status: Joi.string()
-    .valid('pending', 'confirmed', 'shipped', 'delivered', 'cancelled')
-    .default('pending'),
-  createdAt: Joi.date().timestamp('javascript').default(Date.now),
-  updatedAt: Joi.date().timestamp('javascript').default(Date.now)
+const orderSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  buyerInfo: {
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    email: { type: String, required: true },
+    address: { type: String, required: true }
+  },
+  items: [orderItemSchema],
+  originalSubtotal: { type: Number, default: 0 },
+  totalItemDiscount: { type: Number, default: 0 },
+  orderDiscount: { type: Number, default: 0 },
+  appliedOrderPromoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Promotion', default: null },
+  total: { type: Number, required: true, min: 0 },
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  }
+}, {
+  timestamps: true,
+  collection: 'orders'
 })
 
-// Validate trước khi tạo
-const validateBeforeCreate = async (data) => {
-  return await ORDER_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
-}
-
-// Tạo mới đơn hàng
-const createNew = async (data) => {
-  const validData = await validateBeforeCreate(data)
-  validData.userId = new ObjectId(validData.userId)
-  validData.items = validData.items.map(item => ({
-    ...item,
-    productId: new ObjectId(item.productId),
-    variantId: item.variantId ? new ObjectId(item.variantId) : null
-  }))
-
-  const createdOrder = await GET_DB().collection(ORDER_COLLECTION_NAME).insertOne(validData)
-  return createdOrder
-}
-
-// Lấy chi tiết đơn hàng
-const getDetails = async (id) => {
-  return await GET_DB().collection(ORDER_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
-}
-
-// Lấy chi tiết đơn hàng + thông tin sản phẩm
-const getDetailsWithProducts = async (id) => {
-  const result = await GET_DB().collection(ORDER_COLLECTION_NAME).aggregate([
-    { $match: { _id: new ObjectId(id) } },
-    { $unwind: "$items" },
-    {
-      $lookup: {
-        from: "products",
-        localField: "items.productId",
-        foreignField: "_id",
-        as: "productData"
-      }
-    },
-    { $unwind: "$productData" },
-    {
-      $group: {
-        _id: "$_id",
-        buyerInfo: { $first: "$buyerInfo" },
-        status: { $first: "$status" },
-        total: { $first: "$total" },
-        createdAt: { $first: "$createdAt" },
-        updatedAt: { $first: "$updatedAt" },
-        items: {
-          $push: {
-            productId: "$items.productId",
-            variantId: "$items.variantId",
-            size: "$items.size",
-            color: "$items.color",
-            quantity: "$items.quantity",
-            price: "$items.price",
-            product: "$productData",
-            variant: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: "$productData.variants",
-                    as: "v",
-                    cond: {
-                      $or: [
-                        { $eq: [{ $toString: "$$v._id" }, { $toString: "$items.variantId" }] },
-                        { $eq: [{ $toString: "$$v.variantId" }, { $toString: "$items.variantId" }] }
-                      ]
-                    }
-                  }
-                },
-                0
-              ]
-            }
-          }
-        }
-      }
-    }
-  ]).toArray()
-
-  return result[0] || null
-}
-
-const getAllWithProducts = async (filter = {}) => {
-  if (filter.userId) filter.userId = new ObjectId(filter.userId)
-
-  const result = await GET_DB().collection(ORDER_COLLECTION_NAME).aggregate([
-    { $match: filter },
-    { $unwind: "$items" },
-    {
-      $lookup: {
-        from: "products",
-        localField: "items.productId",
-        foreignField: "_id",
-        as: "productData"
-      }
-    },
-    { $unwind: "$productData" },
-    {
-      $group: {
-        _id: "$_id",
-        userId: { $first: "$userId" },
-        buyerInfo: { $first: "$buyerInfo" },
-        status: { $first: "$status" },
-        total: { $first: "$total" },
-        createdAt: { $first: "$createdAt" },
-        updatedAt: { $first: "$updatedAt" },
-        items: {
-          $push: {
-            productId: "$items.productId",
-            variantId: "$items.variantId",
-            size: "$items.size",
-            color: "$items.color",
-            quantity: "$items.quantity",
-            price: "$items.price",
-            product: "$productData",
-            variant: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: "$productData.variants",
-                    as: "v",
-                    cond: {
-                      $or: [
-                        { $eq: [{ $toString: "$$v._id" }, { $toString: "$items.variantId" }] },
-                        { $eq: [{ $toString: "$$v.variantId" }, { $toString: "$items.variantId" }] }
-                      ]
-                    }
-                  }
-                },
-                0
-              ]
-            }
-          }
-        }
-      }
-    }
-  ]).toArray()
-
-  return result
-}
-
-// Các function khác giữ nguyên
-const getAll = async (filter = {}) => {
-  if (filter.userId) filter.userId = new ObjectId(filter.userId)
-  return await GET_DB().collection(ORDER_COLLECTION_NAME).find(filter).toArray()
-}
-
-const deleteOne = async (orderId) => {
-  return await GET_DB().collection(ORDER_COLLECTION_NAME).deleteOne({ _id: new ObjectId(orderId) })
-}
-
-export const search = async (query) => {
-  const regex = new RegExp(query, 'i')
-  const orders = await GET_DB().collection(ORDER_COLLECTION_NAME).find({
-    $or: [
-      { 'buyerInfo.name': regex },
-      { 'buyerInfo.email': regex },
-      { status: regex }
-    ]
-  }).toArray()
-
-  // Không throw lỗi, trả về mảng rỗng nếu không có kết quả
-  return orders || []
-}
-
-const updateOne = async (orderId, updateData) => {
-  updateData.updatedAt = Date.now()
-  const result = await GET_DB().collection(ORDER_COLLECTION_NAME).findOneAndUpdate(
-    { _id: new ObjectId(orderId) },
-    { $set: updateData },
-    { returnDocument: 'after' }
-  )
-  return result || null
-}
-
-export const searchByUser = async (userId, query) => {
-  const regex = new RegExp(query, 'i')
-
-  const orders = await GET_DB().collection(ORDER_COLLECTION_NAME).find({
-    userId: new ObjectId(userId),
-    $or: [
-      { 'buyerInfo.name': regex },
-      { 'buyerInfo.email': regex },
-      { status: regex }
-    ]
-  }).toArray()
-
-  return orders || []
-}
+const Order = mongoose.model('Order', orderSchema)
 
 export const orderModel = {
-  ORDER_COLLECTION_NAME,
-  ORDER_COLLECTION_SCHEMA,
-  createNew,
-  getDetails,
-  getDetailsWithProducts,
-  getAllWithProducts,
-  getAll,
-  deleteOne,
-  search,
-  updateOne,
-  searchByUser
+  ORDER_COLLECTION_NAME: 'orders',
+  
+  createNew: async (data) => {
+    return await Order.create(data)
+  },
+
+  getDetails: async (id) => {
+    return await Order.findById(id)
+  },
+
+  getDetailsWithProducts: async (id) => {
+    const order = await Order.findById(id).populate('items.productId')
+    if (!order) return null
+    
+    const orderObj = order.toObject()
+    orderObj.items = orderObj.items.map(item => {
+      const product = item.productId
+      const variant = (product?.variants && item.variantId) 
+        ? product.variants.find(v => v._id.toString() === item.variantId.toString())
+        : null
+      return {
+        ...item,
+        productId: product?._id || item.productId,
+        product: product || null,
+        variant: variant || null
+      }
+    })
+    return orderObj
+  },
+
+  getAllWithProducts: async (filter = {}) => {
+    const orders = await Order.find(filter).populate('items.productId').sort({ createdAt: -1 })
+    return orders.map(order => {
+      const orderObj = order.toObject()
+      orderObj.items = orderObj.items.map(item => {
+        const product = item.productId
+        const variant = (product?.variants && item.variantId) 
+          ? product.variants.find(v => v._id.toString() === item.variantId.toString())
+          : null
+        return {
+          ...item,
+          productId: product?._id || item.productId,
+          product: product || null,
+          variant: variant || null
+        }
+      })
+      return orderObj
+    })
+  },
+
+  getAll: async (filter = {}) => {
+    return await Order.find(filter).sort({ createdAt: -1 })
+  },
+
+  deleteOne: async (id) => {
+    return await Order.findByIdAndDelete(id)
+  },
+
+  search: async (query) => {
+    const regex = new RegExp(query, 'i')
+    return await Order.find({
+      $or: [
+        { 'buyerInfo.name': regex },
+        { 'buyerInfo.email': regex },
+        { status: regex }
+      ]
+    })
+  },
+
+  updateOne: async (id, data) => {
+    return await Order.findByIdAndUpdate(id, { $set: data }, { new: true })
+  },
+
+  searchByUser: async (userId, query) => {
+    const regex = new RegExp(query, 'i')
+    return await Order.find({
+      userId,
+      $or: [
+        { 'buyerInfo.name': regex },
+        { 'buyerInfo.email': regex },
+        { status: regex }
+      ]
+    })
+  },
+
+  countDocuments: async (filter) => {
+    return await Order.countDocuments(filter)
+  }
 }
+
+export default Order

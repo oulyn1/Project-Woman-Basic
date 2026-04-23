@@ -2,6 +2,7 @@ import { orderModel } from '~/models/orderModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { productModel } from '~/models/productModel'
+import Promotion from '~/models/promotionModel'
 
 const normalizeId = (value) => {
   if (!value) return ''
@@ -14,7 +15,14 @@ const createNew = async (reqBody, userFromToken) => {
   const newOrder = {
     userId: reqBody.userId || userFromToken?._id || userFromToken?.id || null,
     buyerInfo: reqBody.buyerInfo,
-    items: reqBody.items,
+    items: (reqBody.items || []).map(item => ({
+      ...item,
+      appliedPromoId: item.appliedPromo?._id || item.appliedPromoId || null
+    })),
+    originalSubtotal: reqBody.originalSubtotal,
+    totalItemDiscount: reqBody.totalItemDiscount,
+    orderDiscount: reqBody.orderDiscount,
+    appliedOrderPromoId: reqBody.appliedOrderPromoId,
     total: reqBody.total,
     status: 'pending',
     createdAt: Date.now(),
@@ -22,8 +30,29 @@ const createNew = async (reqBody, userFromToken) => {
   }
 
   const createdOrder = await orderModel.createNew(newOrder)
+
+  // Increment usage count for promotions
+  const promoIdsToIncrement = new Set()
+  if (newOrder.appliedOrderPromoId) {
+    promoIdsToIncrement.add(newOrder.appliedOrderPromoId.toString())
+  }
+  (newOrder.items || []).forEach(item => {
+    if (item.appliedPromo && item.appliedPromo._id) {
+      promoIdsToIncrement.add(item.appliedPromo._id.toString())
+    }
+  })
+
+  if (promoIdsToIncrement.size > 0) {
+    await Promise.all(
+      Array.from(promoIdsToIncrement).map(id =>
+        Promotion.findByIdAndUpdate(id, { $inc: { usageCount: 1 } })
+      )
+    )
+  }
+
   // Trả về chi tiết order kèm product info
-  const getNewOrder = await orderModel.getDetailsWithProducts(createdOrder.insertedId)
+  // Trả về chi tiết order kèm product info
+  const getNewOrder = await orderModel.getDetailsWithProducts(createdOrder._id)
   return getNewOrder
 }
 
@@ -38,9 +67,7 @@ const getAll = async (user) => {
   if (user?._id || user?.id) filter.userId = user._id || user.id
 
   const orders = await orderModel.getAllWithProducts(filter)
-  if (!orders || orders.length === 0) throw new ApiError(StatusCodes.NOT_FOUND, 'No orders found')
-
-  return orders
+  return orders || []
 }
 
 const deleteOne = async (orderId) => {
@@ -153,10 +180,7 @@ const getMyOrders = async (userId) => {
   if (!userId) throw new ApiError(StatusCodes.UNAUTHORIZED, 'User not logged in')
 
   const orders = await orderModel.getAllWithProducts({ userId })
-  if (!orders || orders.length === 0)
-    throw new ApiError(StatusCodes.NOT_FOUND, 'No orders found for this user')
-
-  return orders
+  return orders || []
 }
 
 const searchMyOrders = async (userId, keyword) => {

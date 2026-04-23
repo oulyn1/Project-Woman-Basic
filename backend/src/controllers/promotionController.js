@@ -1,59 +1,99 @@
-import { StatusCodes } from "http-status-codes"
-import { promotionService } from "~/services/promotionService"
+import { promotionService } from '~/services/promotionService';
+import { StatusCodes } from 'http-status-codes';
 
-const createNew = async (req, res, next) => {
+const createPromotion = async (req, res, next) => {
   try {
-    console.log('REQ BODY:', req.body)
-    const created = await promotionService.createNew(req.body)
-    res.status(StatusCodes.CREATED).json(created)
+    const data = req.body;
+    const result = await promotionService.createPromotion(data);
+    res.status(StatusCodes.CREATED).json({ success: true, data: result });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-const getAll = async (req, res, next) => {
+const getPromotions = async (req, res, next) => {
   try {
-    const promotions = await promotionService.getAll()
-    res.status(StatusCodes.OK).json(promotions)
+    const query = req.query;
+    const result = await promotionService.getPromotions(query);
+    res.status(StatusCodes.OK).json({ success: true, ...result });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-const getDetails = async (req, res, next) => {
+const getPromotionById = async (req, res, next) => {
   try {
-    const promotion = await promotionService.getDetails(req.params.id)
-    res.status(StatusCodes.OK).json(promotion)
+    const id = req.params.id;
+    const result = await promotionService.getPromotionById(id);
+    if (!result) {
+      return res.status(StatusCodes.NOT_FOUND).json({ success: false, message: 'Promotion not found' });
+    }
+    res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-const deleteOne = async (req, res, next) => {
+const updatePromotion = async (req, res, next) => {
   try {
-    const result = await promotionService.deleteOne(req.params.id)
-    res.status(StatusCodes.OK).json({
-      message: "Promotion deleted successfully",
-      deletedCount: result.deletedCount
-    })
+    const id = req.params.id;
+    const data = req.body;
+    const result = await promotionService.updatePromotion(id, data);
+    res.status(StatusCodes.OK).json({ success: true, data: result });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
-const updateOne = async (req, res, next) => {
+const deletePromotion = async (req, res, next) => {
   try {
-    const updated = await promotionService.updateOne(req.params.id, req.body)
-    res.status(StatusCodes.OK).json(updated)
+    const id = req.params.id;
+    await promotionService.deletePromotion(id);
+    res.status(StatusCodes.OK).json({ success: true, message: 'Deleted successfully' });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
+
+const clonePromotion = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const result = await promotionService.clonePromotion(id);
+    res.status(StatusCodes.CREATED).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getEligibleOrderPromos = async (req, res, next) => {
+  try {
+    const { customerId, orderValue } = req.query;
+    const result = await promotionService.getEligibleOrderPromotions(customerId, parseFloat(orderValue));
+    res.status(StatusCodes.OK).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const applyPromotions = async (req, res, next) => {
+  try {
+    const { cartItems, items, customerId, orderPromoId, couponCode } = req.body;
+    const finalItems = items || cartItems;
+    const finalPromoId = orderPromoId || couponCode;
+    const result = await promotionService.applyPromotions(finalItems, customerId, finalPromoId);
+    res.status(StatusCodes.OK).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const promotionController = {
-  createNew,
-  getAll,
-  getDetails,
-  deleteOne,
-  updateOne
-}
+  createPromotion,
+  getPromotions,
+  getPromotionById,
+  updatePromotion,
+  deletePromotion,
+  clonePromotion,
+  getEligibleOrderPromos,
+  applyPromotions
+};

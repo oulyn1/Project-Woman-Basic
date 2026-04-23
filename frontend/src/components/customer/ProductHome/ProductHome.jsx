@@ -13,12 +13,12 @@ function ProductHome() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [prodRes, promoData] = await Promise.all([
+        const [prodRes, promoRes] = await Promise.all([
           fetchAllProductsAPI(),
           fetchAllPromotionsAPI()
         ])
         setAllProducts(prodRes.data || [])
-        setPromotions(promoData)
+        setPromotions(promoRes.items || [])
       } catch (err) { console.error(err) }
     }
     fetchData()
@@ -35,12 +35,10 @@ function ProductHome() {
 
   // Filter Discounted Products
   const saleProducts = useMemo(() => {
-    const now = new Date()
     const productWithPromo = allProducts.filter(p => 
       promotions.some(promo => 
-        promo.productIds?.includes(p._id) &&
-        new Date(promo.startDate) <= now &&
-        new Date(promo.endDate) >= now
+        promo.computedStatus === 'active' &&
+        (promo.productIds?.includes('ALL') || promo.productIds?.includes(p._id))
       )
     )
     return productWithPromo.slice(0, 10)
