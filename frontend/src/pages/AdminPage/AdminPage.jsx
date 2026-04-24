@@ -11,7 +11,7 @@ function AdminPage() {
     const userStr = localStorage.getItem('user')
     let user = null
     let id = null
-    
+
     try {
       user = userStr ? JSON.parse(userStr) : null
       id = user?._id || null

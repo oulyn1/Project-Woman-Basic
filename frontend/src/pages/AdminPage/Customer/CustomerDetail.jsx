@@ -32,7 +32,7 @@ export default function CustomerDetail() {
         const summary = await getCustomerSummaryAPI(id, token)
         setUser(summary.user)
         setStats(summary.stats)
-        
+
         // Lấy danh sách đơn để hiển thị (đã lọc cancelled)
         const ordersRes = await getCustomerOrdersAPI(id, token)
         const ordersRaw = Array.isArray(ordersRes) ? ordersRes : []

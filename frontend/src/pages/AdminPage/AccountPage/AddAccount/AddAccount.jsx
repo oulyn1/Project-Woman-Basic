@@ -45,7 +45,7 @@ function AddAccount({ open, onClose, onSuccess }) {
       email: /\S+@\S+\.\S+/.test(formData.email) ? '' : 'Email không hợp lệ.',
       password: formData.password ? '' : 'Vui lòng nhập mật khẩu.',
       role: formData.role ? '' : 'Vui lòng chọn vai trò.',
-      phone: formData.phone 
+      phone: formData.phone
         ? (/^[0-9]{9,11}$/.test(formData.phone) ? '' : 'SĐT không hợp lệ.')
         : ''
     }

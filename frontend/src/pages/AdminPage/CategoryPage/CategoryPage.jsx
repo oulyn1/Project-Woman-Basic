@@ -14,7 +14,7 @@ function CategoryPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleAddClick = () => setOpenAddModal(true)
-  
+
   const handleEditClick = (id) => {
     setSelectedId(id)
     setOpenEditModal(true)
@@ -59,7 +59,7 @@ function CategoryPage() {
             sx={{ color: 'white', flex: 1 }}
           />
         </Box>
-        
+
         <Button
           variant="outlined"
           startIcon={<AddOutlinedIcon />}
@@ -79,22 +79,22 @@ function CategoryPage() {
       </Box>
 
       <Box sx={{ px: 5 }}>
-        <TableCategory 
-          onEditCategory={handleEditClick} 
+        <TableCategory
+          onEditCategory={handleEditClick}
           searchQuery={searchQuery}
           refreshTrigger={refreshTrigger}
         />
       </Box>
 
       {/* Modals */}
-      <AddCategory 
-        open={openAddModal} 
+      <AddCategory
+        open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         onSuccess={handleSuccess}
       />
 
       {selectedId && (
-        <EditCategory 
+        <EditCategory
           open={openEditModal}
           categoryId={selectedId}
           onClose={() => setOpenEditModal(false)}

@@ -113,7 +113,7 @@ const TableCustomer = ({ searchQuery }) => {
               <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: '#888', width: 50, height: 50 }}>
                 <PersonIcon />
               </Avatar>
-              
+
               <Box sx={{ flex: 1 }}>
                 <Typography variant="h6" fontWeight="bold" color="white">{customer.name}</Typography>
                 <Stack direction="row" spacing={3} sx={{ mt: 0.5 }}>
@@ -129,10 +129,10 @@ const TableCustomer = ({ searchQuery }) => {
               </Box>
 
               <Tooltip title="Xem chi tiết">
-                <IconButton 
+                <IconButton
                   onClick={() => handleOpenDetail(customer._id)}
-                  sx={{ 
-                    bgcolor: 'rgba(255,255,255,0.05)', 
+                  sx={{
+                    bgcolor: 'rgba(255,255,255,0.05)',
                     color: '#888',
                     transition: '0.2s',
                     '&:hover': { bgcolor: '#66FF99', color: 'black' }
@@ -149,10 +149,10 @@ const TableCustomer = ({ searchQuery }) => {
       <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
 
       {/* Modernized Detail Dialog */}
-      <Dialog 
-        open={openDetail} 
-        onClose={() => setOpenDetail(false)} 
-        maxWidth="md" 
+      <Dialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        maxWidth="md"
         fullWidth
         PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}
       >
@@ -177,7 +177,7 @@ const TableCustomer = ({ searchQuery }) => {
                     </Box>
                   ))}
                 </Box>
-                
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <Typography variant="overline" color="#555" fontWeight="bold">Thống kê mua hàng</Typography>
                   <StatItem icon={<ShoppingBagIcon />} title="Tổng đơn hàng" value={detailStats.totalOrders} color="#2196f3" />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -29,6 +29,51 @@ import ShieldIcon from '@mui/icons-material/Shield'
 import { AllUsersAPI, searchUserAPI, deleteUserAPI } from '~/apis/userAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
+const styles = {
+  rowBox: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    border: '1px solid rgba(255,255,255,0.05)',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    transition: 'all 0.2s',
+    '&:hover': {
+      backgroundColor: 'rgba(255,255,255,0.05)',
+      borderColor: 'rgba(255,255,255,0.1)'
+    }
+  },
+  avatar: (role) => ({
+    bgcolor: role === 'admin' ? '#f44336' : role === 'employee' ? '#2196f3' : '#4caf50',
+    width: 44,
+    height: 44,
+    mr: 2,
+    fontWeight: 'bold'
+  }),
+  statusBox: (status) => {
+    const isOnline = status === 'online'
+    return {
+      px: 1.5,
+      py: 0.5,
+      borderRadius: '20px',
+      backgroundColor: isOnline ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+      color: isOnline ? '#4caf50' : '#ff5252',
+      border: `1px solid ${isOnline ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.5)'}`,
+      fontSize: '0.75rem',
+      fontWeight: 'bold',
+      textTransform: 'uppercase',
+      display: { xs: 'none', sm: 'block' }
+    }
+  },
+  collapseBox: {
+    p: 3, pt: 1, borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.1)'
+  },
+  menuPaper: {
+    backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160
+  },
+  dialogPaper: {
+    backgroundColor: '#1a1a1a', color: 'white'
+  }
+}
+
 const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTrigger = 0 }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -58,77 +103,66 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
     fetchUsers()
   }, [searchQuery, token, fetchTrigger])
 
-  const filteredRows = React.useMemo(() => {
+  const filteredRows = useMemo(() => {
     if (roleFilter === 'ALL') return rows
     return rows.filter(r => r.role === roleFilter)
   }, [rows, roleFilter])
 
-  const handleOpenMenu = (event, id) => {
+  const paginatedRows = useMemo(() => {
+    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+  }, [filteredRows, page, rowsPerPage])
+
+  const handleOpenMenu = useCallback((event, id) => {
     event.stopPropagation()
     setAnchorEl(event.currentTarget)
     setSelectedId(id)
-  }
+  }, [])
 
-  const handleCloseMenu = () => {
+  const handleCloseMenu = useCallback(() => {
     setAnchorEl(null)
     setSelectedId(null)
-  }
+  }, [])
 
-  const handleAction = (type) => {
+  const handleAction = useCallback((type) => {
     if (type === 'edit') onEditAccount(selectedId)
     else if (type === 'delete') {
       setDeletingId(selectedId)
       setOpenDeleteConfirm(true)
     }
     handleCloseMenu()
-  }
+  }, [onEditAccount, selectedId, handleCloseMenu])
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     try {
       await deleteUserAPI(deletingId)
-      setRows(rows.filter(u => u._id !== deletingId))
+      setRows(prev => prev.filter(u => u._id !== deletingId))
       setSnackbar({ open: true, message: 'Đã xóa tài khoản!', severity: 'success' })
     } catch {
       setSnackbar({ open: true, message: 'Lỗi khi xóa!', severity: 'error' })
     } finally {
       setOpenDeleteConfirm(false)
     }
-  }
+  }, [deletingId])
 
-  const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
+  const toggleExpand = useCallback((id) => {
+    setExpandedId(prev => (prev === id ? null : id))
+  }, [])
+
+  const closeSnackbar = useCallback(() => {
+    setSnackbar(prev => ({ ...prev, open: false }))
+  }, [])
 
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-          <Box
-            key={row._id}
-            sx={{
-              backgroundColor: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRadius: '16px',
-              overflow: 'hidden',
-              transition: 'all 0.2s',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,0.05)',
-                borderColor: 'rgba(255,255,255,0.1)'
-              }
-            }}
-          >
+        {paginatedRows.map((row) => (
+          <Box key={row._id} sx={styles.rowBox}>
             {/* Main Header */}
             <Box
               sx={{ p: 2, display: 'flex', alignItems: 'center', cursor: 'pointer' }}
               onClick={() => toggleExpand(row._id)}
             >
-              <Avatar
-                sx={{
-                  bgcolor: row.role === 'admin' ? '#f44336' : row.role === 'employee' ? '#2196f3' : '#4caf50',
-                  width: 44,
-                  height: 44,
-                  mr: 2,
-                  fontWeight: 'bold'
-                }}
-              >
+              <Avatar sx={styles.avatar(row.role)}>
                 {row.name.charAt(0).toUpperCase()}
               </Avatar>
 
@@ -142,20 +176,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: '20px',
-                    backgroundColor: row.status === 'online' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-                    color: row.status === 'online' ? '#4caf50' : '#ff5252',
-                    border: `1px solid ${row.status === 'online' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.5)'}`,
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    display: { xs: 'none', sm: 'block' }
-                  }}
-                >
+                <Box sx={styles.statusBox(row.status)}>
                   {row.status || 'Offline'}
                 </Box>
                 <IconButton onClick={(e) => handleOpenMenu(e, row._id)} sx={{ color: '#888' }}>
@@ -167,7 +188,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
 
             {/* Expandable Content */}
             <Collapse in={expandedId === row._id}>
-              <Box sx={{ p: 3, pt: 1, borderTop: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(0,0,0,0.1)' }}>
+              <Box sx={styles.collapseBox}>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
                   <Stack spacing={2} sx={{ flex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -208,16 +229,14 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
         page={page}
         rowsPerPage={rowsPerPage}
         count={filteredRows.length}
-        onChangePage={(_, p) => setPage(p)}
+        onChangePage={useCallback((_, p) => setPage(p), [])}
       />
 
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleCloseMenu}
-        PaperProps={{
-          sx: { backgroundColor: '#252525', border: '1px solid #333', color: 'white', minWidth: 160 }
-        }}
+        PaperProps={{ sx: styles.menuPaper }}
       >
         <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}>
           <EditIcon fontSize="small" /> Chỉnh sửa
@@ -230,7 +249,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
       <Dialog
         open={openDeleteConfirm}
         onClose={() => setOpenDeleteConfirm(false)}
-        PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white' } }}
+        PaperProps={{ sx: styles.dialogPaper }}
       >
         <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
         <DialogContent sx={{ color: '#aaa' }}>
@@ -247,7 +266,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
@@ -259,3 +278,4 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
 }
 
 export default TableAccount
+

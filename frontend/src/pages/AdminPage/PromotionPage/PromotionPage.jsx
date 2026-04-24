@@ -98,17 +98,17 @@ function PromotionPage() {
       </Box>
 
       {/* Modals */}
-      <AddPromotion 
-        open={openAdd} 
-        onClose={() => setOpenAdd(false)} 
-        onSuccess={handleRefresh} 
+      <AddPromotion
+        open={openAdd}
+        onClose={() => setOpenAdd(false)}
+        onSuccess={handleRefresh}
       />
-      
-      <EditPromotion 
-        open={editInfo.open} 
-        promotionId={editInfo.promotionId} 
-        onClose={() => setEditInfo({ open: false, promotionId: null })} 
-        onSuccess={handleRefresh} 
+
+      <EditPromotion
+        open={editInfo.open}
+        promotionId={editInfo.promotionId}
+        onClose={() => setEditInfo({ open: false, promotionId: null })}
+        onSuccess={handleRefresh}
       />
     </Box>
   )

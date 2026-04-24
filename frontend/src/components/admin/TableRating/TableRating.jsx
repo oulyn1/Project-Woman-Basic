@@ -97,19 +97,19 @@ const TableRatings = ({ searchQuery }) => {
             {/* Rating Header */}
             <Box sx={{ p: 2.5, cursor: 'pointer' }} onClick={() => toggleExpand(row._id)}>
               <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar 
-                  src={row.image} 
-                  variant="rounded" 
+                <Avatar
+                  src={row.image}
+                  variant="rounded"
                   sx={{ width: 60, height: 60, bgcolor: 'rgba(255,255,255,0.05)' }}
                 >
                   <RateReviewIcon />
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle1" fontWeight="bold" color="white">{row.productName}</Typography>
-                  <Rating 
-                    value={row.star} 
-                    readOnly 
-                    size="small" 
+                  <Rating
+                    value={row.star}
+                    readOnly
+                    size="small"
                     icon={<StarIcon sx={{ color: '#FFD700' }} fontSize="inherit" />}
                     emptyIcon={<StarIcon sx={{ color: '#333' }} fontSize="inherit" />}
                   />

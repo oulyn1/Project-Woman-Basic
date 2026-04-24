@@ -77,9 +77,9 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
       let updatedOrder = null
       if (action === 'confirm') updatedOrder = await confirmOrderAPI(orderId)
       else if (action === 'cancel') updatedOrder = await updateOrderAPI(orderId, { status: 'cancelled' })
-      
+
       setOrders(orders.map(o => o._id === orderId ? updatedOrder : o))
-      setSnackbar({ open: true, message: `Thành công!`, severity: 'success' })
+      setSnackbar({ open: true, message: 'Thành công!', severity: 'success' })
     } catch (error) {
       setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
@@ -89,12 +89,12 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
 
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'pending': return { bg: 'rgba(251, 192, 45, 0.1)', color: '#fbc02d' }
-      case 'confirmed': return { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' }
-      case 'shipped': return { bg: 'rgba(255, 152, 0, 0.1)', color: '#ff9800' }
-      case 'delivered': return { bg: 'rgba(56, 142, 60, 0.1)', color: '#388e3c' }
-      case 'cancelled': return { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
-      default: return { bg: 'rgba(117, 117, 117, 0.1)', color: '#757575' }
+    case 'pending': return { bg: 'rgba(251, 192, 45, 0.1)', color: '#fbc02d' }
+    case 'confirmed': return { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' }
+    case 'shipped': return { bg: 'rgba(255, 152, 0, 0.1)', color: '#ff9800' }
+    case 'delivered': return { bg: 'rgba(56, 142, 60, 0.1)', color: '#388e3c' }
+    case 'cancelled': return { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
+    default: return { bg: 'rgba(117, 117, 117, 0.1)', color: '#757575' }
     }
   }
 
@@ -156,57 +156,57 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
                 <Box sx={{ p: 3, pt: 0, backgroundColor: 'rgba(0,0,0,0.1)' }}>
                   <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.05)' }} />
                   <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
-                        <Box sx={{ flex: 1.5 }}>
-                          <Typography variant="overline" color="#555" fontWeight="bold">Sản phẩm đã đặt</Typography>
-                          <Stack spacing={1.5} sx={{ mt: 1 }}>
-                            {order.items.map((item, i) => (
-                              <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <Box>
-                                  <Typography variant="body2" color="#aaa" sx={{ fontWeight: 500 }}>
-                                    {item.product?.name || 'N/A'} x{item.quantity}
-                                  </Typography>
-                                  <Typography variant="caption" color="#666" display="block">
-                                    {[item.size, item.color].filter(Boolean).join(' / ')}
-                                  </Typography>
-                                </Box>
-                                <Box sx={{ textAlign: 'right' }}>
-                                  {item.originalPrice > item.price && (
-                                    <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#555', display: 'block' }}>
-                                      {(item.originalPrice * item.quantity).toLocaleString()}đ
-                                    </Typography>
-                                  )}
-                                  <Typography variant="body2" color="#fff" sx={{ fontWeight: 'bold' }}>
-                                    {(item.price * item.quantity).toLocaleString()}đ
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            ))}
-                          </Stack>
-
-                          {/* Price Breakdown for Admin */}
-                          <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                              <Typography variant="caption" color="#555">Tạm tính:</Typography>
-                              <Typography variant="caption" color="#aaa">{(order.originalSubtotal || order.total).toLocaleString()}đ</Typography>
+                    <Box sx={{ flex: 1.5 }}>
+                      <Typography variant="overline" color="#555" fontWeight="bold">Sản phẩm đã đặt</Typography>
+                      <Stack spacing={1.5} sx={{ mt: 1 }}>
+                        {order.items.map((item, i) => (
+                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Box>
+                              <Typography variant="body2" color="#aaa" sx={{ fontWeight: 500 }}>
+                                {item.product?.name || 'N/A'} x{item.quantity}
+                              </Typography>
+                              <Typography variant="caption" color="#666" display="block">
+                                {[item.size, item.color].filter(Boolean).join(' / ')}
+                              </Typography>
                             </Box>
-                            {order.totalItemDiscount > 0 && (
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Typography variant="caption" color="#555">Giảm giá sản phẩm:</Typography>
-                                <Typography variant="caption" color="#ef5350">-{order.totalItemDiscount.toLocaleString()}đ</Typography>
-                              </Box>
-                            )}
-                            {order.orderDiscount > 0 && (
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                                <Typography variant="caption" color="#555">Mã giảm giá đơn:</Typography>
-                                <Typography variant="caption" color="#ef5350">-{order.orderDiscount.toLocaleString()}đ</Typography>
-                              </Box>
-                            )}
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                              <Typography variant="body2" fontWeight="bold" color="#888">TỔNG CỘNG:</Typography>
-                              <Typography variant="body2" fontWeight="bold" color="#4caf50">{order.total.toLocaleString()}đ</Typography>
+                            <Box sx={{ textAlign: 'right' }}>
+                              {item.originalPrice > item.price && (
+                                <Typography variant="caption" sx={{ textDecoration: 'line-through', color: '#555', display: 'block' }}>
+                                  {(item.originalPrice * item.quantity).toLocaleString()}đ
+                                </Typography>
+                              )}
+                              <Typography variant="body2" color="#fff" sx={{ fontWeight: 'bold' }}>
+                                {(item.price * item.quantity).toLocaleString()}đ
+                              </Typography>
                             </Box>
                           </Box>
+                        ))}
+                      </Stack>
+
+                      {/* Price Breakdown for Admin */}
+                      <Box sx={{ mt: 3, pt: 2, borderTop: '1px dashed rgba(255,255,255,0.1)' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="caption" color="#555">Tạm tính:</Typography>
+                          <Typography variant="caption" color="#aaa">{(order.originalSubtotal || order.total).toLocaleString()}đ</Typography>
                         </Box>
+                        {order.totalItemDiscount > 0 && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" color="#555">Giảm giá sản phẩm:</Typography>
+                            <Typography variant="caption" color="#ef5350">-{order.totalItemDiscount.toLocaleString()}đ</Typography>
+                          </Box>
+                        )}
+                        {order.orderDiscount > 0 && (
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                            <Typography variant="caption" color="#555">Mã giảm giá đơn:</Typography>
+                            <Typography variant="caption" color="#ef5350">-{order.orderDiscount.toLocaleString()}đ</Typography>
+                          </Box>
+                        )}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                          <Typography variant="body2" fontWeight="bold" color="#888">TỔNG CỘNG:</Typography>
+                          <Typography variant="body2" fontWeight="bold" color="#4caf50">{order.total.toLocaleString()}đ</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
 
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="overline" color="#555" fontWeight="bold">Thông tin giao hàng</Typography>

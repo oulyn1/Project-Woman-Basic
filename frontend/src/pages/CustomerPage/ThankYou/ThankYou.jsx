@@ -82,7 +82,7 @@ function ThankYou() {
             <Typography variant="body2" color="text.secondary">Tạm tính:</Typography>
             <Typography variant="body2">{(order.originalSubtotal || order.total).toLocaleString()}đ</Typography>
           </Box>
-          
+
           {(order.totalItemDiscount > 0) && (
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
               <Typography variant="body2" color="text.secondary">Giảm giá sản phẩm:</Typography>

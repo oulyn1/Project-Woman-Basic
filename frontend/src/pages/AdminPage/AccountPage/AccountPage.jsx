@@ -16,7 +16,7 @@ function AccountPage() {
   const [fetchTrigger, setFetchTrigger] = useState(0)
 
   const handleAddClick = () => setOpenAddModal(true)
-  
+
   const handleEditClick = (id) => {
     setSelectedId(id)
     setOpenEditModal(true)
@@ -81,7 +81,7 @@ function AccountPage() {
             <MenuItem value="customer">Khách hàng</MenuItem>
           </Select>
         </FormControl>
-        
+
         <Button
           variant="outlined"
           startIcon={<AddOutlinedIcon />}
@@ -101,22 +101,22 @@ function AccountPage() {
       </Box>
 
       <Box sx={{ px: 5 }}>
-        <TableAccount 
-          onEditAccount={handleEditClick} 
+        <TableAccount
+          onEditAccount={handleEditClick}
           searchQuery={searchQuery}
           roleFilter={selectedRole}
           fetchTrigger={fetchTrigger}
         />
       </Box>
 
-      <AddAccount 
-        open={openAddModal} 
+      <AddAccount
+        open={openAddModal}
         onClose={() => setOpenAddModal(false)}
         onSuccess={handleSuccess}
       />
 
       {selectedId && (
-        <EditAccount 
+        <EditAccount
           open={openEditModal}
           accountId={selectedId}
           onClose={() => setOpenEditModal(false)}

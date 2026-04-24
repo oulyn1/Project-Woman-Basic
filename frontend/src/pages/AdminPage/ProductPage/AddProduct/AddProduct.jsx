@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from 'react'
 import {
   Box,
   Button,
@@ -19,142 +19,142 @@ import {
   Chip,
   ToggleButton,
   ToggleButtonGroup,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined'
 
-const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL"];
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL']
 const COLOR_PALETTE = [
-  { name: "Đen", hex: "#000000" },
-  { name: "Trắng", hex: "#ffffff" },
-  { name: "Đỏ", hex: "#ff0000" },
-  { name: "Xanh dương", hex: "#0000ff" },
-  { name: "Xanh lá", hex: "#00ff00" },
-  { name: "Vàng", hex: "#ffff00" },
-  { name: "Cam", hex: "#ff8c00" },
-  { name: "Hồng", hex: "#ffc0cb" },
-  { name: "Tím", hex: "#800080" },
-  { name: "Xám", hex: "#808080" },
-];
+  { name: 'Đen', hex: '#000000' },
+  { name: 'Trắng', hex: '#ffffff' },
+  { name: 'Đỏ', hex: '#ff0000' },
+  { name: 'Xanh dương', hex: '#0000ff' },
+  { name: 'Xanh lá', hex: '#00ff00' },
+  { name: 'Vàng', hex: '#ffff00' },
+  { name: 'Cam', hex: '#ff8c00' },
+  { name: 'Hồng', hex: '#ffc0cb' },
+  { name: 'Tím', hex: '#800080' },
+  { name: 'Xám', hex: '#808080' },
+]
 
-import FieldCustom from "~/components/admin/FieldCustom/FieldCustom";
-import ImageUpload from "~/components/admin/ImageUpload/ImageUpload";
+import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
+import ImageUpload from '~/components/admin/ImageUpload/ImageUpload'
 import {
   createProductAPI,
   uploadImageToCloudinaryAPI,
-} from "~/apis/productAPIs";
-import { fetchAllCategoriesAPI } from "~/apis/categoryAPIs";
+} from '~/apis/productAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 
 function AddProduct({ open, onClose, onSuccess }) {
-  const [productCategories, setProductCategories] = useState([]);
+  const [productCategories, setProductCategories] = useState([])
   const [formData, setFormData] = useState({
-    categoryId: "",
-    name: "",
-    price: "",
-    description: "",
-    tags: "",
+    categoryId: '',
+    name: '',
+    price: '',
+    description: '',
+    tags: '',
     files: [],
-  });
+  })
 
-  const [selectedSizes, setSelectedSizes] = useState([]);
-  const [selectedColors, setSelectedColors] = useState([]); // Array of color objects from PALETTE
-  const [variantsMatrix, setVariantsMatrix] = useState({});
+  const [selectedSizes, setSelectedSizes] = useState([])
+  const [selectedColors, setSelectedColors] = useState([]) // Array of color objects from PALETTE
+  const [variantsMatrix, setVariantsMatrix] = useState({})
 
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({})
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: "",
-    severity: "success",
-  });
-  const [submitting, setSubmitting] = useState(false);
+    message: '',
+    severity: 'success',
+  })
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategoriesAPI();
+        const data = await fetchAllCategoriesAPI()
         const options = data.map((cat) => ({
           value: cat._id,
           label: cat.name,
-        }));
-        setProductCategories(options);
+        }))
+        setProductCategories(options)
       } catch {
         /* ... */
       }
-    };
-    if (open) fetchCategories();
-  }, [open]);
+    }
+    if (open) fetchCategories()
+  }, [open])
 
   const handleSizeChange = (event, newSizes) => {
-    setSelectedSizes(newSizes);
-  };
+    setSelectedSizes(newSizes)
+  }
 
   const handleColorToggle = (color) => {
     setSelectedColors((prev) => {
-      const isSelected = prev.find((c) => c.hex === color.hex);
-      if (isSelected) return prev.filter((c) => c.hex !== color.hex);
-      return [...prev, color];
-    });
-  };
+      const isSelected = prev.find((c) => c.hex === color.hex)
+      if (isSelected) return prev.filter((c) => c.hex !== color.hex)
+      return [...prev, color]
+    })
+  }
 
   const currentVariants = useMemo(() => {
-    const matrix = [];
+    const matrix = []
     selectedSizes.forEach((size) => {
       selectedColors.forEach((color) => {
-        matrix.push({ size, color });
-      });
-    });
-    return matrix;
-  }, [selectedSizes, selectedColors]);
+        matrix.push({ size, color })
+      })
+    })
+    return matrix
+  }, [selectedSizes, selectedColors])
 
   const handleStockChange = (size, colorHex, value) => {
     setVariantsMatrix((prev) => ({
       ...prev,
       [`${size}-${colorHex}`]: value,
-    }));
-  };
+    }))
+  }
 
   const generateSkuPrefix = (name) => {
     return name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-zA-Z]/g, "")
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z]/g, '')
       .substring(0, 3)
-      .toUpperCase();
-  };
+      .toUpperCase()
+  }
 
   const generateObjectId = () => {
-    const timestamp = ((new Date().getTime() / 1000) | 0).toString(16);
+    const timestamp = ((new Date().getTime() / 1000) | 0).toString(16)
     return (
       timestamp +
-      "xxxxxxxxxxxxxxxx"
+      'xxxxxxxxxxxxxxxx'
         .replace(/[x]/g, () => {
-          return ((Math.random() * 16) | 0).toString(16);
+          return ((Math.random() * 16) | 0).toString(16)
         })
         .toLowerCase()
-    );
-  };
+    )
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     // Simple validation
     if (!formData.name || !formData.price || !formData.categoryId) {
       setSnackbar({
         open: true,
-        message: "Vui lòng điền các trường bắt buộc",
-        severity: "error",
-      });
-      return;
+        message: 'Vui lòng điền các trường bắt buộc',
+        severity: 'error',
+      })
+      return
     }
 
-    setSubmitting(true);
+    setSubmitting(true)
     try {
       const imageUrls = await Promise.all(
         formData.files.map((file) =>
           uploadImageToCloudinaryAPI(file).then((res) => res.secure_url),
         ),
-      );
+      )
 
-      const skuPrefix = generateSkuPrefix(formData.name);
+      const skuPrefix = generateSkuPrefix(formData.name)
 
       const payload = {
         categoryId: formData.categoryId,
@@ -162,12 +162,12 @@ function AddProduct({ open, onClose, onSuccess }) {
         description: formData.description.trim(),
         slug: formData.name
           .toLowerCase()
-          .replace(/ /g, "-")
-          .replace(/[^\w-]+/g, ""),
+          .replace(/ /g, '-')
+          .replace(/[^\w-]+/g, ''),
         price: Number(formData.price),
         images: imageUrls,
         tags: formData.tags
-          .split(",")
+          .split(',')
           .map((tag) => tag.trim())
           .filter((t) => t),
         variants: currentVariants.map((v) => ({
@@ -177,33 +177,33 @@ function AddProduct({ open, onClose, onSuccess }) {
           stock: Number(variantsMatrix[`${v.size}-${v.color.hex}`] || 0),
           sku: `${skuPrefix}-${v.size}-${v.color.name.toUpperCase().substring(0, 3)}`,
         })),
-      };
+      }
 
-      const createdProduct = await createProductAPI(payload);
+      const createdProduct = await createProductAPI(payload)
       setSnackbar({
         open: true,
-        message: "Thêm sản phẩm thành công!",
-        severity: "success",
-      });
+        message: 'Thêm sản phẩm thành công!',
+        severity: 'success',
+      })
       // Optimistic UI: notify other admin components about the new product
       try {
         window.dispatchEvent(
-          new CustomEvent("PRODUCT_ADDED", { detail: createdProduct }),
-        );
+          new CustomEvent('PRODUCT_ADDED', { detail: createdProduct }),
+        )
       } catch {
         // ignore if event dispatch fails
       }
-      onSuccess();
+      onSuccess()
     } catch (err) {
       setSnackbar({
         open: true,
-        message: err.response?.data?.message || "Có lỗi xảy ra",
-        severity: "error",
-      });
+        message: err.response?.data?.message || 'Có lỗi xảy ra',
+        severity: 'error',
+      })
     } finally {
-      setSubmitting(false);
+      setSubmitting(false)
     }
-  };
+  }
 
   return (
     <>
@@ -214,25 +214,25 @@ function AddProduct({ open, onClose, onSuccess }) {
         maxWidth="md"
         PaperProps={{
           sx: {
-            backgroundColor: "#1a1a1a",
-            color: "white",
-            borderRadius: "12px",
-            border: "1px solid #333",
+            backgroundColor: '#1a1a1a',
+            color: 'white',
+            borderRadius: '12px',
+            border: '1px solid #333',
           },
         }}
       >
         <DialogTitle
           sx={{
-            borderBottom: "1px solid #333",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            borderBottom: '1px solid #333',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           <Typography variant="h6" fontWeight="bold">
             Thêm sản phẩm mới
           </Typography>
-          <IconButton onClick={onClose} sx={{ color: "#888" }}>
+          <IconButton onClick={onClose} sx={{ color: '#888' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
@@ -280,8 +280,8 @@ function AddProduct({ open, onClose, onSuccess }) {
               disabled
               value={formData.name
                 .toLowerCase()
-                .replace(/ /g, "-")
-                .replace(/[^\w-]+/g, "")}
+                .replace(/ /g, '-')
+                .replace(/[^\w-]+/g, '')}
               placeholder="auto-generated-slug"
             />
           </Stack>
@@ -317,30 +317,30 @@ function AddProduct({ open, onClose, onSuccess }) {
 
           {/* Size Selection */}
           <Box sx={{ mt: 3 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1.5, color: "#ccc" }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc' }}>
               Size hỗ trợ
             </Typography>
             <ToggleButtonGroup
               value={selectedSizes}
               onChange={handleSizeChange}
               aria-label="device"
-              sx={{ gap: 1, flexWrap: "wrap" }}
+              sx={{ gap: 1, flexWrap: 'wrap' }}
             >
               {SIZE_OPTIONS.map((size) => (
                 <ToggleButton
                   key={size}
                   value={size}
                   sx={{
-                    borderRadius: "50px !important",
-                    border: "1px solid #333 !important",
-                    color: "white",
+                    borderRadius: '50px !important',
+                    border: '1px solid #333 !important',
+                    color: 'white',
                     px: 3,
                     py: 0.5,
-                    textTransform: "none",
-                    "&.Mui-selected": {
-                      backgroundColor: "#e8f5e9 !important",
-                      color: "#2e7d32 !important",
-                      borderColor: "#2e7d32 !important",
+                    textTransform: 'none',
+                    '&.Mui-selected': {
+                      backgroundColor: '#e8f5e9 !important',
+                      color: '#2e7d32 !important',
+                      borderColor: '#2e7d32 !important',
                     },
                   }}
                 >
@@ -352,7 +352,7 @@ function AddProduct({ open, onClose, onSuccess }) {
 
           {/* Color Selection */}
           <Box sx={{ mt: 4 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1.5, color: "#ccc" }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc' }}>
               Màu sắc
             </Typography>
             <Stack
@@ -370,14 +370,14 @@ function AddProduct({ open, onClose, onSuccess }) {
                     width: 32,
                     height: 32,
                     backgroundColor: color.hex,
-                    borderRadius: "50%",
+                    borderRadius: '50%',
                     border: selectedColors.find((c) => c.hex === color.hex)
-                      ? "2px solid #2e7d32"
-                      : "2px solid transparent",
-                    boxShadow: "0 0 0 1px #444",
-                    cursor: "pointer",
-                    transition: "0.2s",
-                    "&:hover": { transform: "scale(1.1)" },
+                      ? '2px solid #2e7d32'
+                      : '2px solid transparent',
+                    boxShadow: '0 0 0 1px #444',
+                    cursor: 'pointer',
+                    transition: '0.2s',
+                    '&:hover': { transform: 'scale(1.1)' },
                   }}
                 />
               ))}
@@ -390,17 +390,17 @@ function AddProduct({ open, onClose, onSuccess }) {
                   onDelete={() => handleColorToggle(color)}
                   size="small"
                   sx={{
-                    backgroundColor: "#333",
-                    color: "white",
-                    borderRadius: "4px",
-                    "& .MuiChip-deleteIcon": { color: "#888" },
+                    backgroundColor: '#333',
+                    color: 'white',
+                    borderRadius: '4px',
+                    '& .MuiChip-deleteIcon': { color: '#888' },
                   }}
                   icon={
                     <Box
                       sx={{
                         width: 12,
                         height: 12,
-                        borderRadius: "50%",
+                        borderRadius: '50%',
                         backgroundColor: color.hex,
                         ml: 1,
                       }}
@@ -413,22 +413,22 @@ function AddProduct({ open, onClose, onSuccess }) {
 
           {/* Variant Matrix */}
           <Box sx={{ mt: 5 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, color: "#ccc" }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, color: '#ccc' }}>
               Tồn kho theo biến thể (size × màu)
             </Typography>
             {currentVariants.length > 0 ? (
               <Box
                 sx={{
-                  border: "1px solid #333",
-                  borderRadius: "8px",
-                  overflow: "hidden",
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
                 }}
               >
                 <Table size="small">
-                  <TableHead sx={{ backgroundColor: "#252525" }}>
+                  <TableHead sx={{ backgroundColor: '#252525' }}>
                     <TableRow>
                       <TableCell
-                        sx={{ color: "#888", borderBottom: "1px solid #333" }}
+                        sx={{ color: '#888', borderBottom: '1px solid #333' }}
                       >
                         Size \ Màu
                       </TableCell>
@@ -436,7 +436,7 @@ function AddProduct({ open, onClose, onSuccess }) {
                         <TableCell
                           key={c.hex}
                           align="center"
-                          sx={{ color: "#888", borderBottom: "1px solid #333" }}
+                          sx={{ color: '#888', borderBottom: '1px solid #333' }}
                         >
                           <Stack
                             direction="row"
@@ -448,7 +448,7 @@ function AddProduct({ open, onClose, onSuccess }) {
                               sx={{
                                 width: 8,
                                 height: 8,
-                                borderRadius: "50%",
+                                borderRadius: '50%',
                                 backgroundColor: c.hex,
                               }}
                             />
@@ -463,9 +463,9 @@ function AddProduct({ open, onClose, onSuccess }) {
                       <TableRow key={size}>
                         <TableCell
                           sx={{
-                            color: "white",
-                            borderBottom: "1px solid #333",
-                            fontWeight: "bold",
+                            color: 'white',
+                            borderBottom: '1px solid #333',
+                            fontWeight: 'bold',
                           }}
                         >
                           {size}
@@ -474,13 +474,13 @@ function AddProduct({ open, onClose, onSuccess }) {
                           <TableCell
                             key={color.hex}
                             align="center"
-                            sx={{ borderBottom: "1px solid #333" }}
+                            sx={{ borderBottom: '1px solid #333' }}
                           >
                             <Box
                               component="input"
                               type="number"
                               value={
-                                variantsMatrix[`${size}-${color.hex}`] || ""
+                                variantsMatrix[`${size}-${color.hex}`] || ''
                               }
                               onChange={(e) =>
                                 handleStockChange(
@@ -491,15 +491,15 @@ function AddProduct({ open, onClose, onSuccess }) {
                               }
                               sx={{
                                 width: 50,
-                                backgroundColor: "#1a1a1a",
-                                border: "1px solid #444",
-                                borderRadius: "4px",
-                                color: "white",
-                                textAlign: "center",
+                                backgroundColor: '#1a1a1a',
+                                border: '1px solid #444',
+                                borderRadius: '4px',
+                                color: 'white',
+                                textAlign: 'center',
                                 py: 0.5,
-                                "&:focus": {
-                                  outline: "none",
-                                  borderColor: "#2e7d32",
+                                '&:focus': {
+                                  outline: 'none',
+                                  borderColor: '#2e7d32',
                                 },
                               }}
                             />
@@ -513,7 +513,7 @@ function AddProduct({ open, onClose, onSuccess }) {
             ) : (
               <Typography
                 variant="body2"
-                sx={{ fontStyle: "italic", color: "#666" }}
+                sx={{ fontStyle: 'italic', color: '#666' }}
               >
                 Chọn ít nhất một size và một màu để nhập tồn kho.
               </Typography>
@@ -529,10 +529,10 @@ function AddProduct({ open, onClose, onSuccess }) {
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 3, borderTop: "1px solid #333" }}>
+        <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
           <Button
             onClick={onClose}
-            sx={{ color: "#888", textTransform: "none" }}
+            sx={{ color: '#888', textTransform: 'none' }}
           >
             Hủy
           </Button>
@@ -541,15 +541,15 @@ function AddProduct({ open, onClose, onSuccess }) {
             variant="contained"
             disabled={submitting}
             sx={{
-              backgroundColor: "#e8f5e9",
-              color: "#2e7d32",
-              textTransform: "none",
-              fontWeight: "bold",
+              backgroundColor: '#e8f5e9',
+              color: '#2e7d32',
+              textTransform: 'none',
+              fontWeight: 'bold',
               px: 4,
-              "&:hover": { backgroundColor: "#c8e6c9" },
+              '&:hover': { backgroundColor: '#c8e6c9' },
             }}
           >
-            {submitting ? "Đang lưu..." : "Lưu sản phẩm"}
+            {submitting ? 'Đang lưu...' : 'Lưu sản phẩm'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -558,18 +558,18 @@ function AddProduct({ open, onClose, onSuccess }) {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: "100%" }}
+          sx={{ width: '100%' }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
     </>
-  );
+  )
 }
 
-export default AddProduct;
+export default AddProduct

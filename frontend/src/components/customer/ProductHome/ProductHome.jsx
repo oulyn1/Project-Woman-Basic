@@ -55,11 +55,11 @@ function ProductHome() {
     const user = currentUser
     const cond = p.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
     switch (cond.type) {
-      case 'all': return true
-      case 'loyal': return !!user?.loyaltyTier && (cond.loyalTiers ?? []).includes(user.loyaltyTier)
-      case 'specific': return !!user?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(user._id))
-      case 'new': return (cond.newCustomerMaxOrders ?? null) == null
-      default: return true
+    case 'all': return true
+    case 'loyal': return !!user?.loyaltyTier && (cond.loyalTiers ?? []).includes(user.loyaltyTier)
+    case 'specific': return !!user?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(user._id))
+    case 'new': return (cond.newCustomerMaxOrders ?? null) == null
+    default: return true
     }
   }
   const promosForProduct = (prod) => promotions.filter(p => isProductPromo(p, prod._id) && isPromoActive(p) && isPromoEligibleForUser(p))
@@ -73,11 +73,11 @@ function ProductHome() {
       let isEligible = true
       const cond = promo.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
       switch (cond.type) {
-        case 'all': break
-        case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
-        case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
-        case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
-        default: break
+      case 'all': break
+      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      default: break
       }
       return isProductPromo && isActive && isEligible
     }))
@@ -89,9 +89,9 @@ function ProductHome() {
       <Container maxWidth="xl">
         {/* New Arrivals Section */}
         <Box sx={{ mt: 6, mb: 8 }}>
-          <Typography 
-            variant="h4" 
-            align="center" 
+          <Typography
+            variant="h4"
+            align="center"
             sx={{ fontWeight: 'bold', mb: 4, letterSpacing: 1 }}
           >
             HÀNG MỚI VỀ
@@ -106,8 +106,8 @@ function ProductHome() {
             ))}
           </Grid>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => navigate('/listproduct/newest')}
               sx={{ px: 4, py: 1, borderRadius: 2, borderColor: '#333', color: '#333' }}
             >
@@ -118,9 +118,9 @@ function ProductHome() {
 
         {/* Promotion Section */}
         <Box sx={{ mb: 8 }}>
-          <Typography 
-            variant="h4" 
-            align="center" 
+          <Typography
+            variant="h4"
+            align="center"
             sx={{ fontWeight: 'bold', mb: 4, letterSpacing: 1 }}
           >
             WOMAN BASIC - GIẢM GIÁ ĐẾN 50%
@@ -135,8 +135,8 @@ function ProductHome() {
             ))}
           </Grid>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-            <Button 
-              variant="outlined" 
+            <Button
+              variant="outlined"
               onClick={() => navigate('/listproduct/sale')}
               sx={{ px: 4, py: 1, borderRadius: 2, borderColor: '#333', color: '#333' }}
             >

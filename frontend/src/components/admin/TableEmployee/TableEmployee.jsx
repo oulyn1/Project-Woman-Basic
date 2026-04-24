@@ -26,7 +26,7 @@ const TableEmployee = ({ searchQuery }) => {
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
-  
+
   const token = localStorage.getItem('accessToken')
 
   useEffect(() => {

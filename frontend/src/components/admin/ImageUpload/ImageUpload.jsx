@@ -16,9 +16,9 @@ function ImageUpload({ label, required, onImageChange, error, helperText, curren
     if (selectedFiles.length > 0) {
       const newFiles = multiple ? selectedFiles : [selectedFiles[0]]
       const newPreviews = newFiles.map(file => URL.createObjectURL(file))
-      
+
       setPreviews(multiple ? [...previews, ...newPreviews] : newPreviews)
-      onImageChange(multiple ? [...newFiles] : newFiles[0]) 
+      onImageChange(multiple ? [...newFiles] : newFiles[0])
     }
   }
 

@@ -41,10 +41,10 @@ import CartProvider from './context/Cart/CartProvider.jsx'
 let router = createBrowserRouter([
   {
     path: '/',
-    element: <RoleGate />, 
+    element: <RoleGate />,
     children: [
       {
-        element: <CustomerPage />, 
+        element: <CustomerPage />,
         children: [
           { index: true, element: <HomePage /> },
           { path: 'editprofile', element: <CreateInformation /> },
@@ -61,10 +61,10 @@ let router = createBrowserRouter([
   },
   {
     path: '/admin',
-    element: <PrivateRoute allowedRoles={['admin', 'employee']} />, 
+    element: <PrivateRoute allowedRoles={['admin', 'employee']} />,
     children: [
       {
-        element: <AdminPage />, 
+        element: <AdminPage />,
         children: [
           { index: true, element: <Dashboard /> },
           { path: 'dashboard', element: <Dashboard /> },

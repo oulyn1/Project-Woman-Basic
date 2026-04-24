@@ -21,7 +21,7 @@ function Footer() {
               <img src={LogoWB} alt="Woman Basic" style={{ height: '35px' }} />
               <img src={CertBCT} alt="Bộ Công Thương" style={{ height: '30px' }} />
             </Box>
-            
+
             <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
               <IconButton sx={{ border: '1px solid #333', borderRadius: '4px', p: 0.5 }}>
                 <FacebookIcon fontSize="small" />
@@ -31,9 +31,9 @@ function Footer() {
               </IconButton>
             </Box>
 
-            <Button 
-              variant="contained" 
-              sx={{ 
+            <Button
+              variant="contained"
+              sx={{
                 bgcolor: 'black', color: 'white', px: 2, py: 1.5,
                 borderRadius: 1, fontWeight: 'bold', fontSize: '0.8rem',
                 '&:hover': { bgcolor: '#333' }
@@ -80,9 +80,9 @@ function Footer() {
         <Divider sx={{ mt: 8, mb: 4 }} />
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          <IconButton 
+          <IconButton
             onClick={scrollToTop}
-            sx={{ 
+            sx={{
               position: 'absolute', left: 0,
               bgcolor: 'black', color: 'white',
               borderRadius: 1, '&:hover': { bgcolor: '#333' }

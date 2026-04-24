@@ -99,7 +99,7 @@ function Checkout() {
           quantity: item.quantity,
           price: item.product?.price || item.price // Support price from cart items or buy now state
         }))
-        
+
         const user = JSON.parse(localStorage.getItem('user') || '{}')
         const customerId = user._id || user.id
         const result = await applyPromotionsAPI({
@@ -117,7 +117,7 @@ function Checkout() {
           setEligibleCoupons([])
         }
       } catch (err) {
-        console.error("Calculation Error:", err)
+        console.error('Calculation Error:', err)
       } finally {
         setLoadingCalc(false)
       }
@@ -182,11 +182,11 @@ function Checkout() {
     const cond = p.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
     let isEligible = true
     switch (cond.type) {
-      case 'all': break
-      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
-      case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
-      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
-      default: break
+    case 'all': break
+    case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+    case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+    case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+    default: break
     }
     return isProductPromo && isActive && isEligible
   }
@@ -199,7 +199,7 @@ function Checkout() {
     <Box sx={{ backgroundColor: '#F8F9FA', py: 6, minHeight: '100vh' }}>
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
-          
+
           {/* Left Side: Order Items and Information */}
           <Box sx={{ flex: 1.5 }}>
             <Paper sx={{ p: 4, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
@@ -219,7 +219,7 @@ function Checkout() {
                   {products.map((item) => {
                     const promo = getProductPromo(item.product._id)
                     const calcItem = calculationResult?.items?.find(i => i.productId === item.product._id && i.variantId === item.variantId)
-                    
+
                     return (
                       <Box key={`${item.productId}-${item.variantId}`} sx={{ display: 'flex', gap: 2 }}>
                         <Box component="img" src={item.product?.image} sx={{ width: 100, height: 120, objectFit: 'cover', borderRadius: '8px' }} />
@@ -228,7 +228,7 @@ function Checkout() {
                           <Typography variant="body2" color="text.secondary">
                             {[item.variant?.size || item.size, item.variant?.color?.name || item.color].filter(Boolean).join(' / ')}
                           </Typography>
-                          
+
                           <Stack direction="row" alignItems="center" spacing={2} sx={{ mt: 1.5 }}>
                             <Box sx={{ display: 'flex', border: '1px solid #ddd', borderRadius: '4px' }}>
                               <IconButton size="small" onClick={() => handleQuantityChange(item.productId, item.variantId, item.quantity - 1)} disabled={item.quantity <= 1}><RemoveIcon fontSize="small" /></IconButton>
@@ -273,13 +273,13 @@ function Checkout() {
           {/* Right Side: Price Summary & Coupons */}
           <Box sx={{ flex: 1 }}>
             <Stack spacing={3} sx={{ position: 'sticky', top: 24 }}>
-              
+
               {/* Coupon Section */}
               <Paper sx={{ p: 3, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <ConfirmationNumberIcon sx={{ color: '#ad2a36' }} /> Khuyến mãi đơn hàng
                 </Typography>
-                
+
                 {localStorage.getItem('user') ? (
                   selectedCouponCode ? (
                     <Box sx={{ p: 2, bgcolor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', mb: 2, position: 'relative' }}>
@@ -304,13 +304,13 @@ function Checkout() {
               {/* Summary Section */}
               <Paper sx={{ p: 4, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', bgcolor: 'white', color: 'black', border: '1px solid #eee' }}>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>Tổng cộng</Typography>
-                
+
                 <Stack spacing={2}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography color="text.secondary">Tạm tính</Typography>
                     <Typography fontWeight="500">{calculationResult?.originalSubtotal?.toLocaleString() || '0'}đ</Typography>
                   </Box>
-                  
+
                   {calculationResult?.totalItemDiscount > 0 && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography color="text.secondary">Giảm sản phẩm</Typography>
@@ -326,7 +326,7 @@ function Checkout() {
                   )}
 
                   <Divider sx={{ my: 1 }} />
-                  
+
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="h6" fontWeight="bold">Thành tiền</Typography>
                     {loadingCalc ? <CircularProgress size={20} color="inherit" /> : (
@@ -357,7 +357,7 @@ function Checkout() {
           {eligibleCoupons.length === 0 ? (
             <Typography align="center" py={4} color="text.secondary">Rất tiếc, hiện tại chưa có mã nào khả dụng với đơn hàng này.</Typography>
           ) : (
-            <RadioGroup value={selectedCouponCode} onChange={(e) => { setSelectedCouponCode(e.target.value); setOpenCouponModal(false); }}>
+            <RadioGroup value={selectedCouponCode} onChange={(e) => { setSelectedCouponCode(e.target.value); setOpenCouponModal(false) }}>
               <Stack spacing={2}>
                 {eligibleCoupons.map((coupon) => (
                   <Paper key={coupon._id} variant="outlined" sx={{ p: 2, borderRadius: '12px', bgcolor: selectedCouponCode === coupon.title ? '#f0f9ff' : 'white', borderColor: selectedCouponCode === coupon.title ? '#0369a1' : '#eee' }}>

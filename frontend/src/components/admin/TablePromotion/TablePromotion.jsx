@@ -136,19 +136,19 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
                 <Box sx={{ flex: 1 }}>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <Typography variant="subtitle1" fontWeight="bold" color="white">{promo.title}</Typography>
-                    <Chip 
-                      label={promo.computedStatus.toUpperCase()} 
-                      size="small" 
+                    <Chip
+                      label={promo.computedStatus.toUpperCase()}
+                      size="small"
                       color={
-                        promo.computedStatus === 'active' ? 'success' : 
-                        promo.computedStatus === 'scheduled' ? 'info' : 
-                        promo.computedStatus === 'ended' ? 'error' : 'default'
+                        promo.computedStatus === 'active' ? 'success' :
+                          promo.computedStatus === 'scheduled' ? 'info' :
+                            promo.computedStatus === 'ended' ? 'error' : 'default'
                       }
                       sx={{ height: 20, fontSize: '10px', fontWeight: 'bold' }}
                     />
-                    <Chip 
-                      label={promo.type === 'product' ? 'SẢN PHẨM' : 'ĐƠN HÀNG'} 
-                      size="small" 
+                    <Chip
+                      label={promo.type === 'product' ? 'SẢN PHẨM' : 'ĐƠN HÀNG'}
+                      size="small"
                       variant="outlined"
                       sx={{ height: 20, fontSize: '10px', color: '#888', borderColor: '#444' }}
                     />

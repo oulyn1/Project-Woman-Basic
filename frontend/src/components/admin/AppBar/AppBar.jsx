@@ -64,7 +64,7 @@ function AppBar() {
           onSuccess={() => {
             setOpenProfile(false)
             // Optionally refresh user info if name changed
-            window.location.reload() 
+            window.location.reload()
           }}
         />
       )}

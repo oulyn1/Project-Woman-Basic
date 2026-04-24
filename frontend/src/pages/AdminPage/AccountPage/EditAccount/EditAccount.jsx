@@ -65,7 +65,7 @@ function EditAccount({ open, onClose, onSuccess, accountId }) {
   const validate = () => {
     const tempErrors = {
       email: /\S+@\S+\.\S+/.test(formData.email) ? '' : 'Email không hợp lệ.',
-      phone: formData.phone 
+      phone: formData.phone
         ? (/^[0-9]{9,11}$/.test(formData.phone) ? '' : 'SĐT không hợp lệ.')
         : ''
     }

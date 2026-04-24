@@ -5,7 +5,7 @@ import { getRatingsByProductId } from '~/apis/ratingAPIs'
 
 const ProductCard = ({ product, promotions = [] }) => {
   const [avgRating, setAvgRating] = useState(0)
-  
+
   useEffect(() => {
     const fetchRating = async () => {
       try {
@@ -22,29 +22,29 @@ const ProductCard = ({ product, promotions = [] }) => {
   const now = new Date()
   const highestPromotion = useMemo(() => {
     const active = promotions.filter(promo => {
-      const isTargeted = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id);
-      return isTargeted && promo.computedStatus === 'active';
-    });
+      const isTargeted = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)
+      return isTargeted && promo.computedStatus === 'active'
+    })
 
-    if (active.length === 0) return null;
+    if (active.length === 0) return null
 
     // Logic: Find the one that gives the maximum absolute discount
     return active.reduce((prev, curr) => {
-      const getVal = (p) => p.discountType === 'percent' 
-        ? (product.price * p.discountValue / 100) 
-        : p.discountValue;
-      return getVal(prev) > getVal(curr) ? prev : curr;
-    });
+      const getVal = (p) => p.discountType === 'percent'
+        ? (product.price * p.discountValue / 100)
+        : p.discountValue
+      return getVal(prev) > getVal(curr) ? prev : curr
+    })
   }, [product._id, product.price, promotions])
 
   const discountAmount = useMemo(() => {
-    if (!highestPromotion) return 0;
+    if (!highestPromotion) return 0
     return highestPromotion.discountType === 'percent'
       ? Math.round(product.price * (highestPromotion.discountValue / 100))
-      : highestPromotion.discountValue;
+      : highestPromotion.discountValue
   }, [highestPromotion, product.price])
 
-  const finalPrice = product.price - discountAmount;
+  const finalPrice = product.price - discountAmount
 
   const uniqueColors = useMemo(() => {
     const colors = []
@@ -59,12 +59,12 @@ const ProductCard = ({ product, promotions = [] }) => {
   }, [product.variants])
 
   return (
-    <Card sx={{ 
-      maxWidth: 300, 
-      borderRadius: 1, 
-      position: 'relative', 
-      m: 1, 
-      cursor: 'pointer', 
+    <Card sx={{
+      maxWidth: 300,
+      borderRadius: 1,
+      position: 'relative',
+      m: 1,
+      cursor: 'pointer',
       boxShadow: 'none',
       '&:hover': {
         '& .MuiCardMedia-root': { transform: 'scale(1.05)' }
@@ -86,8 +86,8 @@ const ProductCard = ({ product, promotions = [] }) => {
           fontSize: '0.75rem',
           fontWeight: 'bold'
         }}>
-          -{highestPromotion.discountType === 'percent' 
-            ? `${highestPromotion.discountValue}%` 
+          -{highestPromotion.discountType === 'percent'
+            ? `${highestPromotion.discountValue}%`
             : `${(highestPromotion.discountValue/1000)}k`}
         </Box>
       )}
@@ -97,10 +97,10 @@ const ProductCard = ({ product, promotions = [] }) => {
           component="img"
           image={product.images?.[0] || 'https://via.placeholder.com/300'}
           alt={product.name}
-          sx={{ 
-            height: 300, 
-            width: '100%', 
-            objectFit: 'cover', 
+          sx={{
+            height: 300,
+            width: '100%',
+            objectFit: 'cover',
             transition: '0.5s transform ease'
           }}
         />
@@ -108,11 +108,11 @@ const ProductCard = ({ product, promotions = [] }) => {
 
       <CardContent sx={{ px: 1, pt: 2, pb: '8px !important' }}>
         {/* Title */}
-        <Typography 
-          sx={{ 
-            fontSize: '0.95rem', 
-            fontWeight: 500, 
-            color: '#1a1a1a', 
+        <Typography
+          sx={{
+            fontSize: '0.95rem',
+            fontWeight: 500,
+            color: '#1a1a1a',
             minHeight: '2.8rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -128,14 +128,14 @@ const ProductCard = ({ product, promotions = [] }) => {
         {/* Color Swatches */}
         <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
           {uniqueColors.slice(0, 5).map((hex, idx) => (
-            <Box 
+            <Box
               key={idx}
-              sx={{ 
-                width: 12, 
-                height: 12, 
-                borderRadius: '50%', 
-                bgcolor: hex, 
-                border: '1px solid #ddd' 
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: hex,
+                border: '1px solid #ddd'
               }}
             />
           ))}
