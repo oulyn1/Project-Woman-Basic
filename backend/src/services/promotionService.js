@@ -1,58 +1,66 @@
-import mongoose from 'mongoose';
-import Promotion from '~/models/promotionModel';
-import Product from '~/models/productModel';
-import { computePromoStatus } from '~/utils/computePromoStatus';
-import { isCustomerEligible } from '~/utils/checkPromotionEligibility';
+import mongoose from "mongoose";
+import Promotion from "~/models/promotionModel";
+import Product from "~/models/productModel";
+import { computePromoStatus } from "~/utils/computePromoStatus";
+import { isCustomerEligible } from "~/utils/checkPromotionEligibility";
 
 const createPromotion = async (data) => {
   return await Promotion.create(data);
 };
 
 const getPromotions = async (query) => {
-  const { search, type, computedStatus, conditionType, customerId, page = 1, limit = 20 } = query;
-  
+  const {
+    search,
+    type,
+    computedStatus,
+    conditionType,
+    customerId,
+    page = 1,
+    limit = 20,
+  } = query;
+
   const filter = {};
-  if (search) filter.title = { $regex: search, $options: 'i' };
+  if (search) filter.title = { $regex: search, $options: "i" };
   if (type) filter.type = type;
-  if (conditionType) filter['condition.type'] = conditionType;
-  
+  if (conditionType) filter["condition.type"] = conditionType;
+
   // Note: computedStatus filtering is tricky because it's runtime.
-  // We'll fetch all matching basic filters and then filter in memory for status 
+  // We'll fetch all matching basic filters and then filter in memory for status
   // or use complex date queries to match the status logic.
-  
+
   if (computedStatus) {
     const now = new Date();
-    if (computedStatus === 'inactive') {
-      filter.status = 'inactive';
-    } else if (computedStatus === 'scheduled') {
-      filter.status = 'active';
+    if (computedStatus === "inactive") {
+      filter.status = "inactive";
+    } else if (computedStatus === "scheduled") {
+      filter.status = "active";
       filter.startDate = { $gt: now };
-    } else if (computedStatus === 'ended') {
-      filter.status = 'active';
+    } else if (computedStatus === "ended") {
+      filter.status = "active";
       filter.$or = [
         { isForever: false, endDate: { $lt: now } },
-        { 
-          maxUsageTotal: { $gt: 0 }, 
-          $expr: { $gte: ["$usageCount", "$maxUsageTotal"] } 
-        }
+        {
+          maxUsageTotal: { $gt: 0 },
+          $expr: { $gte: ["$usageCount", "$maxUsageTotal"] },
+        },
       ];
-    } else if (computedStatus === 'active') {
-      filter.status = 'active';
+    } else if (computedStatus === "active") {
+      filter.status = "active";
       filter.startDate = { $lte: now };
       filter.$and = [
         {
           $or: [
             { isForever: true },
             { endDate: { $gte: now } },
-            { endDate: null }
-          ]
+            { endDate: null },
+          ],
         },
         {
           $or: [
             { maxUsageTotal: 0 },
-            { $expr: { $lt: ["$usageCount", "$maxUsageTotal"] } }
-          ]
-        }
+            { $expr: { $lt: ["$usageCount", "$maxUsageTotal"] } },
+          ],
+        },
       ];
     }
   }
@@ -77,20 +85,23 @@ const getPromotions = async (query) => {
   }
 
   return {
-    items: promotions.map(p => ({
+    items: promotions.map((p) => ({
       ...p.toObject(),
-      computedStatus: computePromoStatus(p)
+      computedStatus: computePromoStatus(p),
     })),
-    meta: { total, page, limit }
+    meta: { total, page, limit },
   };
 };
 
 const getPromotionById = async (id) => {
-  const promo = await Promotion.findById(id).populate('condition.specificCustomerIds', '_id name email');
+  const promo = await Promotion.findById(id).populate(
+    "condition.specificCustomerIds",
+    "_id name email",
+  );
   if (!promo) return null;
   return {
     ...promo.toObject(),
-    computedStatus: computePromoStatus(promo)
+    computedStatus: computePromoStatus(promo),
   };
 };
 
@@ -104,7 +115,7 @@ const deletePromotion = async (id) => {
 
 const clonePromotion = async (id) => {
   const original = await Promotion.findById(id);
-  if (!original) throw new Error('Promotion not found');
+  if (!original) throw new Error("Promotion not found");
 
   const cloneData = original.toObject();
   delete cloneData._id;
@@ -113,7 +124,7 @@ const clonePromotion = async (id) => {
   delete cloneData.usageCount; // Reset usage counter
 
   cloneData.title = `[Bản sao] ${cloneData.title}`;
-  cloneData.status = 'inactive';
+  cloneData.status = "inactive";
 
   return await Promotion.create(cloneData);
 };
@@ -121,27 +132,24 @@ const clonePromotion = async (id) => {
 const getEligibleOrderPromotions = async (customerId, orderValue) => {
   const now = new Date();
   const promos = await Promotion.find({
-    type: 'order',
-    status: 'active',
+    type: "order",
+    status: "active",
     startDate: { $lte: now },
-    $or: [
-      { isForever: true },
-      { endDate: { $gte: now } },
-      { endDate: null }
-    ],
-    minOrderValue: { $lte: orderValue }
+    $or: [{ isForever: true }, { endDate: { $gte: now } }, { endDate: null }],
+    minOrderValue: { $lte: orderValue },
   });
 
   const eligiblePromos = [];
   for (const promo of promos) {
     // Check usage limits
-    if (promo.maxUsageTotal > 0 && promo.usageCount >= promo.maxUsageTotal) continue;
-    
+    if (promo.maxUsageTotal > 0 && promo.usageCount >= promo.maxUsageTotal)
+      continue;
+
     const isEligible = await isCustomerEligible(promo, customerId);
     if (isEligible) {
       eligiblePromos.push({
         ...promo.toObject(),
-        computedStatus: 'active'
+        computedStatus: "active",
       });
     }
   }
@@ -156,19 +164,15 @@ const applyPromotions = async (cartItems, customerId, orderPromoId) => {
   // 1. Process Product Promotions
   const now = new Date();
   const productPromos = await Promotion.find({
-    type: 'product',
-    status: 'active',
+    type: "product",
+    status: "active",
     startDate: { $lte: now },
-    $or: [
-      { isForever: true },
-      { endDate: { $gte: now } },
-      { endDate: null }
-    ]
+    $or: [{ isForever: true }, { endDate: { $gte: now } }, { endDate: null }],
   });
 
   for (const item of cartItems) {
     let { productId, variantId, price, quantity } = item;
-    
+
     // NORMALIZE IDS (handle if they are objects)
     productId = (productId?._id || productId)?.toString();
     variantId = (variantId?._id || variantId)?.toString();
@@ -186,14 +190,16 @@ const applyPromotions = async (cartItems, customerId, orderPromoId) => {
 
     // Filter promos that apply to this product and customer
     for (const promo of productPromos) {
-      const appliesToProduct = promo.productIds.includes('ALL') || promo.productIds.includes(productId.toString());
+      const appliesToProduct =
+        promo.productIds.includes("ALL") ||
+        promo.productIds.includes(productId.toString());
       if (!appliesToProduct) continue;
 
       const isEligible = await isCustomerEligible(promo, customerId);
       if (!isEligible) continue;
 
       let discount = 0;
-      if (promo.discountType === 'percent') {
+      if (promo.discountType === "percent") {
         discount = price * (promo.discountValue / 100);
       } else {
         discount = promo.discountValue;
@@ -214,13 +220,17 @@ const applyPromotions = async (cartItems, customerId, orderPromoId) => {
       variantId: variantId ? variantId.toString() : null,
       price: price, // Ensure price is present here!
       originalUnitPrice: price,
-      appliedPromo: bestPromo ? { _id: bestPromo._id, title: bestPromo.title, discountAmount: maxDiscount } : null,
+      appliedPromo: bestPromo
+        ? {
+            _id: bestPromo._id,
+            title: bestPromo.title,
+            discountAmount: maxDiscount,
+          }
+        : null,
       promotionApplied: !!bestPromo,
-      finalUnitPrice
+      finalUnitPrice,
     });
   }
-
-
 
   // 2. Process Order Promotion
   let orderDiscount = 0;
@@ -231,15 +241,19 @@ const applyPromotions = async (cartItems, customerId, orderPromoId) => {
     if (mongoose.Types.ObjectId.isValid(orderPromoId)) {
       promo = await Promotion.findById(orderPromoId);
     } else {
-      promo = await Promotion.findOne({ title: orderPromoId, type: 'order', status: 'active' });
+      promo = await Promotion.findOne({
+        title: orderPromoId,
+        type: "order",
+        status: "active",
+      });
     }
 
-    if (promo && computePromoStatus(promo) === 'active') {
+    if (promo && computePromoStatus(promo) === "active") {
       const isEligible = await isCustomerEligible(promo, customerId);
       const meetsMinVal = subtotal >= promo.minOrderValue;
 
       if (isEligible && meetsMinVal) {
-        if (promo.discountType === 'percent') {
+        if (promo.discountType === "percent") {
           orderDiscount = subtotal * (promo.discountValue / 100);
         } else {
           orderDiscount = promo.discountValue;
@@ -265,9 +279,11 @@ const applyPromotions = async (cartItems, customerId, orderPromoId) => {
     originalSubtotal,
     totalItemDiscount,
     discountedSubtotal: subtotal,
-    appliedOrderPromo: appliedOrderPromo ? { _id: appliedOrderPromo._id, title: appliedOrderPromo.title } : null,
+    appliedOrderPromo: appliedOrderPromo
+      ? { _id: appliedOrderPromo._id, title: appliedOrderPromo.title }
+      : null,
     orderDiscount,
-    finalTotal: total
+    finalTotal: total,
   };
 };
 
@@ -285,5 +301,5 @@ export const promotionService = {
   clonePromotion,
   getEligibleOrderPromotions,
   applyPromotions,
-  incrementUsage
+  incrementUsage,
 };

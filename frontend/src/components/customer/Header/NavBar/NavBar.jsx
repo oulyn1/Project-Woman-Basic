@@ -1,122 +1,147 @@
-import React, { useState, useEffect } from 'react'
-import { Box, Button, Menu, MenuItem, ListSubheader, Modal, TextField, Typography } from '@mui/material'
-import { styled } from '@mui/material/styles'
-import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
-import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
-import { useNavigate } from 'react-router-dom'
-import StarIcon from '@mui/icons-material/Star'
-import { getRatingsByProductId } from '~/apis/ratingAPIs'
-import { fetchAllProductsAPI, searchProductsAPI } from '~/apis/productAPIs'
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Menu,
+  MenuItem,
+  ListSubheader,
+  Modal,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
+import { fetchAllCategoriesAPI } from "~/apis/categoryAPIs";
+import { useNavigate } from "react-router-dom";
+import StarIcon from "@mui/icons-material/Star";
+import { getRatingsByProductId } from "~/apis/ratingAPIs";
+import { fetchAllProductsAPI, searchProductsAPI } from "~/apis/productAPIs";
 
 // ==== Component con để load rating ====
 function StarRating({ productId }) {
-  const [avg, setAvg] = useState(0)
+  const [avg, setAvg] = useState(0);
 
   useEffect(() => {
     const fetch = async () => {
       try {
-        const ratings = await getRatingsByProductId(productId)
-        const total = ratings.reduce((sum, r) => sum + r.star, 0)
-        const average = ratings.length ? (total / ratings.length).toFixed(1) : 0
-        setAvg(average)
+        const ratings = await getRatingsByProductId(productId);
+        const total = ratings.reduce((sum, r) => sum + r.star, 0);
+        const average = ratings.length
+          ? (total / ratings.length).toFixed(1)
+          : 0;
+        setAvg(average);
       } catch {
-        setAvg(0)
+        setAvg(0);
       }
-    }
-    fetch()
-  }, [productId])
+    };
+    fetch();
+  }, [productId]);
 
   return (
-    <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-      <StarIcon sx={{ fontSize: 20, color: 'gold' }} /> ({avg})
+    <Typography
+      variant="body2"
+      sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+    >
+      <StarIcon sx={{ fontSize: 20, color: "gold" }} /> ({avg})
     </Typography>
-  )
+  );
 }
 
 const StyledListHeader = styled(ListSubheader)({
-  backgroundImage: 'var(--Paper-overlay)',
-  fontWeight: 600
-})
-
-
+  backgroundImage: "var(--Paper-overlay)",
+  fontWeight: 600,
+});
 
 function NavBar() {
-  const [categories, setCategories] = useState([])
-  const [anchorEls, setAnchorEls] = useState({})
-  const [openModal, setOpenModal] = useState(false)
-  const navigate = useNavigate()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [rows, setRows] = useState([])
+  const [categories, setCategories] = useState([]);
+  const [anchorEls, setAnchorEls] = useState({});
+  const [openModal, setOpenModal] = useState(false);
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [rows, setRows] = useState([]);
 
   const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value)
+    const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
-      const handler = setTimeout(() => setDebouncedValue(value), delay)
-      return () => clearTimeout(handler)
-    }, [value, delay])
-    return debouncedValue
-  }
+      const handler = setTimeout(() => setDebouncedValue(value), delay);
+      return () => clearTimeout(handler);
+    }, [value, delay]);
+    return debouncedValue;
+  };
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         if (!debouncedSearchQuery) {
-          const res = await fetchAllProductsAPI()
-          setRows(res.data || [])
+          const res = await fetchAllProductsAPI();
+          setRows(res.data || []);
         } else {
-          const res = await searchProductsAPI(debouncedSearchQuery)
-          setRows(res.data || [])
+          const res = await searchProductsAPI(debouncedSearchQuery);
+          setRows(res.data || []);
         }
       } catch {
-        setRows([])
+        setRows([]);
       }
-    }
-    fetchProducts()
-  }, [debouncedSearchQuery])
+    };
+    fetchProducts();
+  }, [debouncedSearchQuery]);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategoriesAPI()
-        setCategories(data)
+        const data = await fetchAllCategoriesAPI();
+        setCategories(data);
       } catch {
         //
       }
-    }
-    fetchCategories()
-  }, [])
+    };
+    fetchCategories();
+  }, []);
 
   const handleMenuOpen = (event, id) => {
-    setAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }))
-  }
+    setAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }));
+  };
 
   const handleMenuClose = (id) => {
-    setAnchorEls((prev) => ({ ...prev, [id]: null }))
-  }
+    setAnchorEls((prev) => ({ ...prev, [id]: null }));
+  };
 
   const styleModal = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
     width: 900,
-    bgcolor: 'background.paper',
+    bgcolor: "background.paper",
     borderRadius: 2,
     boxShadow: 24,
-    p: 2
-  }
+    p: 2,
+  };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', height: 50, px: 4 }}>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        height: 50,
+        px: 4,
+      }}
+    >
       {/* ==== Danh mục phẳng ==== */}
-      <Box sx={{ display: 'flex', gap: 3 }}>
+      <Box sx={{ display: "flex", gap: 3 }}>
         {categories.map((cat) => (
           <Button
             key={cat._id}
             onClick={() => navigate(`/listproduct/${cat.slug}`)}
-            sx={{ color: '#696969', textTransform: 'none', '&:hover': { backgroundColor: 'white' } }}
+            sx={{
+              color: "#696969",
+              textTransform: "none",
+              "&:hover": { backgroundColor: "white" },
+            }}
           >
             {cat.name}
           </Button>
@@ -130,14 +155,14 @@ function NavBar() {
           sx={{
             height: 35,
             width: 350,
-            backgroundColor: '#F5F5F5',
-            color: '#696969',
+            backgroundColor: "#F5F5F5",
+            color: "#696969",
             borderRadius: 6,
-            textTransform: 'none',
-            fontStyle: 'italic',
-            display: 'flex',
-            justifyContent: 'space-between',
-            '&:hover': { backgroundColor: '#F5F5F5' }
+            textTransform: "none",
+            fontStyle: "italic",
+            display: "flex",
+            justifyContent: "space-between",
+            "&:hover": { backgroundColor: "#F5F5F5" },
           }}
         >
           Tìm kiếm nhanh
@@ -145,81 +170,106 @@ function NavBar() {
         </Button>
         <Modal open={openModal} onClose={() => setOpenModal(false)}>
           <Box sx={styleModal}>
-            <TextField fullWidth label="Tìm kiếm nhanh" type="search" sx={{ mb: 2 }} onChange={(e) => setSearchQuery(e.target.value)}/>
+            <TextField
+              fullWidth
+              label="Tìm kiếm nhanh"
+              type="search"
+              sx={{ mb: 2 }}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <Box
               sx={{
                 height: 400,
-                borderTop: '6px solid #696969',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                overflowX: 'hidden',
-                overflowY: 'auto'
+                borderTop: "6px solid #696969",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                overflowX: "hidden",
+                overflowY: "auto",
               }}
             >
-              {!debouncedSearchQuery ? null : (
-                rows.length === 0 ? (
-                  <Box>
-                    <img
-                      style={{ height: 200 }}
-                      src="https://cdn.pnj.io/images/2025/rebuild/a60759ad1dabe909c46a817ecbf71878.png"
-                      alt=""
-                    />
-                    <Typography>Không tìm thấy kết quả</Typography>
-                  </Box>
-                ) : (
-                  rows.map((product) => (
+              {!debouncedSearchQuery ? null : rows.length === 0 ? (
+                <Box>
+                  <img
+                    style={{ height: 200 }}
+                    src="https://cdn.pnj.io/images/2025/rebuild/a60759ad1dabe909c46a817ecbf71878.png"
+                    alt=""
+                  />
+                  <Typography>Không tìm thấy kết quả</Typography>
+                </Box>
+              ) : (
+                rows.map((product) => (
+                  <Box
+                    key={product._id}
+                    sx={{
+                      width: "850px",
+                      maxHeight: "120px",
+                      py: 2,
+                      borderBottom: "2px solid #f7f7f7",
+                      display: "flex",
+                      alignItems: "center",
+                      cursor: "pointer",
+                      "&:hover": { backgroundColor: "#f9f9f9" },
+                    }}
+                    onClick={() => {
+                      navigate(`/productdetail/${product._id}`);
+                      setOpenModal(false);
+                    }}
+                  >
+                    {/* Hình sản phẩm */}
                     <Box
-                      key={product._id}
                       sx={{
-                        width: '850px',
-                        maxHeight: '120px',
-                        py: 2,
-                        borderBottom: '2px solid #f7f7f7',
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        '&:hover': { backgroundColor: '#f9f9f9' }
-                      }}
-                      onClick={() => {
-                        navigate(`/productdetail/${product._id}`)
-                        setOpenModal(false)
+                        backgroundColor: "#f7f7f7",
+                        height: "100%",
+                        borderRadius: "8px",
+                        mr: 2,
                       }}
                     >
-                      {/* Hình sản phẩm */}
-                      <Box sx={{ backgroundColor: '#f7f7f7', height: '100%', borderRadius: '8px', mr: 2 }}>
-                        <img
-                          src={product.image || 'https://via.placeholder.com/120'}
-                          alt={product.name}
-                          style={{ height: '100%', width: 120, objectFit: 'cover', borderRadius: '8px' }}
-                        />
-                      </Box>
+                      <img
+                        src={product.image || "https://via.placeholder.com/120"}
+                        alt={product.name}
+                        style={{
+                          height: "100%",
+                          width: 120,
+                          objectFit: "cover",
+                          borderRadius: "8px",
+                        }}
+                      />
+                    </Box>
 
-                      {/* Thông tin sản phẩm */}
-                      <Box sx={{ width: '100%' }}>
-                        <Typography variant="body2" sx={{ mb: 1 }}>
-                          {product.name}
+                    {/* Thông tin sản phẩm */}
+                    <Box sx={{ width: "100%" }}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        {product.name}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
+                        <Typography variant="body2">
+                          {product.price?.toLocaleString("vi-VN")} ₫
                         </Typography>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                          <Typography variant="body2">
-                            {product.price?.toLocaleString('vi-VN')} ₫
-                          </Typography>
-                          <StarRating productId={product._id} />
-                          <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', pr: 2 }}>
-                            {product.sold || 0} đã bán
-                          </Typography>
-                        </Box>
+                        <StarRating productId={product._id} />
+                        <Typography
+                          variant="body2"
+                          sx={{ display: "flex", alignItems: "center", pr: 2 }}
+                        >
+                          {product.sold || 0} đã bán
+                        </Typography>
                       </Box>
                     </Box>
-                  ))
-                )
+                  </Box>
+                ))
               )}
             </Box>
           </Box>
         </Modal>
       </Box>
     </Box>
-  )
+  );
 }
 
-export default NavBar
+export default NavBar;
