@@ -19,27 +19,28 @@ function Banner({ banners }) {
     <Box
       sx={{
         width: '100%',
-        height: { xs: 'auto', md: '490px' },
         overflow: 'hidden',
         position: 'relative',
+        borderRadius: '12px',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.10)',
         '& .slick-dots': {
-          bottom: '36px'
+          bottom: '12px'
         },
         '& .slick-dots li button:before': {
-          color: 'black',
-          fontSize: '12px',
-          textShadow: '0px 0px 4px rgba(0, 0, 0, 1)',
+          color: 'white',
+          fontSize: '10px',
+          opacity: 0.7,
         },
         '& .slick-dots li.slick-active button:before': {
           color: 'white',
+          opacity: 1,
         },
         cursor: 'pointer',
-        overflow: 'hidden'
       }}
     >
       <Slider {...settings}>
         {banners.map((banner, index) => (
-          <Box key={index} sx={{ position: 'relative' }}>
+          <Box key={index}>
             <img
               src={banner.imageUrl}
               alt={banner.altText}

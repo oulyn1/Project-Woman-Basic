@@ -5,13 +5,15 @@ import TrustBanner from '~/components/customer/Service/TrustBanner'
 
 function HomePage() {
   const bannerData = [
-    { imageUrl: 'https://cdn.pnj.io/images/promo/265/22-ngaydoi99-1972x640KPN.jpg', altText: 'Banner 1' },
-    { imageUrl: 'https://cdn.pnj.io/images/promo/240/egift-t3-25-1972x640CTA.jpg', altText: 'Banner 2' },
-    { imageUrl: 'https://cdn.pnj.io/images/promo/264/PNJ_fast_2025-_banner-1972x640-CTA.png', altText: 'Banner 3' },
+    { imageUrl: '/banner1.jpg', altText: 'Lunar Pretty - New Collection' },
+    { imageUrl: '/banner2.jpg', altText: 'Tết Rạng Ngời - Đón Xuân Sang' },
+    { imageUrl: '/banner3.jpg', altText: 'Banner 3' },
   ]
   return (
     <>
-      <Banner banners={bannerData} />
+      <Container sx={{ pt: 2 }}>
+        <Banner banners={bannerData} />
+      </Container>
       <Box sx={{ my: 4, position: 'relative', zIndex: 100, bgcolor: 'white' }}>
         <TrustBanner />
       </Box>

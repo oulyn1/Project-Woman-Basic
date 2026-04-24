@@ -1,281 +1,181 @@
-import { Box, Typography, IconButton } from '@mui/material'
-import { ChevronLeft, ChevronRight } from '@mui/icons-material'
-import { StaffData } from './StaffData.jsx'
-import { useEffect, useState } from 'react'
+import React from 'react'
+import { Box, Typography, Container, Grid, Card, CardContent } from '@mui/material'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder'
+import SpaIcon from '@mui/icons-material/Spa'
+
+const coreValues = [
+  {
+    title: 'Minimalism',
+    subtitle: 'Sự Tối Giản',
+    desc: 'Thiết kế loại bỏ những chi tiết rườm rà, tập trung vào phom dáng chuẩn mực và tính ứng dụng cao.',
+    icon: <AutoAwesomeIcon sx={{ fontSize: 40, color: '#4b5563' }} />
+  },
+  {
+    title: 'Comfort',
+    subtitle: 'Sự Thoải Mái',
+    desc: 'Ưu tiên chất liệu mềm mịn, thoáng mát, mang lại cảm giác dễ chịu tuyệt đối suốt ngày dài.',
+    icon: <CheckCircleOutlineIcon sx={{ fontSize: 40, color: '#4b5563' }} />
+  },
+  {
+    title: 'Confident',
+    subtitle: 'Sự Tự Tin',
+    desc: 'Trang phục giúp bạn tỏa sáng theo cách riêng, không chạy theo xu hướng mà tôn vinh bản sắc cá nhân.',
+    icon: <FavoriteBorderIcon sx={{ fontSize: 40, color: '#4b5563' }} />
+  },
+  {
+    title: 'Sustainable',
+    subtitle: 'Tính Bền Vững',
+    desc: 'Lựa chọn thân thiện với môi trường, thiết kế vượt thời gian không sợ lỗi mốt.',
+    icon: <SpaIcon sx={{ fontSize: 40, color: '#4b5563' }} />
+  }
+]
 
 function StoryPage() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  const goToSlide = (index) => {
-    if (index < 0) index = StaffData.length - 1
-    if (index >= StaffData.length) index = 0
-    setCurrentIndex(index)
-  }
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      goToSlide(currentIndex + 1)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [currentIndex])
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-      }}
-    >
+    <Box sx={{ width: '100%', maxWidth: '100vw', bgcolor: '#ffffff', pb: 8, overflowX: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      {/* Hero Banner Area */}
       <Box
         sx={{
-          backgroundImage:'url("https://res.cloudinary.com/dj53ibv5n/image/upload/v1758380605/banner-vie_i3ara6.jpg")',
-          width: '1200px',
-          maxWidth: '100%',
-          height: '451px',
+          backgroundImage: 'url("/woman_basic_hero_banner_1777018158632.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          mt: '1px'
-        }}
-      />
-      <Box sx={{ maxWidth: '800px', px: 2, py: 4, textAlign: 'center' }}>
-        <Typography
-          sx={{
-            fontSize: '25px',
-            color: '#003468',
-            fontFamily: 'Times New Roman, serif',
-            fontWeight: 'bold',
-          }}
-        >
-          GIỚI THIỆU VỀ CÔNG TY
-        </Typography>
-        <Typography sx={{ mt: 2, lineHeight: 1.5, color: '#003468', fontFamily: 'Times New Roman, serif', }}>
-          Thành lập từ năm 1988, từ Cửa hàng kinh doanh Vàng bạc Đá quý Phú Nhuận phát triển thành Công ty cổ phần Vàng bạc Đá quý Phú Nhuận (Tên tiếng anh là "Phu Nhuan Jewelry Joint Stock Company"), đến năm 2025, thương hiệu PNJ đã có 37 năm hình thành và phát triển.
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          backgroundColor: '#fff4e7',
+          height: { xs: '300px', md: '500px' },
           width: '100%',
-          maxWidth: '1000px',
-          mt: 0.5,
-          py: 2.5,
-          px: 1,
           display: 'flex',
-          justifyContent: 'space-around',
-          flexWrap: 'wrap',
-          textAlign: 'center',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative'
         }}
       >
-        <Box sx={{ width: '20%', p: 1 }}>
-          <Typography sx={{ color: '#003468', fontWeight: 'bold' }}>CHÍNH TRỰC<br />ĐỂ TRƯỜNG TỒN</Typography>
-        </Box>
-        <Box sx={{ width: '20%', p: 1 }}>
-          <Typography sx={{ color: '#003468', fontWeight: 'bold' }}>KIÊN ĐỊNH<br />BÁM MỤC TIÊU</Typography>
-        </Box>
-        <Box sx={{ width: '20%', p: 1 }}>
-          <Typography sx={{ color: '#003468', fontWeight: 'bold' }}>TIÊN PHONG<br />TẠO KHÁC BIỆT</Typography>
-        </Box>
-        <Box sx={{ width: '20%', p: 1 }}>
-          <Typography sx={{ color: '#003468', fontWeight: 'bold' }}>QUAN TÂM<br />CÙNG PHÁT TRIỂN</Typography>
-        </Box>
-        <Box sx={{ width: '20%', p: 1 }}>
-          <Typography sx={{ color: '#003468', fontWeight: 'bold' }}>TẬN TÂM<br />VÌ KHÁCH HÀNG</Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: '800px', px: 2, py: 4, }}>
+        <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.3)' }} />
         <Typography
+          variant="h2"
           sx={{
-            fontSize: '25px',
-            color: '#003468',
-            fontFamily: 'Times New Roman, serif',
-            fontWeight: 'bold',
+            color: '#fff',
+            fontWeight: 300,
+            letterSpacing: '4px',
+            textTransform: 'uppercase',
+            position: 'relative',
+            zIndex: 1,
             textAlign: 'center',
-            mb: 3,
+            px: 2,
+            textShadow: '0px 2px 4px rgba(0,0,0,0.5)'
           }}
         >
-          GIÁ TRỊ DOANH NGHIỆP
+          Câu Chuyện Woman Basic
         </Typography>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-            <Typography sx={{ color: '#dbbd8a', fontSize: '20px', mr: 1 }}>-</Typography>
-            <Box>
-              <Typography sx={{ fontWeight: 'bold', color: '#dbbd8a' }}>TẦM NHÌN</Typography>
-              <Typography sx={{ color: '#003468' }}>TRỞ THÀNH CÔNG TY HÀNG ĐẦU CHÂU Á VỀ CHẾ TÁC TRANG SỨC VÀ BÁN LẺ SẢN PHẨM TÔN VINH VẺ ĐẸP, VƯƠN TẦM THẾ GIỚI</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-            <Typography sx={{ color: '#dbbd8a', fontSize: '20px', mr: 1 }}>-</Typography>
-            <Box>
-              <Typography sx={{ fontWeight: 'bold', color: '#dbbd8a' }}>SỨ MỆNH</Typography>
-              <Typography sx={{ color: '#003468' }}>KHÔNG NGỪNG SÁNG TẠO ĐỂ MANG LẠI NHỮNG SẢN PHẨM TINH TẾ VỚI GIÁ TRỊ THẬT ĐỂ TÔN VINH VẺ ĐẸP CHO CON NGƯỜI VÀ CUỘC SỐNG</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-            <Typography sx={{ color: '#dbbd8a', fontSize: '20px', mr: 1 }}>-</Typography>
-            <Box>
-              <Typography sx={{ fontWeight: 'bold', color: '#dbbd8a' }}>TRIẾT LÝ PHÁT TRIỂN BỀN VỮNG</Typography>
-              <Typography sx={{ color: '#003468' }}>ĐẶT LỢI ÍCH KHÁCH HÀNG VÀ LỢI ÍCH XÃ HỘI VÀO LỢI ÍCH CỦA DOANH NGHIỆP</Typography>
-            </Box>
-          </Box>
-        </Box>
       </Box>
 
-      <Box sx={{
-        backgroundImage: 'url("https://res.cloudinary.com/dj53ibv5n/image/upload/v1758380605/HDQT-VIE_ernzjv.jpg")',
-        width: '1200px',
-        maxWidth: '100%',
-        height: '451px',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}>
-      </Box>
-      {/* ✅ Carousel */}
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          width: '1200px',
-          maxWidth: '100%',
-          height: '501px',
-          mx: 'auto',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            transition: 'transform 0.7s ease-in-out',
-            transform: `translateX(-${currentIndex * 90}%)`,
-            height: '100%',
-          }}
-        >
-          {StaffData.map((staff, index) => (
-            <Box
-              key={staff.id}
-              sx={{
-                minWidth: '90%',
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                opacity: currentIndex === index ? 1 : 0.5,
-                transition: 'opacity 0.3s ease',
-                pl: 10
-              }}
-            >
-              <img
-                src={staff.Image}
-                alt={staff.name}
-                style={{
-                  height: '400px',
-                  objectFit: 'cover',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      {/* Our Story Section */}
+      <Container maxWidth="md" sx={{ width: '100%', textAlign: 'center', py: { xs: 6, md: 10 } }}>
+        <Typography variant="h4" sx={{ fontWeight: 400, color: '#111827', mb: 3, letterSpacing: '2px' }}>
+          VỀ CHÚNG TÔI
+        </Typography>
+        <Box sx={{ width: '60px', height: '2px', bgcolor: '#111827', mx: 'auto', mb: 4 }} />
+        <Typography variant="body1" sx={{ color: '#4b5563', fontSize: '1.1rem', lineHeight: 1.8, mb: 2 }}>
+          Ra đời từ khát khao định nghĩa lại vẻ đẹp của sự giản đơn, <strong>Woman Basic</strong> không chỉ là một thương hiệu thời trang, mà là một lối sống. Chúng tôi tin rằng, vẻ thanh lịch đích thực không đến từ những hoa văn cầu kỳ hay xu hướng chớp nhoáng, mà bắt nguồn từ sự thoải mái và tự tin khi là chính mình.
+        </Typography>
+        <Typography variant="body1" sx={{ color: '#4b5563', fontSize: '1.1rem', lineHeight: 1.8 }}>
+          Mọi thiết kế của Woman Basic đều bắt đầu từ một dấu gạch ngang cơ bản – đường cắt may tinh tế, chất liệu chọn lọc, bảng màu trung tính. Tất cả hòa quyện để tạo nên chiếc móng vững chắc cho tủ đồ của mọi cô gái hiện đại.
+        </Typography>
+      </Container>
+
+
+      {/* Mission & Vision */}
+      <Box sx={{ bgcolor: '#f9fafb', py: { xs: 8, md: 12 }, width: '100%' }}>
+        <Container maxWidth="lg" sx={{ width: '100%' }}>
+          <Grid container spacing={4} alignItems="center">
+             <Grid item xs={12} md={6}>
+              <Box sx={{ pr: { md: 4 }, textAlign: { xs: 'center', md: 'left' } }}>
+                <Typography variant="h4" sx={{ fontWeight: 400, color: '#111827', mb: 2, letterSpacing: '1px' }}>
+                  TẦM NHÌN & SỨ MỆNH
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#4b5563', lineHeight: 1.8, mb: 3 }}>
+                  Sứ mệnh của chúng tôi là mang đến những trang phục cơ bản (basics) chất lượng cao nhất với mức giá hợp lý. Để mỗi cô gái, dù ở bất kỳ độ tuổi hay môi trường nào, đều có thể dễ dàng tìm thấy "bộ cánh" chân ái cho riêng mình.
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#4b5563', lineHeight: 1.8 }}>
+                  Khát vọng dài hạn của Woman Basic là trở thành thương hiệu thời trang thiết yếu hàng đầu trong tủ đồ của phụ nữ Việt Nam, gắn liền với sự tinh tế, chuẩn mực và bền vững.
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                component="img"
+                src="/woman_basic_vision_1777018174293.png"
+                alt="Woman Basic Vision"
+                sx={{
+                  width: '100%',
+                  maxWidth: '500px',
+                  display: 'block',
+                  margin: '0 auto',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
                 }}
               />
-            </Box>
+            </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Core Values */}
+      <Container maxWidth="lg" sx={{ width: '100%', py: { xs: 8, md: 10 } }}>
+        <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 400, color: '#111827', mb: 3, letterSpacing: '2px' }}>
+          GIÁ TRỊ CỐT LÕI
+        </Typography>
+         <Box sx={{ width: '60px', height: '2px', bgcolor: '#111827', mx: 'auto', mb: 8 }} />
+        
+        <Grid container spacing={4} justifyContent="center">
+          {coreValues.map((value, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card 
+                elevation={0} 
+                sx={{ 
+                  height: '100%',
+                  textAlign: 'center',
+                  bgcolor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  transition: 'transform 0.3s',
+                  mx: 'auto',
+                  maxWidth: '300px',
+                  '&:hover': { transform: 'translateY(-10px)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }
+                }}
+              >
+                <CardContent sx={{ p: 4 }}>
+                  <Box sx={{ mb: 2 }}>
+                    {value.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: '#111827', mb: 0.5 }}>
+                    {value.title}
+                  </Typography>
+                  <Typography variant="subtitle2" sx={{ color: '#9ca3af', textTransform: 'uppercase', mb: 2, letterSpacing: '1px' }}>
+                    {value.subtitle}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#6b7280', lineHeight: 1.6 }}>
+                    {value.desc}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </Box>
-
-        <IconButton
-          onClick={() => goToSlide(currentIndex - 1)}
+        </Grid>
+      </Container>
+      
+      {/* Bottom Picture / Banner */}
+      <Container maxWidth="lg" sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
+         <Box
+          component="img"
+          src="/woman_basic_core_values_1777018185820.png"
+          alt="Woman Basic Lifestyle"
           sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '10px',
-            transform: 'translateY(-50%)',
-            background: 'rgba(0,0,0,0.3)',
-            color: '#fff'
+             width: '100%',
+             height: { xs: '300px', md: '500px' },
+             objectFit: 'cover',
+             borderRadius: '8px'
           }}
-        >
-          <ChevronLeft />
-        </IconButton>
-        <IconButton
-          onClick={() => goToSlide(currentIndex + 1)}
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            right: '10px',
-            transform: 'translateY(-50%)',
-            background: 'rgba(0,0,0,0.3)',
-            color: '#fff'
-          }}
-        >
-          <ChevronRight />
-        </IconButton>
-      </Box>
-
-      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 2, mb: 3 }}>
-        {StaffData.map((_, index) => (
-          <Box
-            key={index}
-            onClick={() => goToSlide(index)}
-            sx={{
-              width: currentIndex === index ? 14 : 10,
-              height: currentIndex === index ? 14 : 10,
-              borderRadius: '50%',
-              backgroundColor: currentIndex === index ? '#003468' : '#ccc',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-            }}
-          />
-        ))}
-      </Box>
-
-      <Box sx={{
-        backgroundImage: 'url("https://res.cloudinary.com/dj53ibv5n/image/upload/v1758380605/BDH-VIE_z7dhs7.jpg")',
-        width: '1200px',
-        maxWidth: '100%',
-        height: '451px',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        mb: '2',
-      }}>
-      </Box>
-      <Box
-        sx={{
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          py: 4,
-          px: 2,
-        }}
-      >
-        {/* Tiêu đề */}
-        <Box sx={{ textAlign: 'center', mt: 2 }}>
-          <Typography
-            sx={{
-              fontSize: '25px',
-              color: '#003468',
-              fontFamily: 'Times New Roman, serif',
-              fontWeight: 'bold',
-              mb: 1,
-            }}
-          >
-            CÁC LĨNH VỰC KINH DOANH
-          </Typography>
-          <img
-            src="https://res.cloudinary.com/dj53ibv5n/image/upload/v1758380606/kimcuong_vgnpb8.png"
-            alt="Diamond icon"
-            style={{ width: '98px', height: 'auto' }}
-          />
-          <Typography
-            sx={{
-              fontSize: '22px',
-              color: '#003468',
-              fontFamily: 'Times New Roman, serif',
-              mt: 1,
-            }}
-          >
-            THƯƠNG HIỆU SẢN PHẨM
-          </Typography>
-        </Box>
-      </Box>
-
+        />
+      </Container>
     </Box>
   )
 }
