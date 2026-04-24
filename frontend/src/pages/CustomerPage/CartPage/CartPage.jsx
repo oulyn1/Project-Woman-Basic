@@ -12,17 +12,35 @@ function CartPage() {
   const { cartItems, updateQuantity, removeFromCart, clearCart } = useContext(CartContext)
   const [selectedItems, setSelectedItems] = useState([])
   const [promotions, setPromotions] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
   const navigate = useNavigate()
+
+  // Load current user từ localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) {
+        setCurrentUser(JSON.parse(stored))
+      }
+    } catch (err) {
+      console.error('Error loading user:', err)
+    }
+  }, [])
 
   useEffect(() => {
     const loadPromotions = async () => {
       try {
-        const res = await fetchAllPromotionsAPI({ type: 'product', computedStatus: 'active' })
+        // Pass customerId để backend filter theo tier
+        const params = { type: 'product', computedStatus: 'active' }
+        if (currentUser?._id) {
+          params.customerId = currentUser._id
+        }
+        const res = await fetchAllPromotionsAPI(params)
         setPromotions(res.items || [])
       } catch (err) { console.error(err) }
     }
     loadPromotions()
-  }, [])
+  }, [currentUser])
 
   // Toggle chọn 1 sản phẩm
   const handleSelectItem = (uniqueKey, checked) => {
@@ -42,11 +60,28 @@ function CartPage() {
     }
   }
 
+  const canApplyPromo = (p, productId) => {
+    // product match?
+    const isProductPromo = p.productIds?.includes('ALL') || p.productIds?.includes(productId)
+    const isActive = p.computedStatus === 'active' || p.computedStatus === 'Active'
+    // user eligibility
+    const now = new Date()
+    const isWithinDate = (!p.startDate || new Date(p.startDate) <= now) && (!p.endDate || p.endDate === null || new Date(p.endDate) >= now)
+    const cond = p.condition ?? { type: 'all', loyaltyTiers: [], specificCustomerIds: [] }
+    let isEligible = true
+    switch (cond.type) {
+      case 'all': break
+      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      default: break
+    }
+    return isProductPromo && isActive && isWithinDate && isEligible
+  }
+
   const getDiscountedPrice = (product) => {
-    const applied = promotions.find(promo =>
-      (promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)) &&
-      promo.computedStatus === 'active'
-    )
+    const now = new Date()
+    const applied = promotions.find(promo => canApplyPromo(promo, product._id))
     if (applied) {
       const val = parseFloat(applied.discountValue || 0)
       if (applied.discountType === 'percent') {

@@ -20,7 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import CategoryIcon from '@mui/icons-material/Category'
 
-import { fetchAllCategorysAPI, deleteCategoryAPI, searchCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI, deleteCategoryAPI, searchCategoriesAPI } from '~/apis/categoryAPIs'
 import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
@@ -38,8 +38,8 @@ const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
     const fetchCategorys = async () => {
       try {
         const data = !searchQuery
-          ? await fetchAllCategorysAPI()
-          : await searchCategorysAPI(searchQuery)
+          ? await fetchAllCategoriesAPI()
+          : await searchCategoriesAPI(searchQuery)
         setRows(data)
       } catch {
         setRows([])

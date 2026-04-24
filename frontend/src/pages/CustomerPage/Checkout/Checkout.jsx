@@ -27,6 +27,7 @@ function Checkout() {
   )
 
   const [promotions, setPromotions] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
   const [eligibleCoupons, setEligibleCoupons] = useState([])
   const [selectedCouponCode, setSelectedCouponCode] = useState('')
   const [calculationResult, setCalculationResult] = useState(null)
@@ -74,6 +75,16 @@ function Checkout() {
       } catch (err) { console.error(err) }
     }
     loadData()
+  }, [])
+
+  // Load current user
+  useEffect(() => {
+    const saved = localStorage.getItem('user')
+    if (saved) {
+      try {
+        setCurrentUser(JSON.parse(saved))
+      } catch { /* ignore */ }
+    }
   }, [])
 
   // Whenever products or coupon change, calculate total via API
@@ -164,8 +175,24 @@ function Checkout() {
     }
   }
 
+  const canApplyPromo = (p, productId) => {
+    const isProductPromo = p.productIds?.includes('ALL') || p.productIds?.includes(productId)
+    const isActive = p.computedStatus === 'active' && (!p.startDate || new Date(p.startDate) <= new Date()) && (!p.endDate || p.endDate === null || new Date(p.endDate) >= new Date())
+    // user eligibility
+    const cond = p.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
+    let isEligible = true
+    switch (cond.type) {
+      case 'all': break
+      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      default: break
+    }
+    return isProductPromo && isActive && isEligible
+  }
+
   const getProductPromo = (productId) => {
-    return promotions.find(p => p.productIds?.includes('ALL') || p.productIds?.includes(productId))
+    return promotions.find(p => canApplyPromo(p, productId))
   }
 
   return (

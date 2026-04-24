@@ -5,7 +5,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import TableProduct from '~/components/admin/TableProduct/TableProduct'
 import AddProduct from './AddProduct/AddProduct'
 import EditProduct from './EditProduct/EditProduct'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 
 function ProductPage() {
   const [openAddModal, setOpenAddModal] = useState(false)
@@ -17,7 +17,7 @@ function ProductPage() {
   const [fetchTrigger, setFetchTrigger] = useState(0)
 
   useEffect(() => {
-    fetchAllCategorysAPI().then(res => setCategories(res || []))
+    fetchAllCategoriesAPI().then(res => setCategories(res || []))
   }, [])
 
   const handleAddProduct = () => setOpenAddModal(true)

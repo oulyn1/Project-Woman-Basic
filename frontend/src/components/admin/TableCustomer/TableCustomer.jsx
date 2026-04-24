@@ -72,12 +72,17 @@ const TableCustomer = ({ searchQuery }) => {
 
       const ordersRaw = await getCustomerOrdersAPI(id, token)
       const orders = Array.isArray(ordersRaw) ? ordersRaw : []
-      const filtered = orders.filter(o => {
+      // Lọc bỏ đơn bị hủy để hiển thị danh sách đơn (chỉ hiện đơn chưa hủy)
+      const validOrders = orders.filter(o => {
+        const st = (o?.status ?? '').toString().toLowerCase()
+        return st !== 'cancelled'
+      })
+      const filtered = validOrders.filter(o => {
         const uid = o.userId || o.user || o.user?._id || o.userId?._id
         return String(uid) === String(id)
       })
       setDetailOrders(filtered)
-      stats = { ...stats, totalOrders: filtered.length, totalAmount: filtered.reduce((s, o) => s + Number(o?.total || 0), 0) }
+      // Sử dụng stats từ API (đã lọc cancelled ở backend), không tính lại ở frontend
       setDetailStats(stats)
     } catch {
       setSnack({ open: true, message: 'Lỗi khi tải chi tiết.', severity: 'error' })

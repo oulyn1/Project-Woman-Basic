@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['customer', 'employee', 'admin'], default: 'customer' },
   phone: { type: String, default: '' },
   address: { type: String, default: '' },
-  avatar: { type: String, default: '' },
   loyaltyTier: { type: String, enum: ['Standard', 'Silver', 'Gold', 'Platinum'], default: 'Standard' }
 }, {
   timestamps: true,

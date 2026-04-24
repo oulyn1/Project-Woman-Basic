@@ -9,14 +9,13 @@ const search = async (q) => {
   const users = await User.find({
     role: 'customer',
     $or: [{ name: regex }, { email: regex }]
-  }).select('_id name email avatar')
+  }).select('_id name email')
 
   // Map 'name' to 'fullName' as requested by user
   return users.map(u => ({
     _id: u._id,
     fullName: u.name,
-    email: u.email,
-    avatar: u.avatar
+    email: u.email
   }))
 }
 

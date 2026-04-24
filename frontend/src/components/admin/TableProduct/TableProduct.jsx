@@ -29,7 +29,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 
 import { fetchAllProductsAPI, deleteProductAPI } from '~/apis/productAPIs'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 
 const TableProduct = ({ onEditProduct, searchQuery, categoryId = 'ALL', fetchTrigger }) => {
   const [rows, setRows] = useState([])
@@ -53,7 +53,7 @@ const TableProduct = ({ onEditProduct, searchQuery, categoryId = 'ALL', fetchTri
       setLoading(true)
       try {
         const [cats, prods] = await Promise.all([
-          fetchAllCategorysAPI(),
+          fetchAllCategoriesAPI(),
           fetchAllProductsAPI({ q: searchQuery, limit: 200 }) // load all, filter client-side
         ])
         setCategories(cats)

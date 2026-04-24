@@ -13,8 +13,9 @@ function FieldCustom({
   const isSelect = !!options
 
   const inputProps = isSelect ? {} : { multiline, rows }
+
   return (
-    <Box sx={{ maxWidth: '100%', my: 2 }}>
+    <Box sx={{ width: '100%' }}>
       <Typography
         sx={{
           mb: 1,
@@ -23,16 +24,16 @@ function FieldCustom({
           alignItems: 'center',
           ...(required && {
             '&::after': {
-              content: '"*"',
+              content: '" *"',
               color: 'red',
-              ml: 0.5,
-              mt: -0.5
+              ml: 0.5
             }
           })
         }}
       >
         {label}
       </Typography>
+
       <TextField
         fullWidth
         variant="outlined"
@@ -41,46 +42,88 @@ function FieldCustom({
         {...inputProps}
         {...rest}
         sx={{
+          width: '100%',
+
           '& .MuiOutlinedInput-root': {
+            color: 'white',
+
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'rgba(255, 255, 255, 0.7)',
+              borderColor: 'rgba(255,255,255,0.7)'
             },
+
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'white',
+              borderColor: 'white'
             },
+
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'white',
+              borderColor: 'white'
             },
+
+            '&.Mui-disabled': {
+              color: 'white',
+
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(255,255,255,0.3)'
+              }
+            }
           },
+
+          // 🔥 INPUT TEXT
           '& .MuiInputBase-input': {
             color: 'white',
+
             '&::placeholder': {
-              color: 'rgba(255, 255, 255, 0.5)',
-              opacity: 1,
-            },
+              color: 'rgba(255,255,255,0.5)',
+              opacity: 1
+            }
           },
+
+          // 🔥 DISABLED TEXT (QUAN TRỌNG)
+          '& .MuiInputBase-input.Mui-disabled': {
+            WebkitTextFillColor: 'white !important',
+            color: 'white !important'
+          },
+
+          // 🔥 MULTILINE DISABLED
+          '& .MuiInputBase-inputMultiline.Mui-disabled': {
+            WebkitTextFillColor: 'white !important'
+          },
+
+          // 🔥 SELECT DISABLED
+          '& .MuiSelect-select.Mui-disabled': {
+            WebkitTextFillColor: 'white !important',
+            color: 'white !important'
+          },
+
+          // LABEL
           '& .MuiInputLabel-root': {
-            color: 'rgba(255, 255, 255, 0.7)',
+            color: 'rgba(255,255,255,0.7)'
           },
+
           '& .MuiInputLabel-root.Mui-focused': {
-            color: 'white',
-          },
-          '& .MuiSvgIcon-root': {
-            color: 'white',
-          },
-          '& .MuiMenu-paper': {
-            backgroundColor: '#343a40'
-          },
-          '& .MuiMenuItem-root': {
             color: 'white'
+          },
+
+          '& .MuiInputLabel-root.Mui-disabled': {
+            color: 'rgba(255,255,255,0.4)'
+          },
+
+          // ICON
+          '& .MuiSvgIcon-root': {
+            color: 'white'
+          },
+
+          '& .MuiSvgIcon-root.Mui-disabled': {
+            color: 'rgba(255,255,255,0.3)'
           }
         }}
       >
-        {isSelect && options.map((option) => (
-          <MenuItem key={option.value} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
+        {isSelect &&
+          options.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
       </TextField>
     </Box>
   )

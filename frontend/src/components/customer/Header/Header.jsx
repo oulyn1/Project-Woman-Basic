@@ -3,7 +3,7 @@ import { Box, Button, Menu, MenuItem, Container, Badge, IconButton, Tooltip, Typ
 import { styled } from '@mui/material/styles'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '~/context/Cart/useCart'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 import { fetchAllProductsAPI, searchProductsAPI } from '~/apis/productAPIs'
 import { getRatingsByProductId } from '~/apis/ratingAPIs'
 
@@ -53,7 +53,7 @@ function Header() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategorysAPI()
+        const data = await fetchAllCategoriesAPI()
         setCategories(data)
       } catch (err) { console.error(err) }
     }

@@ -28,13 +28,20 @@ export default function CustomerDetail() {
     (async () => {
       try {
         setLoading(true)
-        const [summary, ordersRes] = await Promise.all([
-          getCustomerSummaryAPI(id, token),
-          getCustomerOrdersAPI(id, token)
-        ])
+        // Gọi API lấy stats từ backend (đã lọc cancelled ở backend)
+        const summary = await getCustomerSummaryAPI(id, token)
         setUser(summary.user)
         setStats(summary.stats)
-        setOrders(Array.isArray(ordersRes) ? ordersRes : [])
+        
+        // Lấy danh sách đơn để hiển thị (đã lọc cancelled)
+        const ordersRes = await getCustomerOrdersAPI(id, token)
+        const ordersRaw = Array.isArray(ordersRes) ? ordersRes : []
+        // Lọc bỏ đơn bị hủy khi hiển thị danh sách
+        const validOrders = ordersRaw.filter(o => {
+          const st = (o?.status ?? '').toString().toLowerCase()
+          return st !== 'cancelled'
+        })
+        setOrders(validOrders)
       } catch {
         setError('Không thể tải thông tin khách hàng / đơn hàng.')
       } finally {

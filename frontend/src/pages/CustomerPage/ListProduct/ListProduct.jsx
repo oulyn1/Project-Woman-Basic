@@ -5,7 +5,7 @@ import {
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
 import ProductCard from '~/components/customer/ProductHome/ProductCard/ProductCard'
 import SearchIcon from '@mui/icons-material/Search'
@@ -17,17 +17,28 @@ function ListProduct() {
   const [allProducts, setAllProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [promotions, setPromotions] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
   
   // States for filters
   const [searchQuery, setSearchQuery] = useState('')
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity }) // null or {min, max}
   const [sortBy, setSortBy] = useState('newest')
 
+  // Load current user from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) setCurrentUser(JSON.parse(stored))
+    } catch {
+      // ignore
+    }
+  }, [])
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const [cats, prodRes, promos] = await Promise.all([
-          fetchAllCategorysAPI(),
+          fetchAllCategoriesAPI(),
           fetchAllProductsAPI(),
           fetchAllPromotionsAPI()
         ])
@@ -38,6 +49,26 @@ function ListProduct() {
     }
     loadData()
   }, [])
+
+  // Helper: promotions applicable to a given product for current user
+  const promosForProduct = (prod) => {
+    if (!prod) return []
+    const now = new Date()
+    return promotions.filter(p => {
+      const isProductPromo = (p.productIds?.includes('ALL') || p.productIds?.includes(prod._id))
+      const isActive = p.computedStatus === 'active' && (!p.startDate || new Date(p.startDate) <= now) && (!p.endDate || p.endDate === null || new Date(p.endDate) >= now)
+      const cond = p.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
+      let eligible = true
+      switch (cond.type) {
+        case 'all': eligible = true; break
+        case 'loyal': eligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+        case 'specific': eligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+        case 'new': eligible = (cond.newCustomerMaxOrders ?? null) == null; break
+        default: eligible = true;
+      }
+      return isProductPromo && isActive && eligible
+    })
+  }
 
   // Calculate Product Count per Category
   const categoryCounts = useMemo(() => {
@@ -204,10 +235,10 @@ function ListProduct() {
             </Box>
           ) : (
             <Grid container spacing={3}>
-              {processedProducts.map(product => (
+            {processedProducts.map(product => (
                 <Grid item xs={12} sm={6} md={4} key={product._id}>
                   <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
-                    <ProductCard product={product} promotions={promotions} />
+                    <ProductCard product={product} promotions={promosForProduct(product)} />
                   </Box>
                 </Grid>
               ))}

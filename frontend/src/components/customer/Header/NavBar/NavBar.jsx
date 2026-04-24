@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Button, Menu, MenuItem, ListSubheader, Modal, TextField, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 import { useNavigate } from 'react-router-dom'
 import StarIcon from '@mui/icons-material/Star'
 import { getRatingsByProductId } from '~/apis/ratingAPIs'
@@ -79,7 +79,7 @@ function NavBar() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategorysAPI()
+        const data = await fetchAllCategoriesAPI()
         setCategories(data)
       } catch {
         //

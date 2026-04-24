@@ -14,11 +14,12 @@ const getCustomerDetail = async (id) => {
 
 const getCustomerSummary = async (id) => {
   const user = await getCustomerDetail(id)
-  // Lấy đơn theo userId 
-  const orders = await orderModel.getAll({ userId: id })
-
-  const totalOrders = orders.length
-  const totalAmount = orders.reduce((s, o) => s + Number(o?.total || 0), 0)
+  // Lấy đơn theo userId, loại bỏ cancelled ở query để đảm bảo đúng tổng chi tiêu
+  const orders = await orderModel.getAll({ userId: id, status: { $nin: ['cancelled','Cancelled','CANCELLED'] } })
+  // validOrders là danh sách đơn đã loại bỏ cancelle d ở query
+  const validOrders = orders
+  const totalOrders = validOrders.length
+  const totalAmount = validOrders.reduce((s, o) => s + Number(o?.total || 0), 0)
   const tier = user.tier || (
     totalAmount >= 50_000_000 ? 'Platinum'
       : totalAmount >= 20_000_000 ? 'Gold'

@@ -2,18 +2,53 @@ import React, { useEffect, useState } from 'react'
 import {
   Box, Button, Typography, Snackbar, Alert, Dialog, DialogTitle,
   DialogContent, DialogActions, TextField, FormControlLabel,
-  Checkbox, Stack, IconButton, CircularProgress, MenuItem,
-  Select, FormControl, InputLabel, Chip, Autocomplete
+  Checkbox, Stack, IconButton, CircularProgress, MenuItem, Chip, Autocomplete
 } from '@mui/material'
 import SaveIcon from '@mui/icons-material/Save'
 import CloseIcon from '@mui/icons-material/Close'
 import InventoryIcon from '@mui/icons-material/Inventory'
 
-import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
 import { getPromotionDetailAPI, updatePromotionAPI } from '~/apis/promotionAPIs'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
 import { searchCustomersAPI } from '~/apis/customerAPIs'
 
+// ── Unified dark TextField style ──────────────────────────────────────────────
+const darkField = {
+  '& .MuiOutlinedInput-root': {
+    color: 'white',
+    '& fieldset': { borderColor: '#444' },
+    '&:hover fieldset': { borderColor: '#666' },
+    '&.Mui-focused fieldset': { borderColor: '#66FF99' },
+    '&.Mui-disabled': {
+      '& fieldset': { borderColor: '#333' },
+      '& input': { WebkitTextFillColor: 'rgba(255,255,255,0.5) !important' },
+      '& textarea': { WebkitTextFillColor: 'rgba(255,255,255,0.5) !important' }
+    },
+    '& .MuiSelect-select.Mui-disabled': {
+      WebkitTextFillColor: 'rgba(255,255,255,0.5) !important'
+    }
+  },
+  '& .MuiInputLabel-root': { color: '#888' },
+  '& .MuiInputLabel-root.Mui-focused': { color: '#66FF99' },
+  '& .MuiInputLabel-root.Mui-disabled': { color: '#555' },
+  '& .MuiSelect-icon': { color: '#888' },
+  '& input[type="date"]::-webkit-calendar-picker-indicator': { filter: 'invert(0.5)' }
+}
+
+function F({ sxExtra, ...props }) {
+  return (
+    <TextField
+      fullWidth
+      variant="outlined"
+      size="small"
+      InputLabelProps={props.type === 'date' ? { shrink: true } : undefined}
+      sx={{ ...darkField, ...sxExtra }}
+      {...props}
+    />
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 function EditPromotion({ open, onClose, onSuccess, promotionId }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -26,9 +61,9 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
     endDate: '',
     isForever: false,
     productIds: [],
-    minOrderValue: 0,
-    maxUsageTotal: 0,
-    maxUsagePerCustomer: 0,
+    minOrderValue: '',
+    maxUsageTotal: '',
+    maxUsagePerCustomer: '',
     condition: {
       type: 'all',
       newCustomerMaxOrders: 1,
@@ -50,21 +85,17 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
   const [productSearch, setProductSearch] = useState('')
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetchAllProductsAPI()
-        const prodList = res.data || []
-        setProducts(prodList.map(p => ({ value: p._id, label: p.name })))
-      } catch { /* handle error */ }
-    }
-    if (open) fetchData()
+    if (!open) return
+    fetchAllProductsAPI()
+      .then(res => setProducts((res.data || []).map(p => ({ value: p._id, label: p.name }))))
+      .catch(() => {})
   }, [open])
 
   useEffect(() => {
-    const fetchPromotion = async () => {
-      setFetching(true)
-      try {
-        const promo = await getPromotionDetailAPI(promotionId)
+    if (!open || !promotionId) return
+    setFetching(true)
+    getPromotionDetailAPI(promotionId)
+      .then(promo => {
         setComputedStatus(promo.computedStatus)
         setFormData({
           title: promo.title || '',
@@ -77,9 +108,9 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
           endDate: promo.endDate ? promo.endDate.split('T')[0] : '',
           isForever: promo.isForever || false,
           productIds: promo.productIds || [],
-          minOrderValue: promo.minOrderValue || 0,
-          maxUsageTotal: promo.maxUsageTotal || 0,
-          maxUsagePerCustomer: promo.maxUsagePerCustomer || 0,
+          minOrderValue: promo.minOrderValue || '',
+          maxUsageTotal: promo.maxUsageTotal || '',
+          maxUsagePerCustomer: promo.maxUsagePerCustomer || '',
           condition: {
             type: promo.condition?.type || 'all',
             newCustomerMaxOrders: promo.condition?.newCustomerMaxOrders || 1,
@@ -88,100 +119,71 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
           }
         })
         if (promo.condition?.specificCustomerIds) {
-          setCustomerOptions(promo.condition.specificCustomerIds.map(c => typeof c === 'object' ? c : { _id: c, fullName: 'Loading...', email: '' }))
+          setCustomerOptions(promo.condition.specificCustomerIds.map(c =>
+            typeof c === 'object' ? c : { _id: c, fullName: 'Loading...', email: '' }
+          ))
         }
-      } catch {
-        setSnackbar({ open: true, message: 'Lỗi khi lấy dữ liệu!', severity: 'error' })
-      } finally {
-        setFetching(false)
-      }
-    }
-    if (open && promotionId) fetchPromotion()
+      })
+      .catch(() => setSnackbar({ open: true, message: 'Lỗi khi lấy dữ liệu!', severity: 'error' }))
+      .finally(() => setFetching(false))
   }, [open, promotionId])
 
   useEffect(() => {
-    const search = async () => {
-      if (!customerSearch) return
+    if (!customerSearch) return
+    const t = setTimeout(() => {
       setCustomerLoading(true)
-      try {
-        const res = await searchCustomersAPI(customerSearch)
-        setCustomerOptions(prev => {
-          const combined = [...prev, ...res]
+      searchCustomersAPI(customerSearch)
+        .then(res => setCustomerOptions(prev => {
+          const combined = [...prev, ...(res || [])]
           return combined.filter((v, i, a) => a.findIndex(t => t._id === v._id) === i)
-        })
-      } catch { /* handle error */ }
-      finally { setCustomerLoading(false) }
-    }
-    const timer = setTimeout(search, 300)
-    return () => clearTimeout(timer)
+        }))
+        .catch(() => {})
+        .finally(() => setCustomerLoading(false))
+    }, 300)
+    return () => clearTimeout(t)
   }, [customerSearch])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
+  const set = (name, value) => {
     if (name.startsWith('condition.')) {
-      const field = name.split('.')[1]
-      setFormData(prev => ({
-        ...prev,
-        condition: { ...prev.condition, [field]: value }
-      }))
+      const key = name.split('.')[1]
+      setFormData(p => ({ ...p, condition: { ...p.condition, [key]: value } }))
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }))
+      setFormData(p => ({ ...p, [name]: value }))
     }
-    setErrors(prev => ({ ...prev, [name]: '' }))
+    setErrors(p => ({ ...p, [name]: '' }))
   }
 
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target
-    setFormData(prev => ({ ...prev, [name]: checked }))
-  }
+  const handleChange = e => set(e.target.name, e.target.value)
+  const handleCheck  = e => setFormData(p => ({ ...p, [e.target.name]: e.target.checked }))
 
   const isFieldDisabled = (fieldName) => {
     if (computedStatus === 'ended') return true
     if (computedStatus === 'active' || computedStatus === 'scheduled') {
-      const allowed = ['status', 'endDate', 'isForever', 'description']
-      return !allowed.includes(fieldName)
+      return !['status', 'endDate', 'isForever', 'description'].includes(fieldName)
     }
     return false
   }
 
   const validate = () => {
-    const tempErrors = {
-      title: formData.title ? '' : 'Vui lòng nhập tên khuyến mãi.',
+    const e = {
+      title:         formData.title           ? '' : 'Vui lòng nhập tên khuyến mãi.',
       discountValue: formData.discountValue > 0 ? '' : 'Giá trị giảm phải lớn hơn 0.',
-      startDate: formData.startDate ? '' : 'Chọn ngày bắt đầu.'
+      startDate:     formData.startDate        ? '' : 'Chọn ngày bắt đầu.',
+      ...(!formData.isForever && !formData.endDate
+        ? { endDate: 'Chọn ngày kết thúc hoặc tích Vĩnh viễn.' }
+        : {})
     }
-    if (!formData.isForever && !formData.endDate) {
-      tempErrors.endDate = 'Chọn ngày kết thúc hoặc tích Vĩnh viễn.'
-    }
-    setErrors(tempErrors)
-    return Object.values(tempErrors).every(x => x === '')
+    setErrors(e)
+    return Object.values(e).every(x => !x)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
-
     try {
-      // Filter payload based on status to match backend rules
-      let payload = {}
-      if (computedStatus === 'active' || computedStatus === 'scheduled') {
-        payload = {
-          status: formData.status,
-          endDate: formData.isForever ? null : formData.endDate,
-          isForever: formData.isForever,
-          description: formData.description
-        }
-      } else {
-        payload = {
-          ...formData,
-          discountValue: parseFloat(formData.discountValue),
-          minOrderValue: parseFloat(formData.minOrderValue || 0),
-          maxUsageTotal: parseInt(formData.maxUsageTotal || 0),
-          maxUsagePerCustomer: parseInt(formData.maxUsagePerCustomer || 0),
-          endDate: formData.isForever ? null : formData.endDate
-        }
-      }
+      const payload = (computedStatus === 'active' || computedStatus === 'scheduled')
+        ? { status: formData.status, endDate: formData.isForever ? null : formData.endDate, isForever: formData.isForever, description: formData.description }
+        : { ...formData, discountValue: parseFloat(formData.discountValue), minOrderValue: parseFloat(formData.minOrderValue || 0), maxUsageTotal: parseInt(formData.maxUsageTotal || 0), maxUsagePerCustomer: parseInt(formData.maxUsagePerCustomer || 0), endDate: formData.isForever ? null : formData.endDate }
 
       await updatePromotionAPI(promotionId, payload)
       setSnackbar({ open: true, message: 'Cập nhật thành công!', severity: 'success' })
@@ -193,183 +195,298 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
     }
   }
 
-  const filteredProducts = products.filter(p => p.label.toLowerCase().includes(productSearch.toLowerCase()))
+  const filteredProducts = products.filter(p =>
+    p.label.toLowerCase().includes(productSearch.toLowerCase())
+  )
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px', border: '1px solid #333' } }}>
-        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
+      <Dialog
+        open={open} onClose={onClose} fullWidth maxWidth="md"
+        PaperProps={{ sx: { bgcolor: '#1a1a1a', color: 'white', borderRadius: '12px', border: '1px solid #333' } }}
+      >
+        {/* Header */}
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
             <Typography variant="h6" fontWeight="bold">Chỉnh sửa khuyến mãi</Typography>
-            <Chip label={computedStatus.toUpperCase()} size="small" color={computedStatus === 'active' ? 'success' : computedStatus === 'ended' ? 'error' : 'default'} sx={{ height: 20, fontSize: '10px' }} />
+            <Chip
+              label={computedStatus.toUpperCase()} size="small"
+              color={computedStatus === 'active' ? 'success' : computedStatus === 'ended' ? 'error' : 'default'}
+              sx={{ height: 20, fontSize: '10px' }}
+            />
           </Stack>
           <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
         </DialogTitle>
 
-        <DialogContent sx={{ p: 3, pt: 4 }}>
-          {fetching ? <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress color="inherit" /></Box> : (
-            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              
-              <Stack direction="row" spacing={2}>
-                <Box sx={{ flex: 2 }}>
-                  <FieldCustom label="Tên khuyến mãi" required name="title" value={formData.title} onChange={handleChange} disabled={isFieldDisabled('title')} error={!!errors.title} helperText={errors.title} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel sx={{ color: '#888' }}>Trạng thái</InputLabel>
-                    <Select name="status" value={formData.status} label="Trạng thái" onChange={handleChange} disabled={computedStatus === 'ended'} sx={{ color: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' } }}>
+        {/* Body */}
+        <DialogContent sx={{ p: 3, '&.MuiDialogContent-root': { paddingTop: '32px' } }}>
+          {fetching
+            ? <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress color="inherit" /></Box>
+            : (
+              <Stack spacing={3}>
+
+                {/* Row 1: Tên + Trạng thái */}
+                <Stack direction="row" spacing={2}>
+                  <Box sx={{ flex: 2 }}>
+                    <F
+                      label="Tên khuyến mãi *"
+                      name="title" value={formData.title} onChange={handleChange}
+                      disabled={isFieldDisabled('title')}
+                      error={!!errors.title} helperText={errors.title}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <F
+                      select label="Trạng thái"
+                      name="status" value={formData.status} onChange={handleChange}
+                      disabled={computedStatus === 'ended'}
+                    >
                       <MenuItem value="active">Kích hoạt</MenuItem>
                       <MenuItem value="inactive">Tạm ngưng</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Stack>
+                    </F>
+                  </Box>
+                </Stack>
 
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Box sx={{ flex: 1 }}>
-                  <FormControl fullWidth disabled={isFieldDisabled('type')}>
-                    <InputLabel sx={{ color: '#888' }}>Loại khuyến mãi</InputLabel>
-                    <Select name="type" value={formData.type} label="Loại khuyến mãi" onChange={handleChange} sx={{ color: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' } }}>
-                      <MenuItem value="product">Giảm sản phẩm</MenuItem>
-                      <MenuItem value="order">Giảm đơn hàng</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <FormControl fullWidth disabled={isFieldDisabled('discountType')}>
-                    <InputLabel sx={{ color: '#888' }}>Loại giảm</InputLabel>
-                    <Select name="discountType" value={formData.discountType} label="Loại giảm" onChange={handleChange} sx={{ color: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' } }}>
-                      <MenuItem value="percent">Phần trăm (%)</MenuItem>
-                      <MenuItem value="fixed">Số tiền cố định (đ)</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <FieldCustom label="Giá trị giảm" type="number" required name="discountValue" value={formData.discountValue} onChange={handleChange} disabled={isFieldDisabled('discountValue')} error={!!errors.discountValue} helperText={errors.discountValue} />
-                </Box>
-              </Stack>
+                {/* Row 2: Loại KM + Loại giảm + Giá trị giảm */}
+                <Stack direction="row" spacing={2}>
+                  <F
+                    select label="Loại khuyến mãi"
+                    name="type" value={formData.type} onChange={handleChange}
+                    disabled={isFieldDisabled('type')}
+                  >
+                    <MenuItem value="product">Giảm sản phẩm</MenuItem>
+                    <MenuItem value="order">Giảm đơn hàng</MenuItem>
+                  </F>
+                  <F
+                    select label="Loại giảm"
+                    name="discountType" value={formData.discountType} onChange={handleChange}
+                    disabled={isFieldDisabled('discountType')}
+                  >
+                    <MenuItem value="percent">Phần trăm (%)</MenuItem>
+                    <MenuItem value="fixed">Số tiền cố định (đ)</MenuItem>
+                  </F>
+                  <F
+                    label="Giá trị giảm *" type="number"
+                    name="discountValue" value={formData.discountValue} onChange={handleChange}
+                    disabled={isFieldDisabled('discountValue')}
+                    error={!!errors.discountValue} helperText={errors.discountValue}
+                  />
+                </Stack>
 
-              <Box sx={{ width: '100%' }}>
-                <FieldCustom label="Mô tả" name="description" value={formData.description} onChange={handleChange} disabled={computedStatus === 'ended'} />
-              </Box>
+                {/* Row 3: Mô tả */}
+                <F
+                  label="Mô tả"
+                  name="description" value={formData.description} onChange={handleChange}
+                  disabled={computedStatus === 'ended'}
+                />
 
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Box sx={{ flex: 1 }}>
-                  <FieldCustom label="Ngày bắt đầu" type="date" required name="startDate" value={formData.startDate} onChange={handleChange} disabled={isFieldDisabled('startDate')} error={!!errors.startDate} helperText={errors.startDate} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <FieldCustom label="Ngày kết thúc" type="date" name="endDate" value={formData.endDate} onChange={handleChange} disabled={formData.isForever || computedStatus === 'ended'} error={!!errors.endDate} helperText={errors.endDate} />
-                </Box>
-                <Box sx={{ flex: 1, pt: 1 }}>
-                  <FormControlLabel control={<Checkbox name="isForever" checked={formData.isForever} onChange={handleCheckboxChange} disabled={computedStatus === 'ended'} sx={{ color: '#555', '&.Mui-checked': { color: '#66FF99' } }} />} label="Áp dụng vĩnh viễn" />
-                </Box>
-              </Stack>
+                {/* Row 4: Ngày bắt đầu + Ngày kết thúc + Checkbox */}
+                <Stack direction="row" spacing={2} alignItems="flex-start">
+                  <Box sx={{ flex: 1 }}>
+                    <F
+                      label="Ngày bắt đầu *" type="date"
+                      name="startDate" value={formData.startDate} onChange={handleChange}
+                      disabled={isFieldDisabled('startDate')}
+                      error={!!errors.startDate} helperText={errors.startDate}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <F
+                      label="Ngày kết thúc" type="date"
+                      name="endDate" value={formData.endDate} onChange={handleChange}
+                      disabled={formData.isForever || computedStatus === 'ended'}
+                      error={!!errors.endDate} helperText={errors.endDate}
+                    />
+                  </Box>
+                  <Box sx={{ flex: 1, height: '40px', display: 'flex', alignItems: 'center' }}>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          name="isForever" checked={formData.isForever} onChange={handleCheck}
+                          disabled={computedStatus === 'ended'}
+                          sx={{ color: '#555', '&.Mui-checked': { color: '#66FF99' } }}
+                        />
+                      }
+                      label={<Typography variant="body2" color="#ccc">Áp dụng vĩnh viễn</Typography>}
+                    />
+                  </Box>
+                </Stack>
 
-              <Box sx={{ p: 2, borderRadius: '8px', border: '1px dashed #444' }}>
-                <Typography variant="overline" color="#888" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>Đối tượng áp dụng</Typography>
-                {formData.type === 'product' ? (
-                  <Button variant="outlined" fullWidth startIcon={<InventoryIcon />} onClick={() => setOpenProductModal(true)} disabled={isFieldDisabled('productIds')} sx={{ py: 1.5, borderColor: '#555', color: '#aaa', textTransform: 'none', '&:hover': { borderColor: '#888', backgroundColor: 'rgba(255,255,255,0.05)' } }}>
-                    {formData.productIds.includes('ALL') ? 'Tất cả sản phẩm' : `Chọn sản phẩm (${formData.productIds.length})`}
-                  </Button>
-                ) : (
+                {/* Row 5: Đối tượng áp dụng */}
+                <Box sx={{ p: 2.5, borderRadius: '8px', border: '1px dashed #444' }}>
+                  <Typography variant="overline" color="#888" sx={{ display: 'block', mb: 1.5, fontWeight: 'bold' }}>
+                    Đối tượng áp dụng
+                  </Typography>
+                  {formData.type === 'product' ? (
+                    <Button
+                      variant="outlined" fullWidth startIcon={<InventoryIcon />}
+                      onClick={() => setOpenProductModal(true)}
+                      disabled={isFieldDisabled('productIds')}
+                      sx={{ height: 40, borderColor: '#555', color: '#aaa', textTransform: 'none', '&:hover': { borderColor: '#888', bgcolor: 'rgba(255,255,255,0.04)' }, '&.Mui-disabled': { borderColor: '#333', color: 'rgba(255,255,255,0.4)' } }}
+                    >
+                      {formData.productIds.includes('ALL') ? 'Tất cả sản phẩm' : `Chọn sản phẩm (${formData.productIds.length})`}
+                    </Button>
+                  ) : (
+                    <Stack direction="row" spacing={2}>
+                      <F label="Giá trị đơn tối thiểu" type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} disabled={isFieldDisabled('minOrderValue')} />
+                      <F label="Lượt dùng tối đa"       type="number" name="maxUsageTotal"       value={formData.maxUsageTotal}       onChange={handleChange} disabled={isFieldDisabled('maxUsageTotal')} />
+                      <F label="Lượt/Khách tối đa"       type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} disabled={isFieldDisabled('maxUsagePerCustomer')} />
+                    </Stack>
+                  )}
+                </Box>
+
+                {/* Row 6: Điều kiện khách hàng */}
+                <Box sx={{ p: 2.5, borderRadius: '8px', border: '1px solid #333' }}>
+                  <Typography variant="overline" color="#888" sx={{ display: 'block', mb: 1.5, fontWeight: 'bold' }}>
+                    Điều kiện khách hàng
+                  </Typography>
                   <Stack direction="row" spacing={2}>
-                    <FieldCustom label="Giá trị đơn tối thiểu" type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} disabled={isFieldDisabled('minOrderValue')} />
-                    <FieldCustom label="Lượt dùng tối đa" type="number" name="maxUsageTotal" value={formData.maxUsageTotal} onChange={handleChange} disabled={isFieldDisabled('maxUsageTotal')} />
-                    <FieldCustom label="Lượt/Khách tối đa" type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} disabled={isFieldDisabled('maxUsagePerCustomer')} />
-                  </Stack>
-                )}
-              </Box>
-
-              <Box sx={{ p: 2, borderRadius: '8px', border: '1px solid #333' }}>
-                <Typography variant="overline" color="#888" sx={{ display: 'block', mb: 2, fontWeight: 'bold' }}>Điều kiện khách hàng</Typography>
-                <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                  <FormControl sx={{ flex: 1 }} disabled={isFieldDisabled('condition.type')}>
-                    <InputLabel sx={{ color: '#888' }}>Nhóm khách hàng</InputLabel>
-                    <Select name="condition.type" value={formData.condition.type} label="Nhóm khách hàng" onChange={handleChange} sx={{ color: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' } }}>
+                    <F
+                      select label="Nhóm khách hàng"
+                      name="condition.type" value={formData.condition.type} onChange={handleChange}
+                      disabled={isFieldDisabled('condition.type')}
+                    >
                       <MenuItem value="all">Tất cả khách hàng</MenuItem>
                       <MenuItem value="new">Khách hàng mới</MenuItem>
                       <MenuItem value="loyal">Khách hàng thân thiết (Tier)</MenuItem>
                       <MenuItem value="specific">Chỉ định cụ thể</MenuItem>
-                    </Select>
-                  </FormControl>
-                  
-                  {formData.condition.type === 'new' && (
-                    <Box sx={{ flex: 1 }}>
-                      <FieldCustom label="Số đơn tối đa..." type="number" name="condition.newCustomerMaxOrders" value={formData.condition.newCustomerMaxOrders} onChange={handleChange} disabled={isFieldDisabled('condition.newCustomerMaxOrders')} />
-                    </Box>
-                  )}
-                  
-                  {formData.condition.type === 'loyal' && (
-                    <FormControl sx={{ flex: 2 }} disabled={isFieldDisabled('condition.loyalTiers')}>
-                      <InputLabel sx={{ color: '#888' }}>Chọn hạng (Tier)</InputLabel>
-                      <Select multiple name="condition.loyalTiers" value={formData.condition.loyalTiers} label="Chọn hạng (Tier)" onChange={handleChange} sx={{ color: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#444' } }} renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => <Chip key={value} label={value} size="small" sx={{ color: 'white', bgcolor: '#333' }} />)}
-                        </Box>
-                      )}>
+                    </F>
+
+                    {formData.condition.type === 'new' && (
+                      <F
+                        label="Số đơn tối đa (coi là khách mới)" type="number"
+                        name="condition.newCustomerMaxOrders"
+                        value={formData.condition.newCustomerMaxOrders}
+                        onChange={handleChange}
+                        disabled={isFieldDisabled('condition.newCustomerMaxOrders')}
+                      />
+                    )}
+
+                    {formData.condition.type === 'loyal' && (
+                      <F
+                        select label="Chọn hạng (Tier)"
+                        name="condition.loyalTiers" value={formData.condition.loyalTiers} onChange={handleChange}
+                        disabled={isFieldDisabled('condition.loyalTiers')}
+                        SelectProps={{
+                          multiple: true,
+                          renderValue: selected => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map(v => <Chip key={v} label={v} size="small" sx={{ color: 'white', bgcolor: '#333' }} />)}
+                            </Box>
+                          )
+                        }}
+                      >
                         <MenuItem value="Silver">Silver</MenuItem>
                         <MenuItem value="Gold">Gold</MenuItem>
                         <MenuItem value="Platinum">Platinum</MenuItem>
-                      </Select>
-                    </FormControl>
-                  )}
-                </Stack>
-
-                {formData.condition.type === 'specific' && (
-                  <Autocomplete
-                    multiple
-                    disabled={isFieldDisabled('condition.specificCustomerIds')}
-                    loading={customerLoading}
-                    options={customerOptions}
-                    getOptionLabel={(option) => `${option.fullName} (${option.email})`}
-                    value={formData.condition.specificCustomerIds.map(id => customerOptions.find(o => o._id === id) || { _id: id, fullName: 'Loading...', email: '' })}
-                    onChange={(_, newValue) => setFormData(prev => ({ ...prev, condition: { ...prev.condition, specificCustomerIds: newValue.map(v => v._id) } }))}
-                    onInputChange={(_, value) => setCustomerSearch(value)}
-                    renderInput={(params) => (
-                      <TextField {...params} label="Tìm & chọn khách hàng..." sx={{ '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: '#444' } }, '& .MuiInputLabel-root': { color: '#888' } }} />
+                      </F>
                     )}
-                    renderTags={(tagValue, getTagProps) => tagValue.map((option, index) => (
-                      <Chip label={option.fullName} {...getTagProps({ index })} size="small" sx={{ bgcolor: '#333', color: 'white' }} />
-                    ))}
-                  />
-                )}
-              </Box>
-            </Box>
-          )}
+                  </Stack>
+
+                  {formData.condition.type === 'specific' && (
+                    <Box sx={{ mt: 2 }}>
+                      <Autocomplete
+                        multiple
+                        disabled={isFieldDisabled('condition.specificCustomerIds')}
+                        loading={customerLoading}
+                        options={customerOptions}
+                        getOptionLabel={o => `${o.fullName} (${o.email})`}
+                        value={formData.condition.specificCustomerIds.map(
+                          id => customerOptions.find(o => o._id === id) || { _id: id, fullName: 'Loading...', email: '' }
+                        )}
+                        onChange={(_, v) => set('condition.specificCustomerIds', v.map(x => x._id))}
+                        onInputChange={(_, v) => setCustomerSearch(v)}
+                        renderInput={params => (
+                          <TextField {...params} label="Tìm & chọn khách hàng..." size="small" sx={darkField} />
+                        )}
+                        renderTags={(tagValue, getTagProps) =>
+                          tagValue.map((o, i) => (
+                            <Chip label={o.fullName} {...getTagProps({ index: i })} size="small" sx={{ bgcolor: '#333', color: 'white' }} />
+                          ))
+                        }
+                      />
+                    </Box>
+                  )}
+                </Box>
+
+              </Stack>
+            )}
         </DialogContent>
 
+        {/* Footer */}
         <DialogActions sx={{ p: 3, borderTop: '1px solid #333' }}>
           <Button onClick={onClose} sx={{ color: '#888', textTransform: 'none' }}>Hủy</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={loading || fetching || computedStatus === 'ended'} startIcon={<SaveIcon />} sx={{ backgroundColor: '#66FF99', color: 'black', textTransform: 'none', fontWeight: 'bold', px: 3, '&:hover': { backgroundColor: '#52d17c' } }}>
+          <Button
+            onClick={handleSubmit} variant="contained"
+            disabled={loading || fetching || computedStatus === 'ended'}
+            startIcon={loading ? <CircularProgress size={14} color="inherit" /> : <SaveIcon />}
+            sx={{ bgcolor: '#66FF99', color: 'black', textTransform: 'none', fontWeight: 'bold', px: 3, '&:hover': { bgcolor: '#52d17c' } }}
+          >
             {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Product Selection Dialog */}
-      <Dialog open={openProductModal} onClose={() => setOpenProductModal(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white' } }}>
-        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
+      <Dialog open={openProductModal} onClose={() => setOpenProductModal(false)} fullWidth maxWidth="sm"
+        PaperProps={{ sx: { bgcolor: '#1a1a1a', color: 'white' } }}>
+        <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography fontWeight="bold">Chọn sản phẩm</Typography>
-          <FormControlLabel control={<Checkbox checked={formData.productIds.includes('ALL')} disabled={computedStatus !== 'inactive'} onChange={(e) => setFormData(prev => ({ ...prev, productIds: e.target.checked ? ['ALL'] : [] }))} />} label="Tất cả sản phẩm" />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.productIds.includes('ALL')}
+                disabled={computedStatus !== 'inactive'}
+                onChange={e => setFormData(p => ({ ...p, productIds: e.target.checked ? ['ALL'] : [] }))}
+                sx={{ color: '#555', '&.Mui-checked': { color: '#66FF99' } }}
+              />
+            }
+            label="Tất cả sản phẩm"
+          />
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          <TextField fullWidth placeholder="Tìm sản phẩm..." value={productSearch} onChange={(e) => setProductSearch(e.target.value)} disabled={formData.productIds.includes('ALL') || computedStatus !== 'inactive'} sx={{ mb: 2, '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: '#444' } } }} />
-          <Stack spacing={1} maxHeight={300} sx={{ overflowY: 'auto' }}>
-            {!formData.productIds.includes('ALL') && filteredProducts.map((p) => (
-              <FormControlLabel key={p.value} control={<Checkbox checked={formData.productIds.includes(p.value)} disabled={computedStatus !== 'inactive'} onChange={(e) => {
-                const newSelected = e.target.checked ? [...formData.productIds, p.value] : formData.productIds.filter(id => id !== p.value)
-                setFormData(prev => ({ ...prev, productIds: newSelected }))
-              }} sx={{ color: '#555', '&.Mui-checked': { color: '#66FF99' } }} />} label={p.label} />
+          <TextField
+            fullWidth size="small" placeholder="Tìm sản phẩm..."
+            value={productSearch} onChange={e => setProductSearch(e.target.value)}
+            disabled={formData.productIds.includes('ALL') || computedStatus !== 'inactive'}
+            sx={{ mb: 2, ...darkField }}
+          />
+          <Stack spacing={0.5} maxHeight={300} sx={{ overflowY: 'auto' }}>
+            {!formData.productIds.includes('ALL') && filteredProducts.map(p => (
+              <FormControlLabel
+                key={p.value}
+                control={
+                  <Checkbox
+                    checked={formData.productIds.includes(p.value)}
+                    disabled={computedStatus !== 'inactive'}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      productIds: e.target.checked
+                        ? [...prev.productIds, p.value]
+                        : prev.productIds.filter(id => id !== p.value)
+                    }))}
+                    sx={{ color: '#555', '&.Mui-checked': { color: '#66FF99' } }}
+                  />
+                }
+                label={p.label}
+              />
             ))}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid #333' }}>
-          <Button variant="contained" onClick={() => setOpenProductModal(false)} sx={{ backgroundColor: '#66FF99', color: 'black', fontWeight: 'bold' }}>Xong</Button>
+          <Button variant="contained" onClick={() => setOpenProductModal(false)}
+            sx={{ bgcolor: '#66FF99', color: 'black', fontWeight: 'bold' }}>Xong</Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
-        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
+      <Snackbar
+        open={snackbar.open} autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
       </Snackbar>
     </>
   )

@@ -3,6 +3,8 @@ import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { productModel } from '~/models/productModel'
 import Promotion from '~/models/promotionModel'
+import User from '~/models/userModel'
+import { calculateLoyaltyTier } from '~/utils/calculateLoyaltyTier'
 
 const normalizeId = (value) => {
   if (!value) return ''
@@ -171,6 +173,24 @@ const confirmOrder = async (orderId) => {
     status: 'confirmed',
     updatedAt: Date.now()
   })
+
+  // Update loyalty tier cho user nếu có userId
+  if (order.userId) {
+    try {
+      // Lấy tất cả confirmed orders của user để tính tổng chi tiêu
+      const userOrders = await orderModel.getAll({ userId: order.userId, status: 'confirmed' })
+      const totalSpending = (userOrders || []).reduce((sum, o) => sum + Number(o?.total || 0), 0)
+      
+      // Tính tier mới
+      const newTier = calculateLoyaltyTier(totalSpending)
+      
+      // Update user với tier mới
+      await User.findByIdAndUpdate(order.userId, { loyaltyTier: newTier })
+    } catch (error) {
+      // Log error nhưng không throw, vì order đã confirm thành công
+      console.warn('⚠️ Failed to update loyalty tier:', error.message)
+    }
+  }
 
   // Trả về chi tiết order mới nhất
   return updatedOrder || await orderModel.getDetailsWithProducts(orderId)

@@ -23,12 +23,25 @@ function ProductDetail() {
   const [ratings, setRatings] = useState([])
   const [averageStar, setAverageStar] = useState(0)
   const [promotions, setPromotions] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const [quantity, setQuantity] = useState(1)
   
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState(null)
   const [mainImage, setMainImage] = useState('')
+
+  // Load current user từ localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) {
+        setCurrentUser(JSON.parse(stored))
+      }
+    } catch (err) {
+      console.error('Error loading user:', err)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,16 +63,39 @@ function ProductDetail() {
           setAverageStar(total / ratingsData.length)
         }
 
-        const appliedPromos = promos.items?.filter(
-          p => (p.productIds?.includes('ALL') || p.productIds?.includes(prodData._id)) &&
-               p.computedStatus === 'active'
-        ) || []
+        // Filter promotions to apply to this product and current user
+        const now = new Date()
+        const promosList = promos.items ?? []
+        const user = currentUser
+        const isProductPromo = (p) => p.productIds?.includes('ALL') || p.productIds?.includes(prodData._id)
+        const isActivePromo = (p) => {
+          if (p.status !== 'active') return false
+          const startOk = !p.startDate || new Date(p.startDate) <= now
+          const endOk = !p.endDate || p.endDate === null || new Date(p.endDate) >= now
+          return startOk && endOk
+        }
+        const isEligibleForUser = (p) => {
+          const cond = p.condition ?? { type: 'all', loyalTiers: [] }
+          switch (cond.type) {
+            case 'all':
+              return true
+            case 'loyal':
+              return !!user?.loyaltyTier && (cond.loyalTiers ?? []).includes(user.loyaltyTier)
+            case 'specific':
+              return !!user?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(user._id))
+            case 'new':
+              return (cond.newCustomerMaxOrders ?? null) == null
+            default:
+              return true
+          }
+        }
+        const appliedPromos = promosList.filter(p => isProductPromo(p) && isActivePromo(p) && isEligibleForUser(p))
         setPromotions(appliedPromos)
       } catch { /* error handled in layout */ }
       setLoading(false)
     }
     if (productId) fetchData()
-  }, [productId])
+  }, [productId, currentUser?.id, currentUser])
   
   // Reset quantity when variant changes
   useEffect(() => {
@@ -199,22 +235,26 @@ function ProductDetail() {
             <Typography color="text.secondary">{product.sold || 0} đã bán</Typography>
           </Box>
 
-          <Box sx={{ bgcolor: '#fff5f5', p: 3, borderRadius: 3, mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Typography variant="h4" sx={{ color: '#ad2a36', fontWeight: 700 }}>{formatCurrency(finalPrice)}</Typography>
-              {finalPrice < product.price && (
-                <Typography sx={{ textDecoration: 'line-through', color: '#999' }}>{formatCurrency(product.price)}</Typography>
-              )}
-            </Box>
-            {bestPromotion && (
+          { bestPromotion ? (
+            <Box sx={{ bgcolor: '#fff5f5', p: 3, borderRadius: 3, mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h4" sx={{ fontWeight: 700, color: '#ad2a36' }}>{formatCurrency(finalPrice)}</Typography>
+                {finalPrice < product.price && (
+                  <Typography sx={{ textDecoration: 'line-through', color: '#999' }}>{formatCurrency(product.price)}</Typography>
+                )}
+              </Box>
               <Chip 
                 label={`Giảm ${bestPromotion.discountValue}${bestPromotion.discountType === 'percent' ? '%' : 'đ'} - ${bestPromotion.title}`} 
                 color="error" 
                 size="small" 
                 sx={{ mt: 1, fontWeight: 'bold' }} 
               />
-            )}
-          </Box>
+            </Box>
+          ) : (
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: 'inherit' }}>{formatCurrency(finalPrice)}</Typography>
+            </Box>
+          )}
 
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle1" fontWeight="bold" gutterBottom>Màu sắc</Typography>

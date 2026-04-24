@@ -9,7 +9,7 @@ const createPromotion = async (data) => {
 };
 
 const getPromotions = async (query) => {
-  const { search, type, computedStatus, conditionType, page = 1, limit = 20 } = query;
+  const { search, type, computedStatus, conditionType, customerId, page = 1, limit = 20 } = query;
   
   const filter = {};
   if (search) filter.title = { $regex: search, $options: 'i' };
@@ -59,10 +59,22 @@ const getPromotions = async (query) => {
 
   const skip = (page - 1) * limit;
   const total = await Promotion.countDocuments(filter);
-  const promotions = await Promotion.find(filter)
+  let promotions = await Promotion.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
+
+  // Filter by customer eligibility if customerId is provided
+  if (customerId) {
+    const eligiblePromos = [];
+    for (const promo of promotions) {
+      const isEligible = await isCustomerEligible(promo, customerId);
+      if (isEligible) {
+        eligiblePromos.push(promo);
+      }
+    }
+    promotions = eligiblePromos;
+  }
 
   return {
     items: promotions.map(p => ({

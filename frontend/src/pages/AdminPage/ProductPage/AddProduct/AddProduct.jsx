@@ -43,7 +43,7 @@ import {
   createProductAPI,
   uploadImageToCloudinaryAPI
 } from '~/apis/productAPIs'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 
 function AddProduct({ open, onClose, onSuccess }) {
   const [productCategories, setProductCategories] = useState([])
@@ -67,7 +67,7 @@ function AddProduct({ open, onClose, onSuccess }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategorysAPI()
+        const data = await fetchAllCategoriesAPI()
         const options = data.map(cat => ({ value: cat._id, label: cat.name }))
         setProductCategories(options)
       } catch { /* ... */ }

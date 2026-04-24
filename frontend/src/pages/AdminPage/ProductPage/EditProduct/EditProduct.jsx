@@ -27,7 +27,7 @@ import SaveIcon from '@mui/icons-material/Save'
 import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
 import ImageUpload from '~/components/admin/ImageUpload/ImageUpload'
 import { getProductDetailAPI, uploadImageToCloudinaryAPI, updateProductAPI } from '~/apis/productAPIs'
-import { fetchAllCategorysAPI } from '~/apis/categoryAPIs'
+import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL']
 const COLOR_PALETTE = [
@@ -67,7 +67,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const data = await fetchAllCategorysAPI()
+        const data = await fetchAllCategoriesAPI()
         const options = data.map(cat => ({ value: cat._id, label: cat.name }))
         setCategories(options)
       } catch { /* ... */ }

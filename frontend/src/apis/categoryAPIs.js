@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { API_ROOT } from '../util/constants'
 
-export const fetchAllCategorysAPI = async () => {
+export const fetchAllCategoriesAPI = async () => {
   const request = await axios.get(`${API_ROOT}/v1/category/`)
   return request.data
 }
@@ -21,7 +21,7 @@ export const updateCategoryAPI = async (categoryId, categoryData) => {
   return request.data
 }
 
-export const searchCategorysAPI = async (query) => {
+export const searchCategoriesAPI = async (query) => {
   const request = await axios.get(`${API_ROOT}/v1/category/search?name=${query}`)
   return request.data
 }
