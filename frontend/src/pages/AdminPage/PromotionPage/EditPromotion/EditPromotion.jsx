@@ -154,7 +154,7 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
   }
 
   const handleChange = e => set(e.target.name, e.target.value)
-  const handleCheck  = e => setFormData(p => ({ ...p, [e.target.name]: e.target.checked }))
+  const handleCheck = e => setFormData(p => ({ ...p, [e.target.name]: e.target.checked }))
 
   const isFieldDisabled = (fieldName) => {
     if (computedStatus === 'ended') return true
@@ -166,9 +166,9 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
 
   const validate = () => {
     const e = {
-      title:         formData.title           ? '' : 'Vui lòng nhập tên khuyến mãi.',
+      title:         formData.title ? '' : 'Vui lòng nhập tên khuyến mãi.',
       discountValue: formData.discountValue > 0 ? '' : 'Giá trị giảm phải lớn hơn 0.',
-      startDate:     formData.startDate        ? '' : 'Chọn ngày bắt đầu.',
+      startDate:     formData.startDate ? '' : 'Chọn ngày bắt đầu.',
       ...(!formData.isForever && !formData.endDate
         ? { endDate: 'Chọn ngày kết thúc hoặc tích Vĩnh viễn.' }
         : {})
@@ -329,8 +329,8 @@ function EditPromotion({ open, onClose, onSuccess, promotionId }) {
                   ) : (
                     <Stack direction="row" spacing={2}>
                       <F label="Giá trị đơn tối thiểu" type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} disabled={isFieldDisabled('minOrderValue')} />
-                      <F label="Lượt dùng tối đa"       type="number" name="maxUsageTotal"       value={formData.maxUsageTotal}       onChange={handleChange} disabled={isFieldDisabled('maxUsageTotal')} />
-                      <F label="Lượt/Khách tối đa"       type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} disabled={isFieldDisabled('maxUsagePerCustomer')} />
+                      <F label="Lượt dùng tối đa" type="number" name="maxUsageTotal" value={formData.maxUsageTotal} onChange={handleChange} disabled={isFieldDisabled('maxUsageTotal')} />
+                      <F label="Lượt/Khách tối đa" type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} disabled={isFieldDisabled('maxUsagePerCustomer')} />
                     </Stack>
                   )}
                 </Box>

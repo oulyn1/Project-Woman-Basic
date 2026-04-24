@@ -109,13 +109,13 @@ function AddPromotion({ open, onClose, onSuccess }) {
   }
 
   const handleChange = e => set(e.target.name, e.target.value)
-  const handleCheck  = e => setFormData(p => ({ ...p, [e.target.name]: e.target.checked }))
+  const handleCheck = e => setFormData(p => ({ ...p, [e.target.name]: e.target.checked }))
 
   const validate = () => {
     const e = {
-      title:         formData.title           ? '' : 'Vui lòng nhập tên khuyến mãi.',
+      title:         formData.title ? '' : 'Vui lòng nhập tên khuyến mãi.',
       discountValue: formData.discountValue > 0 ? '' : 'Giá trị giảm phải lớn hơn 0.',
-      startDate:     formData.startDate        ? '' : 'Chọn ngày bắt đầu.',
+      startDate:     formData.startDate ? '' : 'Chọn ngày bắt đầu.',
       ...(!formData.isForever && !formData.endDate
         ? { endDate: 'Chọn ngày kết thúc hoặc tích Vĩnh viễn.' }
         : {})
@@ -131,9 +131,9 @@ function AddPromotion({ open, onClose, onSuccess }) {
       await createPromotionAPI({
         ...formData,
         discountValue:       parseFloat(formData.discountValue),
-        minOrderValue:       parseFloat(formData.minOrderValue       || 0),
-        maxUsageTotal:       parseInt(formData.maxUsageTotal         || 0),
-        maxUsagePerCustomer: parseInt(formData.maxUsagePerCustomer   || 0),
+        minOrderValue:       parseFloat(formData.minOrderValue || 0),
+        maxUsageTotal:       parseInt(formData.maxUsageTotal || 0),
+        maxUsagePerCustomer: parseInt(formData.maxUsagePerCustomer || 0),
         endDate: formData.isForever ? null : formData.endDate
       })
       setSnackbar({ open: true, message: 'Thêm thành công!', severity: 'success' })
@@ -250,8 +250,8 @@ function AddPromotion({ open, onClose, onSuccess }) {
               ) : (
                 <Stack direction="row" spacing={2}>
                   <F label="Giá trị đơn tối thiểu" type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} />
-                  <F label="Lượt dùng tối đa"       type="number" name="maxUsageTotal" value={formData.maxUsageTotal} onChange={handleChange} />
-                  <F label="Lượt/Khách tối đa"       type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} />
+                  <F label="Lượt dùng tối đa" type="number" name="maxUsageTotal" value={formData.maxUsageTotal} onChange={handleChange} />
+                  <F label="Lượt/Khách tối đa" type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} />
                 </Stack>
               )}
             </Box>
