@@ -10,7 +10,7 @@ import InventoryIcon from '@mui/icons-material/Inventory'
 
 import { createPromotionAPI } from '~/apis/promotionAPIs'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
-import { searchCustomersAPI } from '~/apis/customerAPIs'
+import { searchCustomersAPI, fetchCustomersAPI } from '~/apis/customerAPIs'
 
 // ── Unified dark TextField style ──────────────────────────────────────────────
 const darkField = {
@@ -87,13 +87,31 @@ function AddPromotion({ open, onClose, onSuccess }) {
   }, [open])
 
   useEffect(() => {
-    if (!customerSearch) return
-    const t = setTimeout(() => {
+    if (formData.condition.type === 'specific' && customerOptions.length === 0) {
+      const token = localStorage.getItem('accessToken')
       setCustomerLoading(true)
-      searchCustomersAPI(customerSearch)
+      fetchCustomersAPI(token)
         .then(res => setCustomerOptions(res || []))
         .catch(() => {})
         .finally(() => setCustomerLoading(false))
+    }
+  }, [formData.condition.type])
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      const token = localStorage.getItem('accessToken')
+      setCustomerLoading(true)
+      if (!customerSearch.trim()) {
+        fetchCustomersAPI(token)
+          .then(res => setCustomerOptions(res || []))
+          .catch(() => {})
+          .finally(() => setCustomerLoading(false))
+      } else {
+        searchCustomersAPI(customerSearch, token)
+          .then(res => setCustomerOptions(res || []))
+          .catch(() => {})
+          .finally(() => setCustomerLoading(false))
+      }
     }, 300)
     return () => clearTimeout(t)
   }, [customerSearch])
@@ -157,7 +175,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
       >
         {/* Header */}
         <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 2 }}>
-          <Typography variant="h6" fontWeight="bold">Thêm khuyến mãi mới</Typography>
+          <Typography component="div" variant="h6" fontWeight="bold">Thêm khuyến mãi mới</Typography>
           <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
         </DialogTitle>
 
@@ -166,7 +184,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
           <Stack spacing={3}>
 
             {/* Row 1: Tên + Loại khuyến mãi */}
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <F
                 label="Tên khuyến mãi *"
                 name="title" value={formData.title} onChange={handleChange}
@@ -182,7 +200,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
             </Stack>
 
             {/* Row 2: Loại giảm + Giá trị giảm + Mô tả */}
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <F
                 select label="Loại giảm"
                 name="discountType" value={formData.discountType} onChange={handleChange}
@@ -202,7 +220,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
             </Stack>
 
             {/* Row 3: Ngày bắt đầu + Ngày kết thúc + Checkbox */}
-            <Stack direction="row" spacing={2} alignItems="flex-start">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="flex-start">
               <Box sx={{ flex: 1 }}>
                 <F
                   label="Ngày bắt đầu *" type="date"
@@ -248,7 +266,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
                     : `Chọn sản phẩm (${formData.productIds.length})`}
                 </Button>
               ) : (
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <F label="Giá trị đơn tối thiểu" type="number" name="minOrderValue" value={formData.minOrderValue} onChange={handleChange} />
                   <F label="Lượt dùng tối đa" type="number" name="maxUsageTotal" value={formData.maxUsageTotal} onChange={handleChange} />
                   <F label="Lượt/Khách tối đa" type="number" name="maxUsagePerCustomer" value={formData.maxUsagePerCustomer} onChange={handleChange} />
@@ -261,7 +279,7 @@ function AddPromotion({ open, onClose, onSuccess }) {
               <Typography variant="overline" color="#888" sx={{ display: 'block', mb: 1.5, fontWeight: 'bold' }}>
                 Điều kiện khách hàng
               </Typography>
-              <Stack direction="row" spacing={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <F
                   select label="Nhóm khách hàng"
                   name="condition.type" value={formData.condition.type} onChange={handleChange}
@@ -304,19 +322,87 @@ function AddPromotion({ open, onClose, onSuccess }) {
               {formData.condition.type === 'specific' && (
                 <Box sx={{ mt: 2 }}>
                   <Autocomplete
-                    multiple loading={customerLoading} options={customerOptions}
-                    getOptionLabel={o => `${o.fullName} (${o.email})`}
+                    multiple
+                    key="customer-select-autocomplete"
+                    openOnFocus
+                    loading={customerLoading}
+                    options={customerOptions}
+                    filterOptions={(x) => x}
+                    isOptionEqualToValue={(option, value) => option._id === value._id}
+                    getOptionLabel={o => o.fullName ? `${o.fullName} (${o.email || ''})` : ''}
                     value={formData.condition.specificCustomerIds.map(
-                      id => customerOptions.find(o => o._id === id) || { _id: id, fullName: 'Loading...', email: '' }
+                      id => customerOptions.find(o => o._id === id) || { _id: id, fullName: id, email: '' }
                     )}
-                    onChange={(_, v) => set('condition.specificCustomerIds', v.map(x => x._id))}
-                    onInputChange={(_, v) => setCustomerSearch(v)}
+                    onChange={(_, v) => {
+                      set('condition.specificCustomerIds', v.map(x => x._id))
+                      setCustomerSearch('') // Clear search on select
+                    }}
+                    inputValue={customerSearch}
+                    onInputChange={(event, newInputValue, reason) => {
+                      if (reason !== 'reset') {
+                        setCustomerSearch(newInputValue)
+                      }
+                    }}
+                    loadingText={<Typography variant="body2" sx={{ color: '#888' }}>Đang tìm...</Typography>}
+                    ListboxProps={{
+                      sx: {
+                        maxHeight: '250px',
+                        '&::-webkit-scrollbar': { width: '6px' },
+                        '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
+                        '&::-webkit-scrollbar-thumb': { bgcolor: '#ddd', borderRadius: '10px' }
+                      }
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...restProps } = props
+                      return (
+                        <Box
+                          component="li"
+                          key={option._id}
+                          {...restProps}
+                          sx={{
+                            color: 'black !important',
+                            borderBottom: '1px solid #eee'
+                          }}
+                        >
+                          <Stack>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{option.fullName}</Typography>
+                            <Typography variant="caption" sx={{ color: '#666' }}>{option.email}</Typography>
+                          </Stack>
+                        </Box>
+                      )
+                    }}
+                    PopperProps={{
+                      sx: {
+                        '& .MuiPaper-root': {
+                          bgcolor: 'white !important',
+                          color: 'black !important',
+                          boxShadow: '0 4px 20px rgba(0,0,0,0.2) !important'
+                        }
+                      }
+                    }}
                     renderInput={params => (
-                      <TextField {...params} label="Tìm & chọn khách hàng..." size="small" sx={darkField} />
+                      <TextField
+                        {...params}
+                        label="Tìm & chọn khách hàng..."
+                        size="small"
+                        sx={{
+                          ...darkField,
+                          '& input': {
+                            color: 'white !important',
+                            WebkitTextFillColor: 'white !important'
+                          }
+                        }}
+                      />
                     )}
                     renderTags={(tagValue, getTagProps) =>
                       tagValue.map((o, i) => (
-                        <Chip label={o.fullName} {...getTagProps({ index: i })} size="small" sx={{ bgcolor: '#333', color: 'white' }} />
+                        <Chip
+                          key={o._id}
+                          label={o.fullName || o._id}
+                          {...getTagProps({ index: i })}
+                          size="small"
+                          sx={{ bgcolor: '#333', color: 'white', fontWeight: 'bold' }}
+                        />
                       ))
                     }
                   />

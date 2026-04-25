@@ -169,14 +169,14 @@ const MyOrders = () => {
 
   return (
     <Container sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
         <TextField
           variant="outlined"
           placeholder="Tìm kiếm theo mã đơn / tên / email..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          sx={{ width: 360 }}
+          sx={{ width: { xs: '100%', sm: 360 } }}
         />
         <FormControl size="small" sx={{ minWidth: 160 }}>
           <InputLabel id="filter-status-label">Lọc trạng thái</InputLabel>
@@ -230,7 +230,7 @@ const MyOrders = () => {
               <Grid key={o._id}>
                 <Card variant="outlined">
                   <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minWidth: '534px' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'flex-start' }, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
                       <Box>
                         <Typography variant="subtitle2" color="text.secondary">Mã đơn</Typography>
                         <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{o._id}</Typography>
@@ -239,7 +239,7 @@ const MyOrders = () => {
                         </Typography>
                       </Box>
 
-                      <Box sx={{ textAlign: 'right' }}>
+                      <Box sx={{ textAlign: { xs: 'left', sm: 'right' }, mt: { xs: 1, sm: 0 } }}>
                         <Chip label={o.status} color={statusColor(o.status)} size="small" />
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, mt: 1, color: '#cc3300' }}>
                           {Number(o.total).toLocaleString('vi-VN')}₫
@@ -247,7 +247,7 @@ const MyOrders = () => {
                       </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: { xs: 'flex-start', sm: 'center' }, mt: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
                       {/* show up to 3 product images as preview */}
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {o.items?.slice(0, 3).map((it, idx) => (

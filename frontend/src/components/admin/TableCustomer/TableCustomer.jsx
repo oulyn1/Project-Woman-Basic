@@ -114,16 +114,18 @@ const TableCustomer = ({ searchQuery }) => {
                 <PersonIcon />
               </Avatar>
 
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" fontWeight="bold" color="white">{customer.name}</Typography>
-                <Stack direction="row" spacing={3} sx={{ mt: 0.5 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmailIcon sx={{ color: '#555', fontSize: 16 }} />
-                    <Typography variant="body2" color="#888">{customer.email}</Typography>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="h6" fontWeight="bold" color="white" sx={{ fontSize: { xs: '15px', sm: '1.25rem' }, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {customer.name}
+                </Typography>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ xs: 0.5, md: 3 }} sx={{ mt: 0.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, overflow: 'hidden' }}>
+                    <EmailIcon sx={{ color: '#555', fontSize: 13 }} />
+                    <Typography variant="body2" color="#888" sx={{ fontSize: { xs: '12px', sm: '14px' }, wordBreak: 'break-all' }}>{customer.email}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PhoneIcon sx={{ color: '#555', fontSize: 16 }} />
-                    <Typography variant="body2" color="#888">{customer.phone || 'Chưa cập nhật'}</Typography>
+                    <PhoneIcon sx={{ color: '#555', fontSize: 13 }} />
+                    <Typography variant="body2" color="#888" sx={{ fontSize: { xs: '12px', sm: '14px' } }}>{customer.phone || 'Chưa cập nhật'}</Typography>
                   </Box>
                 </Stack>
               </Box>
@@ -135,6 +137,7 @@ const TableCustomer = ({ searchQuery }) => {
                     bgcolor: 'rgba(255,255,255,0.05)',
                     color: '#888',
                     transition: '0.2s',
+                    flexShrink: 0,
                     '&:hover': { bgcolor: '#66FF99', color: 'black' }
                   }}
                 >

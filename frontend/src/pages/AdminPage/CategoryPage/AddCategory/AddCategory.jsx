@@ -75,7 +75,7 @@ function AddCategory({ open, onClose, onSuccess }) {
         }}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" fontWeight="bold">Thêm danh mục mới</Typography>
+          <Typography component="div" variant="h6" fontWeight="bold">Thêm danh mục mới</Typography>
           <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
         </DialogTitle>
 

@@ -11,6 +11,14 @@ import {
   Typography,
   Modal,
   TextField,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  Collapse,
+  Divider,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '~/context/Cart/useCart'
@@ -25,6 +33,9 @@ import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined'
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined'
 import StarIcon from '@mui/icons-material/Star'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import MenuIcon from '@mui/icons-material/Menu'
+import CloseIcon from '@mui/icons-material/Close'
 import LogoWB from '~/assets/logo_wb.png'
 import AuthDialog from './AuthDialog'
 
@@ -61,6 +72,8 @@ function StarRating({ productId }) {
 function Header() {
   const navigate = useNavigate()
   const location = useLocation()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const { cartItems = [] } = useCart()
   const itemCount = cartItems.reduce((sum, i) => sum + (i.quantity || 0), 0)
   const token = localStorage.getItem('accessToken')
@@ -71,6 +84,10 @@ function Header() {
   const [openAuthDialog, setOpenAuthDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
+
+  // Mobile drawer
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [catExpandedInDrawer, setCatExpandedInDrawer] = useState(false)
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -91,12 +108,8 @@ function Header() {
     if (authType === 'login') {
       setOpenAuthDialog(true)
     } else if (authType === 'register') {
-      // If we want to support starting at register tab
-      // setOpenAuthDialog(true)
-      // but maybe AuthDialog needs a prop for default tab
       setOpenAuthDialog(true)
     }
-    // Clear search params after reading to avoid repeated opening on reload/navigation
     if (authType) {
       navigate(location.pathname, { replace: true })
     }
@@ -126,17 +139,22 @@ function Header() {
   const handleCartClick = () =>
     token ? navigate('/cart') : setOpenAuthDialog(true)
 
+  const closeDrawerAndNavigate = (path) => {
+    setDrawerOpen(false)
+    navigate(path)
+  }
+
   const styleModal = {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
-    width: { xs: '90%', md: 800 },
+    width: { xs: '95%', sm: '80%', md: 800 },
     bgcolor: 'background.paper',
     borderRadius: 2,
     boxShadow: 24,
-    p: 3,
-    maxHeight: '80vh',
+    p: { xs: 2, md: 3 },
+    maxHeight: '85vh',
     overflowY: 'auto',
   }
 
@@ -150,7 +168,7 @@ function Header() {
         left: 0,
         right: 0,
         zIndex: 2147483647,
-        py: 1.5,
+        py: { xs: 1, md: 1.5 },
         boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
       }}
     >
@@ -162,25 +180,37 @@ function Header() {
             justifyContent: 'space-between',
           }}
         >
-          {/* Logo */}
-          <Box
-            sx={{
-              cursor: 'pointer',
-              height: 45,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            onClick={() => navigate('/')}
-          >
-            <img
-              src={LogoWB}
-              alt="Woman Basic Logo"
-              style={{ height: '100%', objectFit: 'contain' }}
-            />
+          {/* Left: Hamburger (mobile) + Logo */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Hamburger Icon - only on mobile/tablet */}
+            <IconButton
+              onClick={() => setDrawerOpen(true)}
+              sx={{ display: { xs: 'flex', md: 'none' }, p: 0.5 }}
+              aria-label="Mở menu điều hướng"
+            >
+              <MenuIcon />
+            </IconButton>
+
+            {/* Logo */}
+            <Box
+              sx={{
+                cursor: 'pointer',
+                height: { xs: 36, md: 45 },
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              onClick={() => navigate('/')}
+            >
+              <img
+                src={LogoWB}
+                alt="Woman Basic Logo"
+                style={{ height: '100%', objectFit: 'contain' }}
+              />
+            </Box>
           </Box>
 
-          {/* Navigation Menu */}
-          <Box sx={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          {/* Center: Navigation Menu - desktop only */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4, alignItems: 'center' }}>
             <Button
               sx={{ color: 'black', fontWeight: 600, fontSize: '0.9rem' }}
               onClick={() => navigate('/listproduct/sale')}
@@ -225,28 +255,28 @@ function Header() {
             </Button>
           </Box>
 
-          {/* Action Icons */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Right: Action Icons - always visible */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, md: 1 } }}>
             <Tooltip title="Tìm kiếm">
-              <IconButton onClick={() => setOpenSearchModal(true)}>
+              <IconButton onClick={() => setOpenSearchModal(true)} size={isMobile ? 'small' : 'medium'}>
                 <SearchOutlinedIcon color="action" />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Tài khoản">
-              <IconButton onClick={handleAccountClick}>
+              <IconButton onClick={handleAccountClick} size={isMobile ? 'small' : 'medium'}>
                 <PersonOutlineOutlinedIcon color="action" />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Đơn hàng">
-              <IconButton onClick={handleOrderClick}>
+              <IconButton onClick={handleOrderClick} size={isMobile ? 'small' : 'medium'}>
                 <LocalMallOutlinedIcon color="action" />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Giỏ hàng">
-              <IconButton onClick={handleCartClick}>
+              <IconButton onClick={handleCartClick} size={isMobile ? 'small' : 'medium'}>
                 <Badge badgeContent={itemCount} color="error">
                   <ShoppingBagOutlinedIcon color="action" />
                 </Badge>
@@ -255,6 +285,126 @@ function Header() {
           </Box>
         </Box>
       </Container>
+
+      {/* === Mobile Drawer Navigation === */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: { width: { xs: '80vw', sm: 320 }, maxWidth: 360 }
+        }}
+      >
+        {/* Drawer Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 2,
+            py: 1.5,
+            borderBottom: '1px solid #eee',
+          }}
+        >
+          <img src={LogoWB} alt="Woman Basic" style={{ height: 32, objectFit: 'contain' }} />
+          <IconButton onClick={() => setDrawerOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+        {/* Drawer Nav Links */}
+        <List sx={{ pt: 1 }} disablePadding>
+          <ListItemButton
+            onClick={() => closeDrawerAndNavigate('/listproduct/sale')}
+            sx={{ py: 1.5 }}
+          >
+            <ListItemText
+              primary="🔥 FLASH SALE"
+              primaryTypographyProps={{ fontWeight: 700, color: '#ad2a36' }}
+            />
+          </ListItemButton>
+
+          <Divider />
+
+          {/* Danh mục với expand */}
+          <ListItemButton
+            onClick={() => setCatExpandedInDrawer(!catExpandedInDrawer)}
+            sx={{ py: 1.5 }}
+          >
+            <ListItemText
+              primary="DANH MỤC SẢN PHẨM"
+              primaryTypographyProps={{ fontWeight: 600 }}
+            />
+            {catExpandedInDrawer ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </ListItemButton>
+          <Collapse in={catExpandedInDrawer} timeout="auto" unmountOnExit>
+            <List disablePadding>
+              {categories.map((cat) => (
+                <ListItemButton
+                  key={cat._id}
+                  sx={{ pl: 4, py: 1 }}
+                  onClick={() => closeDrawerAndNavigate(`/listproduct/${cat.slug}`)}
+                >
+                  <ListItemText
+                    primary={cat.name}
+                    primaryTypographyProps={{ fontSize: '0.9rem', color: '#444' }}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          </Collapse>
+
+          <Divider />
+
+          <ListItemButton
+            onClick={() => closeDrawerAndNavigate('/story')}
+            sx={{ py: 1.5 }}
+          >
+            <ListItemText
+              primary="VỀ WOMAN BASIC"
+              primaryTypographyProps={{ fontWeight: 600 }}
+            />
+          </ListItemButton>
+
+          <Divider />
+        </List>
+
+        {/* Auth Actions */}
+        <Box sx={{ px: 2, pt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {token ? (
+            <>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => closeDrawerAndNavigate('/editprofile')}
+                startIcon={<PersonOutlineOutlinedIcon />}
+              >
+                Tài khoản của tôi
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => closeDrawerAndNavigate('/myorders')}
+                startIcon={<LocalMallOutlinedIcon />}
+              >
+                Đơn hàng của tôi
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ bgcolor: 'black', '&:hover': { bgcolor: '#333' } }}
+              onClick={() => {
+                setDrawerOpen(false)
+                setOpenAuthDialog(true)
+              }}
+            >
+              Đăng nhập / Đăng ký
+            </Button>
+          )}
+        </Box>
+      </Drawer>
 
       {/* Search Modal */}
       <Modal open={openSearchModal} onClose={() => setOpenSearchModal(false)}>

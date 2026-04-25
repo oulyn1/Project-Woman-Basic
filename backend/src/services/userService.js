@@ -8,6 +8,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret' // 🔑 Đặt tr
 // 🔑 Cache OTP trong RAM
 const otpCache = new Map()
 
+// ✅ Helper for status
+const logOut = async (userId) => {
+  await userModel.updateStatus(userId, { status: 'offline' })
+}
+const logIn = async (userId) => {
+  await userModel.updateStatus(userId, { status: 'online' })
+}
+
 // ✅ Đăng ký
 const register = async (data) => {
   const existed = await userModel.findByEmail(data.email)
@@ -33,9 +41,10 @@ const login = async (email, password) => {
     JWT_SECRET,
     { expiresIn: '7d' }
   )
-
-  delete user.password
-  return { token, user }
+  await logIn(user._id)
+  const updatedUser = await userModel.findOneId(user._id)
+  delete updatedUser.password
+  return { token, user: updatedUser }
 }
 
 // ✅ Lấy thông tin user
@@ -186,12 +195,7 @@ const updateStatus = async (userId, updateData) => {
   delete updatedUser.password
   return updatedUser
 }
-const logOut = async (userId) => {
-  await userModel.updateStatus(userId, { status: 'offline' })
-}
-const logIn = async (userId) => {
-  await userModel.updateStatus(userId, { status: 'online' })
-}
+
 export const userService = {
   register,
   login,

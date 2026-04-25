@@ -3,7 +3,7 @@ import {
   Box, Typography, IconButton, TextField, Button,
   Divider, Stack, Paper, Chip, CircularProgress, Dialog,
   DialogTitle, DialogContent, Radio, RadioGroup, FormControlLabel,
-  Container
+  Container, Snackbar, Alert
 } from '@mui/material'
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos'
 import RemoveIcon from '@mui/icons-material/Remove'
@@ -37,6 +37,7 @@ function Checkout() {
   const [buyerInfo, setBuyerInfo] = useState({
     name: '', phone: '', email: '', address: ''
   })
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' })
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
@@ -136,7 +137,7 @@ function Checkout() {
 
   const handlePlaceOrder = async () => {
     if (!buyerInfo.name || !buyerInfo.phone || !buyerInfo.email || !buyerInfo.address) {
-      alert('Vui lòng nhập đầy đủ thông tin!')
+      setSnackbar({ open: true, message: 'Vui lòng nhập đầy đủ thông tin giao hàng!', severity: 'warning' })
       return
     }
 
@@ -167,11 +168,13 @@ function Checkout() {
         if (!fromBuyNow) {
           await removeManyFromCart(products.map(p => ({ productId: p.productId, variantId: p.variantId })))
         }
-        alert('Đặt hàng thành công!')
-        navigate('/thank-you', { state: { order: orderRes.data || orderRes } })
+        setSnackbar({ open: true, message: 'Đặt hàng thành công!', severity: 'success' })
+        setTimeout(() => {
+          navigate('/thank-you', { state: { order: orderRes.data || orderRes } })
+        }, 1000)
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!')
+      setSnackbar({ open: true, message: err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!', severity: 'error' })
     }
   }
 
@@ -197,12 +200,12 @@ function Checkout() {
 
   return (
     <Box sx={{ backgroundColor: '#F8F9FA', py: 6, minHeight: '100vh' }}>
-      <Container maxWidth="lg">
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
+      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 4 } }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={{ xs: 3, md: 4 }}>
 
           {/* Left Side: Order Items and Information */}
           <Box sx={{ flex: 1.5 }}>
-            <Paper sx={{ p: 4, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <Paper sx={{ p: { xs: 2, md: 4 }, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, cursor: 'pointer' }} onClick={() => navigate(-1)}>
                 <ArrowBackIosIcon sx={{ fontSize: '14px', mr: 0.5 }} />
                 <Typography variant='body2' fontWeight="bold">Quay lại giỏ hàng</Typography>
@@ -221,8 +224,8 @@ function Checkout() {
                     const calcItem = calculationResult?.items?.find(i => i.productId === item.product._id && i.variantId === item.variantId)
 
                     return (
-                      <Box key={`${item.productId}-${item.variantId}`} sx={{ display: 'flex', gap: 2 }}>
-                        <Box component="img" src={item.product?.image} sx={{ width: 100, height: 120, objectFit: 'cover', borderRadius: '8px' }} />
+                      <Box key={`${item.productId}-${item.variantId}`} sx={{ display: 'flex', gap: { xs: 1.5, md: 2 } }}>
+                        <Box component="img" src={item.product?.image} sx={{ width: { xs: 68, md: 100 }, height: { xs: 80, md: 120 }, objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle1" fontWeight="bold">{item.product?.name}</Typography>
                           <Typography variant="body2" color="text.secondary">
@@ -261,7 +264,7 @@ function Checkout() {
               <Typography variant='h6' fontWeight="bold" sx={{ mb: 3 }}>Thông tin giao hàng</Typography>
               <Stack spacing={2.5}>
                 <TextField label="Họ và tên" fullWidth value={buyerInfo.name} onChange={(e) => setBuyerInfo({ ...buyerInfo, name: e.target.value })} />
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <TextField label="Số điện thoại" fullWidth value={buyerInfo.phone} onChange={(e) => setBuyerInfo({ ...buyerInfo, phone: e.target.value })} />
                   <TextField label="Email" fullWidth value={buyerInfo.email} onChange={(e) => setBuyerInfo({ ...buyerInfo, email: e.target.value })} />
                 </Stack>
@@ -302,7 +305,7 @@ function Checkout() {
               </Paper>
 
               {/* Summary Section */}
-              <Paper sx={{ p: 4, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', bgcolor: 'white', color: 'black', border: '1px solid #eee' }}>
+              <Paper sx={{ p: { xs: 2, md: 4 }, borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.05)', bgcolor: 'white', color: 'black', border: '1px solid #eee' }}>
                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>Tổng cộng</Typography>
 
                 <Stack spacing={2}>
@@ -337,7 +340,7 @@ function Checkout() {
                   </Box>
                 </Stack>
 
-                <Button fullWidth variant="contained" onClick={handlePlaceOrder} disabled={loadingCalc || products.length === 0} sx={{ mt: 4, py: 2, bgcolor: '#66FF99', color: 'black', fontWeight: 'bold', fontSize: '1.1rem', '&:hover': { bgcolor: '#52d17c' } }}>
+                <Button fullWidth variant="contained" onClick={handlePlaceOrder} disabled={loadingCalc || products.length === 0} sx={{ mt: 4, py: { xs: 1.5, md: 2 }, bgcolor: '#66FF99', color: 'black', fontWeight: 'bold', fontSize: { xs: '1rem', md: '1.1rem' }, '&:hover': { bgcolor: '#52d17c' } }}>
                   THANH TOÁN NGAY
                 </Button>
                 <Typography align="center" variant="caption" sx={{ display: 'block', mt: 2, color: 'text.secondary' }}>
@@ -382,6 +385,18 @@ function Checkout() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ mt: '70px' }}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: '100%', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

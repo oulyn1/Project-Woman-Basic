@@ -29,8 +29,11 @@ function CategoryPage() {
   return (
     <Box
       sx={{
-        backgroundColor: '#343a40',
-        mx: 5,
+        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+        mx: { xs: 1, md: 5 },
         my: 1,
         borderRadius: '8px',
         minHeight: '80vh',
@@ -38,7 +41,7 @@ function CategoryPage() {
       }}
     >
       {/* Header with Search and Add Button */}
-      <Box sx={{ px: 5, py: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ px: { xs: 2, md: 5 }, py: 3, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Box
           sx={{
             flex: 1,
@@ -78,7 +81,7 @@ function CategoryPage() {
         </Button>
       </Box>
 
-      <Box sx={{ px: 5 }}>
+      <Box sx={{ px: { xs: 2, md: 5 } }}>
         <TableCategory
           onEditCategory={handleEditClick}
           searchQuery={searchQuery}

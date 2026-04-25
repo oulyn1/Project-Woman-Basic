@@ -39,7 +39,7 @@ function CustomerPage() {
   return (
     <Box sx={{ width: '100%', overflowX: 'hidden' }}>
       <Header />
-      <Box sx={{ pt: '85px' }}>
+      <Box sx={{ pt: { xs: '64px', md: '85px' } }}>
         <Outlet />
       </Box>
       <Footer />

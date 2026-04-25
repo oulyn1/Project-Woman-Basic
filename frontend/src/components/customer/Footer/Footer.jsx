@@ -12,9 +12,9 @@ function Footer() {
   }
 
   return (
-    <Box sx={{ bgcolor: 'white', pt: 8, pb: 4, borderTop: '1px solid #eee' }}>
+    <Box sx={{ bgcolor: 'white', pt: { xs: 5, md: 8 }, pb: 4, borderTop: '1px solid #eee' }}>
       <Container maxWidth="lg">
-        <Grid container justifyContent="space-around" spacing={4}>
+        <Grid container justifyContent="space-around" spacing={{ xs: 3, md: 4 }}>
           {/* Brand and Certification */}
           <Grid item xs={12} sm={6} md={2.5}>
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -44,8 +44,8 @@ function Footer() {
           </Grid>
 
           {/* About Links */}
-          <Grid item xs={12} sm={6} md={2}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Giới thiệu</Typography>
+          <Grid item xs={6} sm={6} md={2}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, fontSize: { xs: '1rem', md: '1.25rem' } }}>Giới thiệu</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Về Woman Basic</Link>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Tin Tức</Link>
@@ -54,7 +54,7 @@ function Footer() {
 
           {/* Customer Service Links */}
           <Grid item xs={12} sm={6} md={3.5}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Dịch vụ khách hàng</Typography>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, fontSize: { xs: '1rem', md: '1.25rem' } }}>Dịch vụ khách hàng</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Chính sách điều khoản</Link>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Hướng dẫn mua hàng</Link>
@@ -67,8 +67,8 @@ function Footer() {
           </Grid>
 
           {/* Contact Links */}
-          <Grid item xs={12} sm={6} md={2}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Liên hệ</Typography>
+          <Grid item xs={6} sm={6} md={2}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, fontSize: { xs: '1rem', md: '1.25rem' } }}>Liên hệ</Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Email</Link>
               <Link href="#" underline="none" color="text.secondary" sx={{ fontSize: '0.9rem' }}>Messenger</Link>
@@ -77,7 +77,7 @@ function Footer() {
           </Grid>
         </Grid>
 
-        <Divider sx={{ mt: 8, mb: 4 }} />
+        <Box sx={{ borderTop: '1px solid #eee', mt: { xs: 4, md: 8 }, pt: 3 }} />
 
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
           <IconButton

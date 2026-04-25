@@ -59,10 +59,10 @@ const ProductCard = ({ product, promotions = [] }) => {
 
   return (
     <Card sx={{
-      maxWidth: 300,
+      width: '100%',
       borderRadius: 1,
       position: 'relative',
-      m: 1,
+      m: 0,
       cursor: 'pointer',
       boxShadow: 'none',
       '&:hover': {
@@ -97,7 +97,7 @@ const ProductCard = ({ product, promotions = [] }) => {
           image={product.images?.[0] || 'https://via.placeholder.com/300'}
           alt={product.name}
           sx={{
-            height: 300,
+            height: { xs: 180, sm: 240, md: 300 },
             width: '100%',
             objectFit: 'cover',
             transition: '0.5s transform ease'
@@ -109,16 +109,16 @@ const ProductCard = ({ product, promotions = [] }) => {
         {/* Title */}
         <Typography
           sx={{
-            fontSize: '0.95rem',
+            fontSize: { xs: '0.8rem', md: '0.95rem' },
             fontWeight: 500,
             color: '#1a1a1a',
-            minHeight: '2.8rem',
+            minHeight: '2.5rem',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
-            mb: 1
+            mb: 0.5
           }}
         >
           {product.name}
@@ -159,7 +159,7 @@ const ProductCard = ({ product, promotions = [] }) => {
 
         {/* Pricing */}
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-          <Typography sx={{ fontSize: '1.1rem', fontWeight: 700, color: '#ad2a36' }}>
+          <Typography sx={{ fontSize: { xs: '0.95rem', md: '1.1rem' }, fontWeight: 700, color: '#ad2a36' }}>
             {finalPrice.toLocaleString()} ₫
           </Typography>
           {highestPromotion && (

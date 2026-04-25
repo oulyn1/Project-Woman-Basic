@@ -8,20 +8,27 @@ function SideBarItem({ icon: Icon, title, handleSideBarCllick, to }) {
   return (
     <Button
       sx={{
-        width: '100%',
+        width: 'calc(100% - 32px)',
         height: '50px',
-        ml: '10px',
-        fontSize: '18px',
-        color: 'white',
+        mx: '16px',
+        px: '20px',
+        fontSize: '16px',
+        fontWeight: isActive ? 600 : 500,
+        color: isActive ? '#00FF87' : '#94A3B8',
         display: 'flex',
-        gap: 1,
+        gap: 1.5,
         justifyContent: 'flex-start',
         textTransform: 'none',
-        backgroundColor: isActive ? (theme) => theme.admin.focusColor : 'transparent',
-        transform: isActive ? 'scale(1.02)' : 'none',
+        whiteSpace: 'nowrap',
+        borderRadius: '12px',
+        backgroundColor: isActive ? 'rgba(0, 255, 135, 0.1)' : 'transparent',
+        boxShadow: isActive ? '0 0 16px rgba(0,255,135,0.1)' : 'none',
+        border: isActive ? '1px solid rgba(0, 255, 135, 0.3)' : '1px solid transparent',
+        transition: 'all 0.3s ease',
         '&:hover': {
-          backgroundColor: (theme) => theme.admin.focusColor,
-          transform: 'scale(1.02)',
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          color: 'white',
+          transform: 'translateX(4px)',
         }
       }}
       onClick={handleSideBarCllick}

@@ -228,7 +228,7 @@ function AddProduct({ open, onClose, onSuccess }) {
             alignItems: 'center',
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
+          <Typography component="div" variant="h6" fontWeight="bold">
             Thêm sản phẩm mới
           </Typography>
           <IconButton onClick={onClose} sx={{ color: '#888' }}>
@@ -238,7 +238,7 @@ function AddProduct({ open, onClose, onSuccess }) {
 
         <DialogContent sx={{ p: 4 }}>
           {/* Row 1: Name and Category */}
-          <Stack direction="row" spacing={3} mt={2}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} mt={2}>
             <FieldCustom
               label="Tên sản phẩm"
               required
@@ -262,7 +262,7 @@ function AddProduct({ open, onClose, onSuccess }) {
           </Stack>
 
           {/* Row 2: Price and Slug (auto-preview) */}
-          <Stack direction="row" spacing={3}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
             <FieldCustom
               label="Giá (VNĐ)"
               required
@@ -420,7 +420,7 @@ function AddProduct({ open, onClose, onSuccess }) {
                 sx={{
                   border: '1px solid #333',
                   borderRadius: '8px',
-                  overflow: 'hidden',
+                  overflowX: 'auto',
                 }}
               >
                 <Table size="small">

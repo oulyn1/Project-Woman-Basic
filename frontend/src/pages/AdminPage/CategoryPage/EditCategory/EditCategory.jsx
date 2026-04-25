@@ -88,7 +88,7 @@ function EditCategory({ open, onClose, onSuccess, categoryId }) {
         }}
       >
         <DialogTitle sx={{ borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" fontWeight="bold">Chỉnh sửa danh mục</Typography>
+          <Typography component="div" variant="h6" fontWeight="bold">Chỉnh sửa danh mục</Typography>
           <IconButton onClick={onClose} sx={{ color: '#888' }}><CloseIcon /></IconButton>
         </DialogTitle>
 

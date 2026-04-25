@@ -1,4 +1,4 @@
-import { Box } from '@mui/material'
+import { Box, Drawer, useMediaQuery, useTheme } from '@mui/material'
 import React from 'react'
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
 import SideBarItem from './SideBarItem/SideBarItem'
@@ -8,12 +8,12 @@ import ShoppingCartOutlinedIcon from '@mui/icons-material/ShoppingCartOutlined'
 import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
 import DiscountOutlinedIcon from '@mui/icons-material/DiscountOutlined'
-import StoreOutlinedIcon from '@mui/icons-material/StoreOutlined'
 import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import { useNavigate } from 'react-router-dom'
 
-function SideBar() {
+const SIDEBAR_WIDTH = 280
+
+function SideBarContent({ onItemClick }) {
   const navigate = useNavigate()
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const role = user.role
@@ -39,26 +39,32 @@ function SideBar() {
   const menuItems = role === 'admin' ? adminMenu : employeeMenu
 
   return (
-    <Box sx={{ backgroundColor: '#343a40', flex: '0 0 250px' }}>
+    <Box sx={{ backgroundColor: 'transparent', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Logo */}
       <Box
         sx={{
-          height: '72px',
+          height: '80px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          flexShrink: 0,
         }}
       >
-        <img src="/logo.png" alt="logo" style={{ width: '120px' }} />
+        <img src="/logo.png" alt="logo" style={{ width: '120px', filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.2))' }} />
       </Box>
 
+      {/* Menu Items */}
       <Box
         sx={{
-          height: 'calc(100% - 72px)',
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '20px',
-          py: '10px'
+          justifyContent: 'space-evenly',
+          py: '20px',
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': { width: '4px' },
+          '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }
         }}
       >
         {menuItems.map((item) => (
@@ -67,11 +73,58 @@ function SideBar() {
             icon={item.icon}
             title={item.title}
             to={item.path}
-            handleSideBarCllick={() => navigate(item.path)}
+            handleSideBarCllick={() => {
+              navigate(item.path)
+              if (onItemClick) onItemClick()
+            }}
           />
         ))}
       </Box>
     </Box>
+  )
+}
+
+function SideBar({ mobileOpen, onClose }) {
+  const theme = useTheme()
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'))
+
+  if (isDesktop) {
+    // Floating permanent sidebar on desktop
+    return (
+      <Box sx={{ flex: `0 0 ${SIDEBAR_WIDTH}px`, height: '100vh', p: 2, background: '#0B0F19' }}>
+        <Box
+          sx={{
+            height: '100%',
+            borderRadius: '24px',
+            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+            overflow: 'hidden'
+          }}
+        >
+          <SideBarContent />
+        </Box>
+      </Box>
+    )
+  }
+
+  // Temporary drawer on mobile
+  return (
+    <Drawer
+      anchor="left"
+      open={mobileOpen}
+      onClose={onClose}
+      PaperProps={{
+        sx: {
+          width: SIDEBAR_WIDTH,
+          backgroundColor: '#0B0F19', // Matches base UI
+          borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+        }
+      }}
+    >
+      <SideBarContent onItemClick={onClose} />
+    </Drawer>
   )
 }
 

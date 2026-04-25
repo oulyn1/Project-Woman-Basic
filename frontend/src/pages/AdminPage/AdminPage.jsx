@@ -1,11 +1,13 @@
 import { Box } from '@mui/material'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminBreadcrumbs from '~/components/admin/AdminBreadcrumbs/AdminBreadcrumbs'
 import AppBar from '~/components/admin/AppBar/AppBar'
 import SideBar from '~/components/admin/SideBar/SideBar'
 
 function AdminPage() {
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
     const userStr = localStorage.getItem('user')
@@ -36,6 +38,7 @@ function AdminPage() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [])
+
   return (
     <Box
       sx={{
@@ -45,21 +48,32 @@ function AdminPage() {
         overflow: 'hidden',
       }}
     >
-      <SideBar />
+      {/* Sidebar — passes mobile drawer state */}
+      <SideBar
+        mobileOpen={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+      />
+
+      {/* Main content area */}
       <Box
         sx={{
           width: '100%',
+          minWidth: 0, // prevents flexbox overflow
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: (theme) => theme.admin.focusColor,
+          backgroundColor: '#0B0F19',
+          backgroundImage: 'radial-gradient(circle at 15% 50%, rgba(0, 255, 135, 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(96, 239, 255, 0.05), transparent 25%)',
         }}
       >
+        {/* Top AppBar */}
         <Box sx={{ flex: '0 0 72px' }}>
-          <AppBar />
+          <AppBar onMenuToggle={() => setMobileDrawerOpen(true)} />
         </Box>
+
+        {/* Page content */}
         <Box sx={{ flex: '1', overflow: 'auto' }}>
           <Box
-            sx={{ display: 'flex', justifyContent: 'flex-end', mr: 6, mt: 4 }}
+            sx={{ display: 'flex', justifyContent: 'flex-end', mr: { xs: 2, md: 6 }, mt: { xs: 2, md: 4 } }}
           >
             <AdminBreadcrumbs />
           </Box>

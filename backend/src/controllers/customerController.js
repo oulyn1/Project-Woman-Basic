@@ -9,7 +9,7 @@ export const customerController = {
   search: async (req, res, next) => {
     try {
       const q = (req.query.q || '').trim()
-      if (!q) return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Query "q" is required' })
+      if (!q) return res.status(StatusCodes.OK).json([])
       res.status(StatusCodes.OK).json(await customerService.searchCustomers(q))
     } catch (e) { next(e) }
   },

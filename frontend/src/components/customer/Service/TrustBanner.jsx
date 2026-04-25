@@ -30,7 +30,7 @@ const serviceItems = [
 
 function TrustBanner() {
   return (
-    <Box sx={{ py: 4, bgcolor: '#ffffff', position: 'relative', zIndex: 10 }}>
+    <Box sx={{ py: 4, bgcolor: '#ffffff', position: 'relative', zIndex: 10, display: { xs: 'none', sm: 'block' } }}>
       <Container maxWidth="lg">
         <Grid container spacing={3} justifyContent="center" alignItems="center">
           {serviceItems.map((item, index) => (

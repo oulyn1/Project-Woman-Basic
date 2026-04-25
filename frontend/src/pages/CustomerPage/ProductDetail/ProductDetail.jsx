@@ -12,6 +12,8 @@ import {
   Snackbar,
   Alert,
   IconButton,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
 import AddIcon from '@mui/icons-material/Add'
@@ -33,6 +35,8 @@ function ProductDetail() {
   const navigate = useNavigate()
   const { productId } = useParams()
   const { addToCart, cartItems } = useCart()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -257,8 +261,8 @@ function ProductDetail() {
   }
 
   return (
-    <Container sx={{ py: 6 }}>
-      <Grid container spacing={8}>
+    <Container sx={{ py: { xs: 3, md: 6 }, pb: { xs: isMobile ? '90px' : 6, md: 6 } }}>
+      <Grid container spacing={{ xs: 3, md: 8 }}>
         {/* Gallery Column */}
         <Grid item xs={12} md={6}>
           <Box
@@ -272,7 +276,7 @@ function ProductDetail() {
             <img
               src={mainImage}
               alt={product.name}
-              style={{ width: '100%', height: '500px', objectFit: 'contain' }}
+              style={{ width: '100%', height: isMobile ? '300px' : '500px', objectFit: 'contain' }}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>
@@ -304,7 +308,7 @@ function ProductDetail() {
         <Grid item xs={12} md={6}>
           <Typography
             variant="h4"
-            sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1 }}
+            sx={{ fontWeight: 700, color: '#1a1a1a', mb: 1, fontSize: { xs: '1.4rem', md: '2.125rem' } }}
           >
             {product.name}
           </Typography>
@@ -327,7 +331,7 @@ function ProductDetail() {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography
                   variant="h4"
-                  sx={{ fontWeight: 700, color: '#ad2a36' }}
+                  sx={{ fontWeight: 700, color: '#ad2a36', fontSize: { xs: '1.4rem', md: '2.125rem' } }}
                 >
                   {formatCurrency(finalPrice)}
                 </Typography>
@@ -350,7 +354,7 @@ function ProductDetail() {
             <Box sx={{ mb: 4 }}>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 700, color: 'inherit' }}
+                sx={{ fontWeight: 700, color: 'inherit', fontSize: { xs: '1.4rem', md: '2.125rem' } }}
               >
                 {formatCurrency(finalPrice)}
               </Typography>
@@ -467,7 +471,8 @@ function ProductDetail() {
             </>
           )}
 
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          {/* Desktop: inline CTA buttons */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
             <Button
               disabled={isAdding || !currentVariant || isOutOfStock}
               variant="contained"
@@ -497,9 +502,59 @@ function ProductDetail() {
                 borderRadius: 3,
               }}
             >
-              Thêm vào giỏ
+              {isAdding ? 'Đang thêm...' : 'Thêm vào giỏ'}
             </Button>
           </Box>
+
+          {/* Mobile: sticky bottom bar */}
+          {isMobile && (
+            <Box
+              sx={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1200,
+                bgcolor: 'white',
+                borderTop: '1px solid #eee',
+                p: 1.5,
+                display: 'flex',
+                gap: 1,
+                boxShadow: '0 -2px 12px rgba(0,0,0,0.12)',
+              }}
+            >
+              <Button
+                disabled={isAdding || !currentVariant || isOutOfStock}
+                variant="outlined"
+                fullWidth
+                onClick={handleCartClick}
+                sx={{
+                  color: '#ad2a36',
+                  borderColor: '#ad2a36',
+                  py: 1.2,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                {isAdding ? 'Đang thêm...' : 'Thêm vào giỏ'}
+              </Button>
+              <Button
+                disabled={isAdding || !currentVariant || isOutOfStock}
+                variant="contained"
+                fullWidth
+                onClick={handleNowClick}
+                sx={{
+                  bgcolor: '#ad2a36',
+                  '&:hover': { bgcolor: '#8e212b' },
+                  py: 1.2,
+                  borderRadius: 2,
+                  fontWeight: 600,
+                }}
+              >
+                Mua ngay
+              </Button>
+            </Box>
+          )}
 
           <Divider sx={{ my: 4 }} />
         </Grid>

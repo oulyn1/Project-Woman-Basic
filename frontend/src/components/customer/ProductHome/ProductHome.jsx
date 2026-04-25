@@ -29,7 +29,6 @@ function ProductHome() {
           fetchAllPromotionsAPI()
         ])
         setAllProducts(prodRes.data || [])
-        // Filter promotions to apply per-user in UI layer
         setPromotions(promoRes.items || [])
       } catch (err) { console.error(err) }
     }
@@ -63,13 +62,13 @@ function ProductHome() {
     }
   }
   const promosForProduct = (prod) => promotions.filter(p => isProductPromo(p, prod._id) && isPromoActive(p) && isPromoEligibleForUser(p))
+
   // Filter Discounted Products
   const saleProducts = useMemo(() => {
     const now = new Date()
     const productWithPromo = allProducts.filter(p => promotions.some(promo => {
-      const isProductPromo = promo.productIds?.includes('ALL') || promo.productIds?.includes(p._id)
+      const isTargetProduct = promo.productIds?.includes('ALL') || promo.productIds?.includes(p._id)
       const isActive = promo.computedStatus === 'active' && (!promo.startDate || new Date(promo.startDate) <= now) && (!promo.endDate || promo.endDate === null || new Date(promo.endDate) >= now)
-      // user eligibility gating
       let isEligible = true
       const cond = promo.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
       switch (cond.type) {
@@ -79,7 +78,7 @@ function ProductHome() {
       case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
       default: break
       }
-      return isProductPromo && isActive && isEligible
+      return isTargetProduct && isActive && isEligible
     }))
     return productWithPromo.slice(0, 10)
   }, [allProducts, promotions, currentUser])
@@ -88,17 +87,22 @@ function ProductHome() {
     <Box sx={{ pb: 8 }}>
       <Container maxWidth="xl">
         {/* New Arrivals Section */}
-        <Box sx={{ mt: 6, mb: 8 }}>
+        <Box sx={{ mt: { xs: 4, md: 6 }, mb: { xs: 6, md: 8 } }}>
           <Typography
             variant="h4"
             align="center"
-            sx={{ fontWeight: 'bold', mb: 4, letterSpacing: 1 }}
+            sx={{
+              fontWeight: 'bold',
+              mb: { xs: 3, md: 4 },
+              letterSpacing: 1,
+              fontSize: { xs: '1.4rem', md: '2.125rem' },
+            }}
           >
             HÀNG MỚI VỀ
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, md: 2 }}>
             {newProducts.map(product => (
-              <Grid item xs={12} sm={6} md={4} lg={2.4} key={product._id}>
+              <Grid item xs={6} sm={4} md={4} lg={2.4} key={product._id}>
                 <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
                   <ProductCard product={product} promotions={promosForProduct(product)} />
                 </Box>
@@ -109,7 +113,14 @@ function ProductHome() {
             <Button
               variant="outlined"
               onClick={() => navigate('/listproduct/newest')}
-              sx={{ px: 4, py: 1, borderRadius: 2, borderColor: '#333', color: '#333' }}
+              sx={{
+                px: { xs: 3, md: 4 },
+                py: 1,
+                borderRadius: 2,
+                borderColor: '#333',
+                color: '#333',
+                fontSize: { xs: '0.85rem', md: '1rem' },
+              }}
             >
               Xem thêm
             </Button>
@@ -117,17 +128,22 @@ function ProductHome() {
         </Box>
 
         {/* Promotion Section */}
-        <Box sx={{ mb: 8 }}>
+        <Box sx={{ mb: { xs: 6, md: 8 } }}>
           <Typography
             variant="h4"
             align="center"
-            sx={{ fontWeight: 'bold', mb: 4, letterSpacing: 1 }}
+            sx={{
+              fontWeight: 'bold',
+              mb: { xs: 3, md: 4 },
+              letterSpacing: 1,
+              fontSize: { xs: '1.2rem', md: '2.125rem' },
+            }}
           >
             WOMAN BASIC - GIẢM GIÁ ĐẾN 50%
           </Typography>
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, md: 2 }}>
             {saleProducts.map(product => (
-              <Grid item xs={12} sm={6} md={4} lg={2.4} key={product._id}>
+              <Grid item xs={6} sm={4} md={4} lg={2.4} key={product._id}>
                 <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
                   <ProductCard product={product} promotions={promosForProduct(product)} />
                 </Box>
@@ -138,7 +154,14 @@ function ProductHome() {
             <Button
               variant="outlined"
               onClick={() => navigate('/listproduct/sale')}
-              sx={{ px: 4, py: 1, borderRadius: 2, borderColor: '#333', color: '#333' }}
+              sx={{
+                px: { xs: 3, md: 4 },
+                py: 1,
+                borderRadius: 2,
+                borderColor: '#333',
+                color: '#333',
+                fontSize: { xs: '0.85rem', md: '1rem' },
+              }}
             >
               Xem thêm
             </Button>

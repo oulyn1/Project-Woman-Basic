@@ -19,13 +19,13 @@ function ThankYou() {
   }
 
   return (
-    <Box sx={{ backgroundColor: '#F5F5F5', py: 6, minHeight: '100vh' }}>
-      <Box sx={{ backgroundColor: 'white', width: '700px', mx: 'auto', p: 4, borderRadius: '8px' }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center', color: '#003468' }}>
+    <Box sx={{ backgroundColor: '#F5F5F5', py: { xs: 3, md: 6 }, px: { xs: 2, md: 0 }, minHeight: '100vh' }}>
+      <Box sx={{ backgroundColor: 'white', width: '100%', maxWidth: '700px', mx: 'auto', p: { xs: 2, md: 4 }, borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center', color: '#003468', fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
           Cảm ơn bạn đã đặt hàng!
         </Typography>
 
-        <Typography variant="body1" sx={{ mb: 2 }}>
+        <Typography variant="body1" sx={{ mb: 2, wordBreak: 'break-all' }}>
           Mã đơn hàng: <strong>{order._id}</strong>
         </Typography>
 

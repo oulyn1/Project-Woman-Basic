@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
       enum: ["Standard", "Silver", "Gold", "Platinum"],
       default: "Standard",
     },
+    status: {
+      type: String,
+      enum: ["online", "offline"],
+      default: "offline",
+    },
   },
   {
     timestamps: true,

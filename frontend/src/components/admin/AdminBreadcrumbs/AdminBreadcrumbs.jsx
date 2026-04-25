@@ -38,10 +38,11 @@ const AdminBreadcrumbs = () => {
 
   return (
     <Breadcrumbs
-      separator={<NavigateNextIcon fontSize="small" />}
+      separator={<NavigateNextIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.5)' }} />}
       aria-label="breadcrumb"
+      sx={{ color: 'white' }}
     >
-      <Link component={RouterLink} underline="hover" color="inherit" to="/admin/dashboard">
+      <Link component={RouterLink} underline="hover" sx={{ color: 'rgba(255,255,255,0.7)' }} to="/admin/dashboard">
         Home
       </Link>
       {pathnames.map((value, index) => {
@@ -50,14 +51,14 @@ const AdminBreadcrumbs = () => {
         const name = breadcrumbNameMap[to] || value
 
         return last ? (
-          <Typography color="text.primary" key={to} fontWeight="bold">
+          <Typography sx={{ color: 'white' }} key={to} fontWeight="bold">
             {name}
           </Typography>
         ) : (
           <Link
             component={RouterLink}
             underline="hover"
-            color="inherit"
+            sx={{ color: 'rgba(255,255,255,0.7)' }}
             to={to}
             key={to}
           >

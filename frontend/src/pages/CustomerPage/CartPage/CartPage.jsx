@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react'
-import { Box, Typography, Checkbox, IconButton } from '@mui/material'
+import { Box, Typography, Checkbox, IconButton, Container } from '@mui/material'
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos'
 import DeleteIcon from '@mui/icons-material/Delete'
 import RemoveIcon from '@mui/icons-material/Remove'
@@ -134,17 +134,16 @@ function CartPage() {
   }
 
   return (
-    <Box sx={{ backgroundColor: '#F5F5F5', py: 6 }}>
-      <Box
-        sx={{
-          backgroundColor: 'white',
-          width: '800px',
-          minHeight: '600px',
-          mx: 'auto',
-          borderRadius: '8px',
-          p: 3,
-        }}
-      >
+    <Box sx={{ backgroundColor: '#F5F5F5', py: { xs: 3, md: 6 }, minHeight: '100vh' }}>
+      <Container maxWidth="sm" disableGutters={false}>
+        <Box
+          sx={{
+            backgroundColor: 'white',
+            borderRadius: { xs: '8px', sm: '8px' },
+            p: { xs: 2, sm: 3 },
+            mx: { xs: 0, sm: 'auto' },
+          }}
+        >
         {/* Header */}
         <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
           <Box
@@ -256,11 +255,13 @@ function CartPage() {
                     src={item.product?.image}
                     alt={item.product?.name}
                     sx={{
-                      width: 80,
-                      height: 80,
+                      width: { xs: 68, sm: 80 },
+                      height: { xs: 68, sm: 80 },
                       objectFit: 'cover',
-                      mr: 2,
+                      mr: 1.5,
                       border: '1px solid #eee',
+                      borderRadius: 1,
+                      flexShrink: 0,
                     }}
                   />
                   <Box sx={{ flexGrow: 1 }}>
@@ -437,7 +438,8 @@ function CartPage() {
             </Box>
           </Box>
         )}
-      </Box>
+        </Box>
+      </Container>
     </Box>
   )
 }

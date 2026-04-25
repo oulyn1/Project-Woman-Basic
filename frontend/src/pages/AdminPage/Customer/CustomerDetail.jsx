@@ -67,7 +67,7 @@ export default function CustomerDetail() {
   }
 
   return (
-    <Box sx={{ backgroundColor: '#343a40', mx: 5, my: 1, borderRadius: '8px', color: 'white' }}>
+    <Box sx={{ backgroundColor: 'rgba(255, 255, 255, 0.02)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255, 255, 255, 0.05)', boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)', mx: { xs: 1, md: 5 }, my: 1, borderRadius: '8px', color: 'white' }}>
       <Box sx={{ m: '16px 48px 16px 16px', display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="h5">Thông tin khách hàng</Typography>
       </Box>

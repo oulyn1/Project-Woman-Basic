@@ -273,7 +273,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
             alignItems: 'center',
           }}
         >
-          <Typography variant="h6" fontWeight="bold">
+          <Typography component="div" variant="h6" fontWeight="bold">
             Chỉnh sửa sản phẩm
           </Typography>
           <IconButton onClick={onClose} sx={{ color: '#888' }}>
@@ -288,7 +288,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
             </Box>
           ) : (
             <>
-              <Stack direction="row" spacing={3} mt={2}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} mt={2}>
                 <FieldCustom
                   label="Tên sản phẩm"
                   required
@@ -309,7 +309,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                 />
               </Stack>
 
-              <Stack direction="row" spacing={3}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
                 <FieldCustom
                   label="Giá (VNĐ)"
                   required
@@ -455,7 +455,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                   sx={{
                     border: '1px solid #333',
                     borderRadius: '8px',
-                    overflow: 'hidden',
+                    overflowX: 'auto',
                   }}
                 >
                   <Table size="small">

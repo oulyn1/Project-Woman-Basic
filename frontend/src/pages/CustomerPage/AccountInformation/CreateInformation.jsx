@@ -62,12 +62,13 @@ function CreateInformation() {
         onSubmit={handleSubmit}
         sx={{
           maxWidth: 600,
-          mx: 'auto',
+          mx: { xs: 2, sm: 'auto' },
           my: 3,
-          p: '25px 50px 30px 50px',
+          p: { xs: '20px', sm: '25px 50px 30px 50px' },
           bgcolor: 'white',
           borderRadius: 2,
-          boxShadow: 4
+          boxShadow: 4,
+          width: '100%'
         }}
       >
         <FormLabel

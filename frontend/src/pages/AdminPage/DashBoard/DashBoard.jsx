@@ -113,13 +113,21 @@ const Dashboard = () => {
       <Box
         sx={{
           p: 3,
-          backgroundColor: 'rgba(255,255,255,0.05)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255,255,255,0.1)',
+          backgroundColor: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(16px)',
+          borderRadius: '20px',
+          border: '1px solid rgba(255,255,255,0.05)',
           position: 'relative',
           overflow: 'hidden',
           minWidth: '220px',
-          flex: 1
+          flex: 1,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-4px)',
+            boxShadow: `0 8px 32px ${color}33`,
+            borderColor: `${color}55`
+          }
         }}
       >
         <Box sx={{ position: 'absolute', right: -10, top: -10, opacity: 0.1 }}>
@@ -138,19 +146,16 @@ const Dashboard = () => {
   return (
     <Box
       sx={{
-        backgroundColor: '#343a40',
-        mx: 5,
-        my: 1,
-        borderRadius: '8px',
+        mx: { xs: 1, md: 4 },
+        my: 2,
         pb: 4,
-        px: 4,
-        pt: 2,
-        color: 'white'
+        px: { xs: 2, md: 2 },
+        color: 'white',
       }}
     >
       <Typography variant="h5" fontWeight="bold" sx={{ mb: 4 }}>Tổng quan Dashboard</Typography>
 
-      <Stack direction="row" spacing={3} sx={{ mb: 5 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" spacing={2} useFlexGap sx={{ mb: 5 }}>
         <StatCard title="Tổng Sản phẩm" value={summary.totalProducts} icon={InventoryIcon} color="#2196f3" trend="+12%" />
         <StatCard title="Tổng Đơn hàng" value={summary.totalOrders} icon={ShoppingCartIcon} color="#ff9800" trend="+5%" />
         <StatCard title="Tổng Doanh thu" value={`${(summary.totalRevenue / 1000000).toFixed(1)}M`} icon={MonetizationOnIcon} color="#4caf50" trend="+18%" />
@@ -160,7 +165,7 @@ const Dashboard = () => {
       <Grid container spacing={3}>
         {/* Revenue Trend Chart */}
         <Grid item xs={12} md={8}>
-          <Box sx={{ p: 3, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <Box sx={{ p: 4, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
             <Typography variant="h6" sx={{ mb: 3 }}>Xu hướng Doanh thu (Tuần)</Typography>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={revenueTrend}>
@@ -182,7 +187,7 @@ const Dashboard = () => {
 
         {/* Top Products Pie */}
         <Grid item xs={12} md={4}>
-          <Box sx={{ p: 3, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', height: '100%' }}>
+          <Box sx={{ p: 4, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 24px rgba(0,0,0,0.2)', height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 3 }}>Top 5 Sản phẩm bán chạy</Typography>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -199,7 +204,7 @@ const Dashboard = () => {
 
         {/* Order Status Bar */}
         <Grid item xs={12}>
-          <Box sx={{ p: 3, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <Box sx={{ p: 4, backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 4px 24px rgba(0,0,0,0.2)' }}>
             <Typography variant="h6" sx={{ mb: 3 }}>Phân tích trạng thái đơn hàng</Typography>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={orderStatus} layout="horizontal">
