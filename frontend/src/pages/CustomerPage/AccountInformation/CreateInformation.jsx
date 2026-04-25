@@ -20,7 +20,7 @@ function CreateInformation() {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visitedcustomer')
-    window.location.href = '/login'
+    window.location.href = '/'
   }
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })

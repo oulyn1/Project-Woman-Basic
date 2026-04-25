@@ -52,7 +52,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
         const response = await fetchAllPromotionsAPI(query)
         setRows(response.items || [])
         setPage(0)
-      } catch (error) {
+      } catch {
         setRows([])
         setSnackbar({ open: true, message: 'Lỗi khi tải khuyến mãi!', severity: 'error' })
       } finally {
@@ -88,7 +88,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
         const response = await fetchAllPromotionsAPI({ search: searchQuery })
         setRows(response.items || [])
         setSnackbar({ open: true, message: 'Nhân bản thành công!', severity: 'success' })
-      } catch (error) {
+      } catch {
         setSnackbar({ open: true, message: 'Lỗi nhân bản!', severity: 'error' })
       }
       handleCloseMenu()

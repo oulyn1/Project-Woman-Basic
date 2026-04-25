@@ -120,7 +120,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
           setSelectedColors(Object.values(uniqueColorsMap))
           setVariantsMatrix(matrix)
         }
-      } catch (err) {
+      } catch {
         setSnackbar({
           open: true,
           message: 'Lỗi tải dữ liệu!',
@@ -238,7 +238,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
         // ignore if event dispatch fails
       }
       onSuccess()
-    } catch (err) {
+    } catch {
       setSnackbar({
         open: true,
         message: 'Lỗi khi cập nhật!',

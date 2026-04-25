@@ -11,13 +11,11 @@ function PromotionPage() {
   const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [openAdd, setOpenAdd] = useState(false)
   const [editInfo, setEditInfo] = useState({ open: false, promotionId: null })
-  const [fetchTrigger, setFetchTrigger] = useState(0)
 
   const handleEditClick = (id) => setEditInfo({ open: true, promotionId: id })
   const handleRefresh = () => {
     setOpenAdd(false)
     setEditInfo({ open: false, promotionId: null })
-    setFetchTrigger(prev => prev + 1)
   }
 
   return (

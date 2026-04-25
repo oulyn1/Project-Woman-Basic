@@ -107,30 +107,33 @@ const Dashboard = () => {
     )
   }
 
-  const StatCard = ({ title, value, icon: Icon, color, trend }) => (
-    <Box
-      sx={{
-        p: 3,
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: '16px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        position: 'relative',
-        overflow: 'hidden',
-        minWidth: '220px',
-        flex: 1
-      }}
-    >
-      <Box sx={{ position: 'absolute', right: -10, top: -10, opacity: 0.1 }}>
-        <Icon sx={{ fontSize: 100, color }} />
+  const StatCard = ({ title, value, icon, color, trend }) => {
+    const StatIcon = icon
+    return (
+      <Box
+        sx={{
+          p: 3,
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          borderRadius: '16px',
+          border: '1px solid rgba(255,255,255,0.1)',
+          position: 'relative',
+          overflow: 'hidden',
+          minWidth: '220px',
+          flex: 1
+        }}
+      >
+        <Box sx={{ position: 'absolute', right: -10, top: -10, opacity: 0.1 }}>
+          <StatIcon sx={{ fontSize: 100, color }} />
+        </Box>
+        <Typography variant="subtitle2" sx={{ color: '#888', mb: 1 }}>{title}</Typography>
+        <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>{value}</Typography>
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
+          <TrendingUpIcon sx={{ fontSize: 16, color: '#4caf50' }} />
+          <Typography variant="caption" sx={{ color: '#4caf50' }}>{trend} than last month</Typography>
+        </Stack>
       </Box>
-      <Typography variant="subtitle2" sx={{ color: '#888', mb: 1 }}>{title}</Typography>
-      <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>{value}</Typography>
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
-        <TrendingUpIcon sx={{ fontSize: 16, color: '#4caf50' }} />
-        <Typography variant="caption" sx={{ color: '#4caf50' }}>{trend} than last month</Typography>
-      </Stack>
-    </Box>
-  )
+    )
+  }
 
   return (
     <Box

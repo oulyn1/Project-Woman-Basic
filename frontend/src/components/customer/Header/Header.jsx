@@ -12,11 +12,10 @@ import {
   Modal,
   TextField,
 } from '@mui/material'
-import { styled } from '@mui/material/styles'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '~/context/Cart/useCart'
 import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
-import { fetchAllProductsAPI, searchProductsAPI } from '~/apis/productAPIs'
+import { searchProductsAPI } from '~/apis/productAPIs'
 import { getRatingsByProductId } from '~/apis/ratingAPIs'
 
 // Icons
@@ -27,6 +26,8 @@ import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined'
 import StarIcon from '@mui/icons-material/Star'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import LogoWB from '~/assets/logo_wb.png'
+import AuthDialog from './AuthDialog'
+
 
 // ==== Component con để load rating ====
 function StarRating({ productId }) {
@@ -59,6 +60,7 @@ function StarRating({ productId }) {
 
 function Header() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { cartItems = [] } = useCart()
   const itemCount = cartItems.reduce((sum, i) => sum + (i.quantity || 0), 0)
   const token = localStorage.getItem('accessToken')
@@ -66,6 +68,7 @@ function Header() {
   const [categories, setCategories] = useState([])
   const [catAnchorEl, setCatAnchorEl] = useState(null)
   const [openSearchModal, setOpenSearchModal] = useState(false)
+  const [openAuthDialog, setOpenAuthDialog] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
 
@@ -80,6 +83,24 @@ function Header() {
     }
     fetchCategories()
   }, [])
+
+  // URL Trigger for AuthDialog
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const authType = searchParams.get('auth')
+    if (authType === 'login') {
+      setOpenAuthDialog(true)
+    } else if (authType === 'register') {
+      // If we want to support starting at register tab
+      // setOpenAuthDialog(true)
+      // but maybe AuthDialog needs a prop for default tab
+      setOpenAuthDialog(true)
+    }
+    // Clear search params after reading to avoid repeated opening on reload/navigation
+    if (authType) {
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.search, navigate, location.pathname])
 
   // Search Logic
   useEffect(() => {
@@ -99,9 +120,11 @@ function Header() {
   }, [searchQuery])
 
   const handleAccountClick = () =>
-    token ? navigate('/editprofile') : navigate('/login')
+    token ? navigate('/editprofile') : setOpenAuthDialog(true)
   const handleOrderClick = () =>
-    token ? navigate('/myorders') : navigate('/login')
+    token ? navigate('/myorders') : setOpenAuthDialog(true)
+  const handleCartClick = () =>
+    token ? navigate('/cart') : setOpenAuthDialog(true)
 
   const styleModal = {
     position: 'absolute',
@@ -223,7 +246,7 @@ function Header() {
             </Tooltip>
 
             <Tooltip title="Giỏ hàng">
-              <IconButton onClick={() => navigate('/cart')}>
+              <IconButton onClick={handleCartClick}>
                 <Badge badgeContent={itemCount} color="error">
                   <ShoppingBagOutlinedIcon color="action" />
                 </Badge>
@@ -297,6 +320,12 @@ function Header() {
           </Box>
         </Box>
       </Modal>
+
+      {/* Auth Dialog */}
+      <AuthDialog
+        open={openAuthDialog}
+        onClose={() => setOpenAuthDialog(false)}
+      />
     </Box>
   )
 }

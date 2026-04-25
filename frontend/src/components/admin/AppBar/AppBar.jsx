@@ -24,7 +24,7 @@ function AppBar() {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visited')
-    navigate('/login')
+    navigate('/')
   }
 
   return (

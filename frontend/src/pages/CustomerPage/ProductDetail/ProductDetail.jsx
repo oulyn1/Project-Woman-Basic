@@ -22,6 +22,7 @@ import { getProductDetailAPI } from '~/apis/productAPIs'
 import { getRatingsByProductId } from '~/apis/ratingAPIs'
 import { useCart } from '~/context/Cart/useCart'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
+import AuthDialog from '~/components/customer/Header/AuthDialog'
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
@@ -50,6 +51,7 @@ function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState('')
   const [selectedColor, setSelectedColor] = useState(null)
   const [mainImage, setMainImage] = useState('')
+  const [openAuthDialog, setOpenAuthDialog] = useState(false)
 
   // Load current user từ localStorage
   useEffect(() => {
@@ -176,7 +178,7 @@ function ProductDetail() {
   const handleCartClick = async () => {
     const token = localStorage.getItem('accessToken')
     if (!token) {
-      navigate('/login')
+      setOpenAuthDialog(true)
       return
     }
     if (currentVariant && !isOutOfStock) {
@@ -591,6 +593,11 @@ function ProductDetail() {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <AuthDialog
+        open={openAuthDialog}
+        onClose={() => setOpenAuthDialog(false)}
+      />
     </Container>
   )
 }

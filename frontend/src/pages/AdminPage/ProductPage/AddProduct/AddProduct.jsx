@@ -60,7 +60,6 @@ function AddProduct({ open, onClose, onSuccess }) {
   const [selectedColors, setSelectedColors] = useState([]) // Array of color objects from PALETTE
   const [variantsMatrix, setVariantsMatrix] = useState({})
 
-  const [errors, setErrors] = useState({})
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',

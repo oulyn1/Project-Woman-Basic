@@ -54,7 +54,6 @@ const StyledListHeader = styled(ListSubheader)({
 
 function NavBar() {
   const [categories, setCategories] = useState([])
-  const [anchorEls, setAnchorEls] = useState({})
   const [openModal, setOpenModal] = useState(false)
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
@@ -99,14 +98,6 @@ function NavBar() {
     }
     fetchCategories()
   }, [])
-
-  const handleMenuOpen = (event, id) => {
-    setAnchorEls((prev) => ({ ...prev, [id]: event.currentTarget }))
-  }
-
-  const handleMenuClose = (id) => {
-    setAnchorEls((prev) => ({ ...prev, [id]: null }))
-  }
 
   const styleModal = {
     position: 'absolute',

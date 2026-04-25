@@ -37,7 +37,7 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
   const [page, setPage] = useState(0)
   const [rowsPerPage] = useState(10)
   const [expandedId, setExpandedId] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const [confirmDialog, setConfirmDialog] = useState({ open: false, orderId: null, action: '' })
 
@@ -80,7 +80,7 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
 
       setOrders(orders.map(o => o._id === orderId ? updatedOrder : o))
       setSnackbar({ open: true, message: 'Thành công!', severity: 'success' })
-    } catch (error) {
+    } catch {
       setSnackbar({ open: true, message: 'Lỗi!', severity: 'error' })
     } finally {
       setConfirmDialog({ open: false, orderId: null, action: '' })

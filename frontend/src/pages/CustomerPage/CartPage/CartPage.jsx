@@ -105,7 +105,6 @@ function CartPage() {
   }
 
   const getDiscountedPrice = (product) => {
-    const now = new Date()
     const applied = promotions.find((promo) =>
       canApplyPromo(promo, product._id),
     )

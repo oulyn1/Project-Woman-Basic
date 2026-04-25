@@ -87,7 +87,7 @@ function StoryPage() {
       <Box sx={{ bgcolor: '#f9fafb', py: { xs: 8, md: 12 }, width: '100%' }}>
         <Container maxWidth="lg" sx={{ width: '100%' }}>
           <Grid container spacing={4} alignItems="center">
-             <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <Box sx={{ pr: { md: 4 }, textAlign: { xs: 'center', md: 'left' } }}>
                 <Typography variant="h4" sx={{ fontWeight: 400, color: '#111827', mb: 2, letterSpacing: '1px' }}>
                   TẦM NHÌN & SỨ MỆNH
@@ -124,14 +124,14 @@ function StoryPage() {
         <Typography variant="h4" sx={{ textAlign: 'center', fontWeight: 400, color: '#111827', mb: 3, letterSpacing: '2px' }}>
           GIÁ TRỊ CỐT LÕI
         </Typography>
-         <Box sx={{ width: '60px', height: '2px', bgcolor: '#111827', mx: 'auto', mb: 8 }} />
-        
+        <Box sx={{ width: '60px', height: '2px', bgcolor: '#111827', mx: 'auto', mb: 8 }} />
+
         <Grid container spacing={4} justifyContent="center">
           {coreValues.map((value, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
-              <Card 
-                elevation={0} 
-                sx={{ 
+              <Card
+                elevation={0}
+                sx={{
                   height: '100%',
                   textAlign: 'center',
                   bgcolor: '#ffffff',
@@ -161,18 +161,18 @@ function StoryPage() {
           ))}
         </Grid>
       </Container>
-      
+
       {/* Bottom Picture / Banner */}
       <Container maxWidth="lg" sx={{ width: '100%', textAlign: 'center', mt: 4 }}>
-         <Box
+        <Box
           component="img"
           src="/woman_basic_core_values_1777018185820.png"
           alt="Woman Basic Lifestyle"
           sx={{
-             width: '100%',
-             height: { xs: '300px', md: '500px' },
-             objectFit: 'cover',
-             borderRadius: '8px'
+            width: '100%',
+            height: { xs: '300px', md: '500px' },
+            objectFit: 'cover',
+            borderRadius: '8px'
           }}
         />
       </Container>

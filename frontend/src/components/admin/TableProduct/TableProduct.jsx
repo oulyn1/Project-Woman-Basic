@@ -44,7 +44,7 @@ const TableProduct = ({
   // Action Menu State
   const [anchorEl, setAnchorEl] = useState(null)
   const [menuId, setMenuId] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [, setLoading] = useState(false)
 
   // Delete State
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)

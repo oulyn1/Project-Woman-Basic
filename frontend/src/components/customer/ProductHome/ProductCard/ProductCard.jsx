@@ -14,12 +14,11 @@ const ProductCard = ({ product, promotions = [] }) => {
           const total = ratings.reduce((sum, r) => sum + r.star, 0)
           setAvgRating(total / ratings.length)
         }
-      } catch (err) { /* silent error */ }
+      } catch { /* silent error */ }
     }
     fetchRating()
   }, [product._id])
 
-  const now = new Date()
   const highestPromotion = useMemo(() => {
     const active = promotions.filter(promo => {
       const isTargeted = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)

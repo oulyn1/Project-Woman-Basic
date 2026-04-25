@@ -127,14 +127,7 @@ function ListProduct() {
         (p) => p.variants?.reduce((sum, v) => sum + (v.stock || 0), 0) > 0,
       )
     } else if (categorySlug === 'sale') {
-      result = result.filter((p) =>
-        promotions.some(
-          (promo) =>
-            promo.computedStatus === 'active' &&
-            (promo.productIds?.includes('ALL') ||
-              promo.productIds?.includes(p._id)),
-        ),
-      )
+      result = result.filter((p) => promosForProduct(p).length > 0)
     } else if (categorySlug && categorySlug !== 'all') {
       const targetCat = categories.find((c) => c.slug === categorySlug)
       if (targetCat) {

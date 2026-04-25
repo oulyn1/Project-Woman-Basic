@@ -8,16 +8,10 @@ import AdminPage from './pages/AdminPage/AdminPage.jsx'
 import HomePage from './pages/CustomerPage/HomePage/HomePage.jsx'
 import CustomerPage from './pages/CustomerPage/CustomerPage.jsx'
 import ProductPage from './pages/AdminPage/ProductPage/ProductPage.jsx'
-import AddProduct from './pages/AdminPage/ProductPage/AddProduct/AddProduct.jsx'
-import EditProduct from './pages/AdminPage/ProductPage/EditProduct/EditProduct.jsx'
-import Register from './pages/CustomerPage/Register/Register.jsx'
 import CreateInformation from './pages/CustomerPage/AccountInformation/CreateInformation.jsx'
 import CategoryPage from './pages/AdminPage/CategoryPage/CategoryPage.jsx'
-import AddCategory from './pages/AdminPage/CategoryPage/AddCategory/AddCategory.jsx'
-import EditCategory from './pages/AdminPage/CategoryPage/EditCategory/EditCategory.jsx'
 import ListProduct from './pages/CustomerPage/ListProduct/ListProduct.jsx'
 import ProductDetail from './pages/CustomerPage/ProductDetail/ProductDetail.jsx'
-import Login from './pages/CustomerPage/Login/Login.jsx'
 import PrivateRoute from './components/PrivateRoute.jsx'
 import RoleGate from './components/RoleGate.jsx'
 import StoryPage from './pages/CustomerPage/StoryPage/StoryPage.jsx'
@@ -78,9 +72,7 @@ let router = createBrowserRouter([
         ]
       }
     ]
-  },
-  { path: '/login', element: <Login /> },
-  { path: '/register', element: <Register /> }
+  }
 ])
 
 createRoot(document.getElementById('root')).render(
