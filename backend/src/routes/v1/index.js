@@ -8,6 +8,7 @@ import { orderRoute } from "./orderRoute"
 import { ratingRoute } from "./ratingRoute"
 import { promotionRoute } from "./promotionRoute"
 import { customerRoute } from "./customerRoute"
+import { aiRoute } from "./ai.route"
 
 const Router = express.Router()
 
@@ -30,5 +31,7 @@ Router.use('/ratings', ratingRoute)
 Router.use('/promotion', promotionRoute)
 
 Router.use('/customers', customerRoute)
+
+Router.use('/ai', aiRoute)
 
 export const APIs_V1 = Router

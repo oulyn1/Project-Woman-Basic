@@ -19,6 +19,7 @@ const productSchema = new mongoose.Schema({
   sold: { type: Number, default: 0, min: 0 },
   images: [{ type: String, required: true }],
   tags: [{ type: String, trim: true }],
+  material: { type: String, trim: true, default: '' },
   variants: [variantSchema],
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null }

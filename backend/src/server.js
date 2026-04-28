@@ -16,7 +16,8 @@ const START_SERVER = () => {
 
   app.use(cors())
 
-  app.use(express.json())
+  // Tăng limit lên 6mb để xử lý base64 ảnh (ảnh 4MB ≈ 5.5MB base64)
+  app.use(express.json({ limit: '6mb' }))
 
   app.use('/v1', APIs_V1)
 

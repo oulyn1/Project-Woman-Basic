@@ -56,6 +56,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
     name: '',
     price: '',
     description: '',
+    material: '',
     tags: '',
     files: [],
     currentImages: [],
@@ -100,6 +101,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
           name: product.name || '',
           price: product.price?.toString() || '',
           description: product.description || '',
+          material: product.material || '',
           tags: (product.tags || []).join(', '),
           files: [],
           currentImages: product.images || [],
@@ -202,6 +204,7 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
         categoryId: formData.categoryId,
         name: formData.name.trim(),
         description: formData.description.trim(),
+        material: formData.material.trim(),
         slug: formData.name
           .toLowerCase()
           .replace(/ /g, '-')
@@ -328,6 +331,17 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                     .replace(/[^\w-]+/g, '')}
                 />
               </Stack>
+
+              <Box sx={{ mt: 1 }}>
+                <FieldCustom
+                  label="Chất liệu"
+                  value={formData.material}
+                  onChange={(e) =>
+                    setFormData({ ...formData, material: e.target.value })
+                  }
+                  placeholder="VD: Tuyết mưa, Cotton, Denim..."
+                />
+              </Box>
 
               <Box sx={{ mt: 1 }}>
                 <FieldCustom

@@ -11,6 +11,7 @@ const createNew = async (req, res, next) => {
       price: Joi.number().required().min(0),
       images: Joi.array().items(Joi.string().uri()).min(1).required(),
       tags: Joi.array().items(Joi.string().trim()).default([]),
+      material: Joi.string().allow('').trim(),
 
       variants: Joi.array().items(Joi.object({
         size: Joi.string().valid('XS', 'S', 'M', 'L', 'XL').required(),
@@ -43,6 +44,7 @@ const updateOne = async (req, res, next) => {
     price: Joi.number().min(0),
     images: Joi.array().items(Joi.string().uri()).min(1),
     tags: Joi.array().items(Joi.string().trim()),
+    material: Joi.string().allow('').trim(),
     isDeleted: Joi.boolean(),
     variants: Joi.array().items(Joi.object({
       _id: Joi.string().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
