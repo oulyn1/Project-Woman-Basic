@@ -106,7 +106,7 @@ const getPromotionById = async (id) => {
 };
 
 const updatePromotion = async (id, data) => {
-  return await Promotion.findByIdAndUpdate(id, { $set: data }, { new: true });
+  return await Promotion.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after' });
 };
 
 const deletePromotion = async (id) => {

@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom'
 import AdminBreadcrumbs from '~/components/admin/AdminBreadcrumbs/AdminBreadcrumbs'
 import AppBar from '~/components/admin/AppBar/AppBar'
 import SideBar from '~/components/admin/SideBar/SideBar'
+import AdminChatBubble from '~/components/chat/AdminChatBubble'
 
 function AdminPage() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
@@ -80,6 +81,9 @@ function AdminPage() {
           <Outlet />
         </Box>
       </Box>
+
+      {/* Admin Chat Bubble — tự ẩn trên /admin/dashboard */}
+      <AdminChatBubble />
     </Box>
   )
 }

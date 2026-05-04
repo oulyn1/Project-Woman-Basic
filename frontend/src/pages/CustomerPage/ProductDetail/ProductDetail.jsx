@@ -560,6 +560,37 @@ function ProductDetail() {
         </Grid>
       </Grid>
 
+      {product.sizeChart && (
+        <Box sx={{ mt: 8 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              borderLeft: '5px solid #ad2a36',
+              pl: 2,
+              mb: 3,
+              fontWeight: 'bold',
+            }}
+          >
+            BẢNG QUY ĐỔI KÍCH CỠ
+          </Typography>
+          <Box
+            sx={{
+              bgcolor: '#fff',
+              p: { xs: 1, md: 2 },
+              borderRadius: 4,
+              border: '1px solid #eee',
+              textAlign: 'center',
+            }}
+          >
+            <img
+              src={product.sizeChart}
+              alt="Bảng quy đổi kích cỡ"
+              style={{ maxWidth: '100%', borderRadius: '8px' }}
+            />
+          </Box>
+        </Box>
+      )}
+
       <Box sx={{ mt: 8 }}>
         <Typography
           variant="h5"

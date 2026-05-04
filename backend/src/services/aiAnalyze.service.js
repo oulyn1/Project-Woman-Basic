@@ -173,6 +173,64 @@ Lưu Ý Khi Mua Hàng
   }
 }
 
+/**
+ * Analyze a size chart image using Groq.
+ * @param {string} base64Image - Base64-encoded image string
+ * @returns {{ sizeGuide: string }}
+ */
+const analyzeSizeChartWithAI = async (base64Image) => {
+  const groqKey = env.GROQ_API_KEY
+  if (!groqKey) {
+    throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Thiếu cấu hình GROQ_API_KEY.')
+  }
+
+  const groqPrompt = `Bạn là trợ lý trích xuất dữ liệu bảng size chuyên nghiệp.
+Dựa trên hình ảnh bảng quy đổi kích cỡ sản phẩm thời trang, hãy trích xuất toàn bộ thông tin thành một bảng Markdown rõ ràng.
+
+Yêu cầu:
+- Trích xuất chính xác: Size, Cân nặng, Chiều cao, Vòng ngực, Dài áo... (tùy theo có trong ảnh).
+- Định dạng: Bảng Markdown.
+- Trả về JSON: { "sizeGuide": "nội dung bảng markdown ở đây" }`
+
+  try {
+    const groqResponse = await axios.post(
+      GROQ_API_URL,
+      {
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: groqPrompt },
+              {
+                type: 'image_url',
+                image_url: { url: `data:image/jpeg;base64,${base64Image}` }
+              }
+            ]
+          }
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2,
+        max_tokens: 2048
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${groqKey}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    )
+
+    const content = groqResponse.data?.choices?.[0]?.message?.content || ''
+    const parsed = JSON.parse(content)
+    return { sizeGuide: parsed.sizeGuide || '' }
+  } catch (error) {
+    throw new ApiError(StatusCodes.BAD_GATEWAY, `Lỗi khi phân tích bảng size: ${error.message}`)
+  }
+}
+
 export const aiAnalyzeService = {
   analyzeProductWithAI,
+  analyzeSizeChartWithAI
 }

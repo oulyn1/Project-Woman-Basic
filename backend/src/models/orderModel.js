@@ -108,7 +108,7 @@ export const orderModel = {
   },
 
   updateOne: async (id, data) => {
-    return await Order.findByIdAndUpdate(id, { $set: data }, { new: true })
+    return await Order.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after' })
   },
 
   searchByUser: async (userId, query) => {

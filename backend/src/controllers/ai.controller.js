@@ -46,6 +46,27 @@ const analyzeProduct = async (req, res, next) => {
   }
 }
 
+const analyzeSizeChart = async (req, res, next) => {
+  try {
+    const { base64Image } = req.body
+
+    if (!base64Image || typeof base64Image !== 'string') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Thiếu ảnh base64Image')
+    }
+
+    const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image
+    const result = await aiAnalyzeService.analyzeSizeChartWithAI(cleanBase64)
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: result,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const aiController = {
   analyzeProduct,
+  analyzeSizeChart
 }

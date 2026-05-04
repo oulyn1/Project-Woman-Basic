@@ -21,3 +21,21 @@ export const analyzeProductWithAIAPI = async (base64Image, token) => {
   )
   return response.data // { success: true, data: { name, category, description, tags } }
 }
+
+/**
+ * Gọi backend API để phân tích bảng size bằng AI.
+ */
+export const analyzeSizeChartWithAIAPI = async (base64Image, token) => {
+  const response = await axios.post(
+    `${API_ROOT}/v1/ai/analyze-size-chart`,
+    { base64Image },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 60000,
+    }
+  )
+  return response.data
+}

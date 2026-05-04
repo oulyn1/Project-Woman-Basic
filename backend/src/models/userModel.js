@@ -83,7 +83,7 @@ export const userModel = {
     return await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
-      { new: true },
+      { returnDocument: 'after' },
     );
   },
 
@@ -125,7 +125,7 @@ export const userModel = {
     return await User.findOneAndUpdate(
       { email },
       { $set: updateData },
-      { new: true },
+      { returnDocument: 'after' },
     );
   },
 
@@ -133,7 +133,7 @@ export const userModel = {
     return await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
-      { new: true },
+      { returnDocument: 'after' },
     );
   },
 };

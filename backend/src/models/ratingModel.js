@@ -39,7 +39,7 @@ export const ratingModel = {
   },
 
   updateOne: async (id, updateData) => {
-    return await Rating.findByIdAndUpdate(id, { $set: updateData }, { new: true })
+    return await Rating.findByIdAndUpdate(id, { $set: updateData }, { returnDocument: 'after' })
   },
 
   deleteOne: async (id) => {

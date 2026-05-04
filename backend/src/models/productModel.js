@@ -21,6 +21,8 @@ const productSchema = new mongoose.Schema({
   tags: [{ type: String, trim: true }],
   material: { type: String, trim: true, default: '' },
   variants: [variantSchema],
+  sizeChart: { type: String, default: '' },
+  sizeGuide: { type: String, default: '' },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null }
 }, {
@@ -61,7 +63,7 @@ export const productModel = {
   },
 
   updateOne: async (id, data) => {
-    return await Product.findByIdAndUpdate(id, { $set: data }, { new: true })
+    return await Product.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after' })
   },
 
   updateVariantStock: async (productId, variantId, quantity) => {
@@ -81,7 +83,7 @@ export const productModel = {
           sold: quantity
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     )
   },
 
@@ -89,7 +91,7 @@ export const productModel = {
     return await Product.findByIdAndUpdate(
       productId,
       { $set: { isDeleted: true, deletedAt: new Date() } },
-      { new: true }
+      { returnDocument: 'after' }
     )
   }
 }

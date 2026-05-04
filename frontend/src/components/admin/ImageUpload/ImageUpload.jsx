@@ -5,9 +5,11 @@ function ImageUpload({ label, required, onImageChange, error, helperText, curren
   const [previews, setPreviews] = useState([])
   const fileInputRef = useRef(null)
 
+  // Chỉ đồng bộ ảnh cũ từ server vào preview khi component mount hoặc khi ảnh cũ thực sự thay đổi
   useEffect(() => {
-    if (currentImageUrl) {
-      setPreviews(Array.isArray(currentImageUrl) ? currentImageUrl : [currentImageUrl])
+    if (currentImageUrl && currentImageUrl.length > 0) {
+      const initialImages = Array.isArray(currentImageUrl) ? currentImageUrl : [currentImageUrl]
+      setPreviews(initialImages)
     }
   }, [currentImageUrl])
 

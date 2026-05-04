@@ -23,6 +23,7 @@ import {
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import SaveIcon from '@mui/icons-material/Save'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 
 import FieldCustom from '~/components/admin/FieldCustom/FieldCustom'
 import ImageUpload from '~/components/admin/ImageUpload/ImageUpload'
@@ -32,6 +33,7 @@ import {
   updateProductAPI,
 } from '~/apis/productAPIs'
 import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
+import { analyzeSizeChartWithAIAPI } from '~/apis/aiAnalyzeAPIs'
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL']
 const COLOR_PALETTE = [
@@ -60,6 +62,9 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
     tags: '',
     files: [],
     currentImages: [],
+    sizeChart: '',
+    sizeChartFile: null,
+    sizeGuide: ''
   })
 
   const [categories, setCategories] = useState([])
@@ -105,6 +110,8 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
           tags: (product.tags || []).join(', '),
           files: [],
           currentImages: product.images || [],
+          sizeChart: product.sizeChart || '',
+          sizeGuide: product.sizeGuide || ''
         })
 
         if (product.variants) {
@@ -134,6 +141,8 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
     }
     if (open && productId) fetchProductData()
   }, [open, productId])
+
+  const sizeChartPreview = useMemo(() => (formData.sizeChart ? [formData.sizeChart] : []), [formData.sizeChart])
 
   const handleSizeChange = (event, newSizes) => {
     setSelectedSizes(newSizes)
@@ -224,7 +233,11 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
             v.sku ||
             `${skuPrefix}-${v.size}-${v.color.name.toUpperCase().substring(0, 3)}`,
         })),
+        sizeChart: formData.sizeChartFile ? await uploadImageToCloudinaryAPI(formData.sizeChartFile).then(res => res.secure_url) : formData.sizeChart,
+        sizeGuide: formData.sizeGuide
       }
+
+      console.log('Update Product Payload:', payload)
 
       const updatedProduct = await updateProductAPI(productId, payload)
       setSnackbar({
@@ -341,6 +354,20 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                   }
                   placeholder="VD: Tuyết mưa, Cotton, Denim..."
                 />
+              </Box>
+
+              {/* Row: Size Chart Upload */}
+              <Box sx={{ mt: 3, mb: 2, p: 2, border: '1px dashed #444', borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.02)' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  Bảng quy đổi kích cỡ (Size Chart)
+                </Typography>
+                <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+                    <ImageUpload
+                      onImageChange={(file) => setFormData(p => ({ ...p, sizeChartFile: file }))}
+                      currentImageUrl={sizeChartPreview}
+                      label="Thay ảnh bảng size"
+                    />
+                </Box>
               </Box>
 
               <Box sx={{ mt: 1 }}>

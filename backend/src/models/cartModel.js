@@ -98,7 +98,7 @@ export const cartModel = {
     const result = await Cart.findOneAndUpdate(
       { userId },
       { $pull: { items: { productId, variantId } } },
-      { new: true }
+      { returnDocument: 'after' }
     )
     return await cartModel.findByUserId(userId)
   },

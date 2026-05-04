@@ -39,7 +39,7 @@ export const categoryModel = {
   },
 
   updateOne: async (id, data) => {
-    return await Category.findByIdAndUpdate(id, { $set: data }, { new: true })
+    return await Category.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after' })
   }
 }
 

@@ -46,7 +46,7 @@ import {
   uploadImageToCloudinaryAPI,
 } from '~/apis/productAPIs'
 import { fetchAllCategoriesAPI } from '~/apis/categoryAPIs'
-import { analyzeProductWithAIAPI } from '~/apis/aiAnalyzeAPIs'
+import { analyzeProductWithAIAPI, analyzeSizeChartWithAIAPI } from '~/apis/aiAnalyzeAPIs'
 
 // Giới hạn kích thước ảnh tối đa cho AI: 4MB
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024
@@ -120,6 +120,8 @@ function AddProduct({ open, onClose, onSuccess }) {
     material: '',
     tags: '',
     files: [],
+    sizeChartFile: null,
+    sizeGuide: ''
   })
 
   const [selectedSizes, setSelectedSizes] = useState([])
@@ -322,7 +324,10 @@ function AddProduct({ open, onClose, onSuccess }) {
           stock: Number(variantsMatrix[`${v.size}-${v.color.hex}`] || 0),
           sku: `${skuPrefix}-${v.size}-${v.color.name.toUpperCase().substring(0, 3)}`,
         })),
+        sizeChart: formData.sizeChartFile ? await uploadImageToCloudinaryAPI(formData.sizeChartFile).then(res => res.secure_url) : '',
       }
+
+      console.log('Product Payload:', payload)
 
       const createdProduct = await createProductAPI(payload)
       setSuccessSnackbar({ open: true, message: 'Thêm sản phẩm thành công!' })
@@ -553,6 +558,19 @@ function AddProduct({ open, onClose, onSuccess }) {
               }
               placeholder="VD: Tuyết mưa, Cotton, Denim..."
             />
+          </Box>
+
+          {/* Row: Size Chart Upload */}
+          <Box sx={{ mt: 3, mb: 2, p: 2, border: '1px dashed #444', borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.02)' }}>
+            <Typography variant="subtitle2" sx={{ mb: 1.5, color: '#ccc', display: 'flex', alignItems: 'center', gap: 1 }}>
+              Bảng quy đổi kích cỡ (Size Chart)
+            </Typography>
+            <Box sx={{ width: { xs: '100%', md: '200px' } }}>
+              <ImageUpload
+                onImageChange={(file) => setFormData(p => ({ ...p, sizeChartFile: file }))}
+                label="Tải ảnh bảng size"
+              />
+            </Box>
           </Box>
 
           {/* Row 4: Description */}
