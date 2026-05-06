@@ -32,6 +32,7 @@ const productSchema = new mongoose.Schema({
 
 // Text indexes for search
 productSchema.index({ name: 'text', description: 'text', tags: 'text' })
+productSchema.index({ slug: 1, isDeleted: 1 }) // Optimize for slug lookups
 
 const Product = mongoose.model('Product', productSchema)
 
@@ -57,7 +58,7 @@ export const productModel = {
   findWithPagination: async ({ filter, sort, page, limit }) => {
     const query = { ...filter, isDeleted: { $ne: true } }
     const skip = (page - 1) * limit
-    const products = await Product.find(query).sort(sort).skip(skip).limit(limit)
+    const products = await Product.find(query).sort(sort).skip(skip).limit(limit).lean()
     const total = await Product.countDocuments(query)
     return { products, total }
   },

@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-console
 import express from 'express'
 import cors from 'cors'
+import rateLimit from 'express-rate-limit'
 import exitHook from 'async-exit-hook'
 import { ratingModel } from '~/models/ratingModel.js'
 
@@ -14,10 +15,28 @@ import { errorHandlingMiddleware } from '~/middlewares/errorHandlingMiddleware'
 const START_SERVER = () => {
   const app = express()
 
-  app.use(cors())
+  // Giới hạn 100 yêu cầu mỗi 15 phút cho các API Auth
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút',
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
+
+  // Cấu hình CORS
+  app.use(cors({
+    origin: process.env.CLIENT_URL || '*', // Nên cấu hình chính xác domain frontend
+    credentials: true
+  }))
 
   // Tăng limit lên 6mb để xử lý base64 ảnh (ảnh 4MB ≈ 5.5MB base64)
   app.use(express.json({ limit: '6mb' }))
+
+  // Áp dụng giới hạn cho các route nhạy cảm
+  app.use('/v1/user/login', authLimiter)
+  app.use('/v1/user/register', authLimiter)
+  app.use('/v1/user/send-otp', authLimiter)
 
   app.use('/v1', APIs_V1)
 

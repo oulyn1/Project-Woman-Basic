@@ -1,7 +1,8 @@
 import express from 'express'
 import { userController } from '~/controllers/userController'
 import { authMiddleware } from '~/middlewares/authMiddleware'   
-import { userValidation } from '~/validations/userValidation'   
+import { isAdmin, isStaff } from '~/middlewares/roleMiddleware'
+import { userValidation } from '~/validations/userValidation'
 
 const Router = express.Router()
 
@@ -16,22 +17,22 @@ Router.route('/profile')
   .put(authMiddleware, userController.updateProfile)
 
 Router.route('/search')
-  .get(userController.search)
+  .get(authMiddleware, isStaff, userController.search)
 
 Router.route('/employee')
-  .get(userController.employee)
+  .get(authMiddleware, isStaff, userController.employee)
 
 Router.route('/employee/search')
-  .get(userController.searchEmployee)
+  .get(authMiddleware, isStaff, userController.searchEmployee)
 
 Router.route('/')
-.get(userController.getAll)
-.post(userController.createUser)
+.get(authMiddleware, isStaff, userController.getAll)
+.post(authMiddleware, isStaff, userController.createUser)
 
 Router.route('/:id')
-  .delete(userController.deleteOne)
-  .get(userController.getDetails)
+  .get(authMiddleware, isStaff, userController.getDetails)
   .put(authMiddleware, userController.updateAccount)
+  .delete(authMiddleware, isStaff, userController.deleteOne)
 
   Router.route('/check-email')
   .post(userController.checkEmail)

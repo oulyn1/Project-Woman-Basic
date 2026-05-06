@@ -26,7 +26,7 @@ export const categoryModel = {
   },
 
   getAll: async () => {
-    return await Category.find()
+    return await Category.find().lean()
   },
 
   deleteOne: async (id) => {
@@ -35,7 +35,7 @@ export const categoryModel = {
 
   search: async (query) => {
     const regex = new RegExp(query, 'i')
-    return await Category.find({ name: regex })
+    return await Category.find({ name: regex }).lean()
   },
 
   updateOne: async (id, data) => {

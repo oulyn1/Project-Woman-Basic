@@ -4,7 +4,8 @@ import { StatusCodes } from 'http-status-codes'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { sendMail } from '~/services/mailService'
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret' // 🔑 Đặt trong .env
+import { env } from '~/config/environment'
+const JWT_SECRET = env.JWT_SECRET
 // 🔑 Cache OTP trong RAM
 const otpCache = new Map()
 
@@ -112,8 +113,9 @@ const createUser = async (data) => {
   if (existed) throw new ApiError(StatusCodes.CONFLICT, 'Email đã tồn tại')
 
   // Nếu admin tạo user mà chưa set password thì gán mật khẩu mặc định
+  // Nếu admin tạo user mà chưa set password thì gán mật khẩu ngẫu nhiên hoặc yêu cầu đổi sau
   if (!data.password) {
-    data.password = '123456'
+    data.password = Math.random().toString(36).slice(-8) + '!' // Mật khẩu ngẫu nhiên 8 ký tự + !
   }
   data.role = data.role || 'customer' // gán role mặc định nếu chưa có
   const createdUser = await userModel.createNew(data)

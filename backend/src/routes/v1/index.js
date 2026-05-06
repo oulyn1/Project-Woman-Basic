@@ -10,6 +10,8 @@ import { promotionRoute } from "./promotionRoute"
 import { customerRoute } from "./customerRoute"
 import { aiRoute } from "./ai.route"
 import { chatRoute } from "./chat.route"
+import { authMiddleware } from "~/middlewares/authMiddleware"
+import { isAdmin, isStaff } from "~/middlewares/roleMiddleware"
 
 const Router = express.Router()
 
@@ -29,11 +31,11 @@ Router.use('/order', orderRoute)
 
 Router.use('/ratings', ratingRoute)
 
-Router.use('/promotion', promotionRoute)
+Router.use('/promotion', authMiddleware, isStaff, promotionRoute)
 
-Router.use('/customers', customerRoute)
+Router.use('/customers', authMiddleware, isStaff, customerRoute)
 
-Router.use('/ai', aiRoute)
+Router.use('/ai', authMiddleware, isStaff, aiRoute)
 
 Router.use('/chat', chatRoute)
 

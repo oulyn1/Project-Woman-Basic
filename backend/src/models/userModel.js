@@ -70,7 +70,7 @@ export const userModel = {
   },
 
   findOneId: async (id) => {
-    return await User.findById(id);
+    return await User.findById(id).select("-password").lean();
   },
 
   updateOne: async (userId, updateData) => {
@@ -88,17 +88,17 @@ export const userModel = {
   },
 
   getAll: async () => {
-    return await User.find();
+    return await User.find().select("-password").lean();
   },
 
   search: async (query) => {
     const regex = new RegExp(query, "i");
-    return await User.find({ name: regex });
+    return await User.find({ name: regex }).select("-password").lean();
   },
 
   employee: async (query) => {
     const regex = new RegExp(query, "i");
-    return await User.find({ role: regex });
+    return await User.find({ role: regex }).select("-password").lean();
   },
 
   searchemployee: async (query) => {
@@ -106,7 +106,7 @@ export const userModel = {
     return await User.find({
       role: "employee",
       name: regex,
-    });
+    }).select("-password").lean();
   },
 
   deleteOne: async (id) => {
@@ -114,7 +114,7 @@ export const userModel = {
   },
 
   getDetails: async (id) => {
-    return await User.findById(id);
+    return await User.findById(id).select("-password").lean();
   },
 
   updateByEmail: async (email, updateData) => {

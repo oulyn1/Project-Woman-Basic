@@ -7,5 +7,8 @@ export const env = {
   APP_PORT: process.env.APP_PORT,
 
   BUILD_MODE: process.env.BUILD_MODE,
-  GROQ_API_KEY: process.env.GROQ_API_KEY
+  GROQ_API_KEY: process.env.GROQ_API_KEY,
+  JWT_SECRET: process.env.JWT_SECRET,
+  MAIL_USER: process.env.MAIL_USER,
+  MAIL_PASSWORD: process.env.MAIL_PASSWORD
 }

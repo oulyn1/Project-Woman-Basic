@@ -19,6 +19,13 @@ Project-Woman-Basic is a comprehensive E-commerce solution tailored for the fash
 - **Promotions**: Create and manage discount campaigns.
 - **Ratings Oversight**: Monitor and moderate customer feedback.
 
+### 🤖 AI-Powered Capabilities
+- **AI Product Analysis**: Automatically generates product details (name, category, description, tags) from uploaded images using Groq (Llama-4).
+- **AI Size Chart Analysis**: Extracts size tables from images and converts them to Markdown for automated sizing advice.
+- **AI Stylist (Customer)**: Real-time chat assistant providing personalized product suggestions and sizing advice.
+- **AI Admin Copilot**: Intelligent dashboard assistant for business analytics, inventory tracking, and automated administrative tasks.
+- **Lightweight RAG**: Implements Retrieval-Augmented Generation using MongoDB Text Search to provide context-aware AI responses based on real-time store data.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -35,8 +42,9 @@ Project-Woman-Basic is a comprehensive E-commerce solution tailored for the fash
 - **Runtime**: Node.js
 - **Framework**: Express.js
 - **Database**: MongoDB (using MongoDB Atlas)
+- **AI Engine**: Groq (Llama-4 Scout)
 - **Authentication**: JWT (JSON Web Tokens)
-- **Utilities**: Joi (Validation), Bcrypt (Password hashing), Nodemailer.
+- **Utilities**: Joi (Validation), Bcrypt (Password hashing), Nodemailer, Axios.
 
 ---
 
