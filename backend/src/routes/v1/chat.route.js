@@ -40,4 +40,8 @@ Router.route('/history')
   .get(optionalAuth, chatController.getChatHistory)
   .delete(optionalAuth, chatController.clearChatHistory)
 
+// GET /v1/chat/admin/conversations — danh sách các phiên chat cho admin
+Router.route('/admin/conversations')
+  .get(authMiddleware, chatController.getAdminConversations)
+
 export const chatRoute = Router

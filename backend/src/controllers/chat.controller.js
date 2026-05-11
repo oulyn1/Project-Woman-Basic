@@ -58,7 +58,8 @@ const adminChat = async (req, res, next) => {
     const result = await adminChatService.sendAdminMessage({
       adminId,
       message,
-      history: history || []
+      history: history || [],
+      conversationId: req.body.conversationId || null
     })
 
     res.status(StatusCodes.OK).json({
@@ -86,7 +87,18 @@ const getChatHistory = async (req, res, next) => {
     } else if (req.user) {
       // Admin — lấy theo userId
       const adminId = req.user.userId
-      conversation = await conversationModel.getByUserId(adminId)
+      const { conversationId } = req.query
+
+      if (conversationId) {
+        // Lấy theo ID cụ thể
+        conversation = await conversationModel.findOrCreateAdminConversation(adminId, conversationId)
+      } else {
+        // Mặc định lấy cái gần nhất hoặc để trống để bắt đầu mới
+        const all = await conversationModel.getAllAdminConversations(adminId)
+        if (all.length > 0) {
+          conversation = await conversationModel.findOrCreateAdminConversation(adminId, all[0]._id)
+        }
+      }
     } else {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Cần sessionId (customer) hoặc đăng nhập (admin)')
     }
@@ -109,15 +121,21 @@ const getChatHistory = async (req, res, next) => {
  */
 const clearChatHistory = async (req, res, next) => {
   try {
-    const { sessionId } = req.query
+    const { sessionId, conversationId } = req.query
 
     if (sessionId) {
       // Customer — xóa theo sessionId
       await conversationModel.clearBySessionId(sessionId)
     } else if (req.user) {
-      // Admin — xóa theo userId
+      // Admin
       const adminId = req.user.userId
-      await conversationModel.clearByUserId(adminId)
+      if (conversationId) {
+        // Xóa một phiên cụ thể
+        await conversationModel.deleteById(conversationId, adminId)
+      } else {
+        // Xóa tất cả (tùy chọn)
+        await conversationModel.clearByUserId(adminId)
+      }
     } else {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'Cần sessionId (customer) hoặc đăng nhập (admin)')
     }
@@ -131,9 +149,30 @@ const clearChatHistory = async (req, res, next) => {
   }
 }
 
+/**
+ * GET /v1/chat/admin/conversations
+ * Lấy danh sách các phiên chat của admin
+ */
+const getAdminConversations = async (req, res, next) => {
+  try {
+    const adminId = req.user?.userId
+    if (!adminId) throw new ApiError(StatusCodes.UNAUTHORIZED, 'Không xác định được admin')
+
+    const conversations = await conversationModel.getAllAdminConversations(adminId)
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      data: conversations
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const chatController = {
   customerChat,
   adminChat,
   getChatHistory,
-  clearChatHistory
+  clearChatHistory,
+  getAdminConversations
 }

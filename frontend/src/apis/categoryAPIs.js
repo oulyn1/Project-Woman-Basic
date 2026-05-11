@@ -1,6 +1,16 @@
 import axios from 'axios'
 import { API_ROOT } from '../util/constants'
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken')
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+}
+
 export const fetchAllCategoriesAPI = async () => {
   const request = await axios.get(`${API_ROOT}/v1/category/`)
   return request.data
@@ -12,7 +22,7 @@ export const getCategoryDetailAPI = async (categoryId) => {
 }
 
 export const deleteCategoryAPI = async (categoryId) => {
-  const request = await axios.delete(`${API_ROOT}/v1/category/${categoryId}`)
+  const request = await axios.delete(`${API_ROOT}/v1/category/${categoryId}`, getAuthHeaders())
   return request.data
 }
 
@@ -20,6 +30,7 @@ export const updateCategoryAPI = async (categoryId, categoryData) => {
   const request = await axios.put(
     `${API_ROOT}/v1/category/${categoryId}`,
     categoryData,
+    getAuthHeaders()
   )
   return request.data
 }
@@ -32,6 +43,6 @@ export const searchCategoriesAPI = async (query) => {
 }
 
 export const createCategoryAPI = async (categoryData) => {
-  const request = await axios.post(`${API_ROOT}/v1/category/`, categoryData)
+  const request = await axios.post(`${API_ROOT}/v1/category/`, categoryData, getAuthHeaders())
   return request.data
 }

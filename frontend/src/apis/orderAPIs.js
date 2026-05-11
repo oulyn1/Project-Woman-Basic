@@ -3,19 +3,19 @@ import { API_ROOT } from '../util/constants'
 
 // Lấy tất cả đơn hàng (Admin thì tất cả, User thì chỉ đơn của mình)
 export const fetchAllOrdersAPI = async () => {
-  const request = await axios.get(`${API_ROOT}/v1/order/`)
+  const request = await axios.get(`${API_ROOT}/v1/order/`, getAuthHeaders())
   return request.data
 }
 
 // Lấy chi tiết 1 đơn hàng
 export const getOrderDetailAPI = async (orderId) => {
-  const request = await axios.get(`${API_ROOT}/v1/order/detail/${orderId}`)
+  const request = await axios.get(`${API_ROOT}/v1/order/detail/${orderId}`, getAuthHeaders())
   return request.data
 }
 
 // Xóa đơn hàng
 export const deleteOrderAPI = async (orderId) => {
-  const request = await axios.delete(`${API_ROOT}/v1/order/${orderId}`)
+  const request = await axios.delete(`${API_ROOT}/v1/order/${orderId}`, getAuthHeaders())
   return request.data
 }
 
@@ -27,7 +27,7 @@ export const updateOrderAPI = async (orderId, orderData) => {
 
 // Tìm kiếm đơn hàng
 export const searchOrdersAPI = async (query) => {
-  const request = await axios.get(`${API_ROOT}/v1/order/search?keyword=${query}`)
+  const request = await axios.get(`${API_ROOT}/v1/order/search?keyword=${query}`, getAuthHeaders())
   return request.data
 }
 

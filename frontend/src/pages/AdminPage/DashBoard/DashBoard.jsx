@@ -1,20 +1,37 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Box, Typography, TextField, IconButton, Avatar, Chip, Card, CardContent,
   Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Divider, CircularProgress
+  Divider, CircularProgress, Snackbar, Alert
 } from '@mui/material'
-import SendIcon from '@mui/icons-material/Send'
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import SendIcon from '@mui/icons-material/Send'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import { useNavigate } from 'react-router-dom'
-import { sendAdminMessageAPI, getChatHistoryAPI, clearChatHistoryAPI } from '~/apis/chat.api'
-import { deleteProductAPI } from '~/apis/productAPIs'
+import {
+  sendAdminMessageAPI,
+  getChatHistoryAPI,
+  clearChatHistoryAPI,
+  getAdminConversationsAPI
+} from '~/apis/chat.api'
+import { fetchAllProductsAPI, deleteProductAPI, updateProductAPI, createProductAPI } from '~/apis/productAPIs'
+import { AllUsersAPI, deleteUserAPI, updateAccountAPI, createUserAPI } from '~/apis/userAPIs'
+import { fetchAllCategoriesAPI, deleteCategoryAPI } from '~/apis/categoryAPIs'
+import { fetchAllOrdersAPI, deleteOrderAPI, updateOrderAPI } from '~/apis/orderAPIs'
+import SearchIcon from '@mui/icons-material/Search'
+import AddIcon from '@mui/icons-material/Add'
+
+// Import chính chủ từ các trang quản lý
+import AddProduct from '../ProductPage/AddProduct/AddProduct'
+import EditProduct from '../ProductPage/EditProduct/EditProduct'
+import AddAccount from '../AccountPage/AddAccount/AddAccount'
+import EditAccount from '../AccountPage/EditAccount/EditAccount'
+import AddCategory from '../CategoryPage/AddCategory/AddCategory'
+import EditCategory from '../CategoryPage/EditCategory/EditCategory'
 
 const QUICK_ACTIONS = [
   { label: '📊 Tóm tắt hôm nay', msg: 'Tóm tắt hôm nay' },
@@ -37,75 +54,153 @@ const Typing = () => (
   </Box>
 )
 
-// ─── Action Card ───
-const ActionCard = ({ ac, onDismiss }) => {
-  const nav = useNavigate()
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [busy, setBusy] = useState(false)
-  if (!ac) return null
-  const isDel = ac.type === 'delete'
+// ─── Mini Manager (Quick CRUD) ───
+const MiniManager = ({ entity, onDismiss }) => {
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [editingItem, setEditingItem] = useState(null)
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      let res
+      if (entity === 'product') res = await fetchAllProductsAPI({ q: search })
+      else if (entity === 'account') res = await AllUsersAPI()
+      else if (entity === 'category') res = await fetchAllCategoriesAPI()
+      else if (entity === 'order') res = await fetchAllOrdersAPI()
+
+      // Handle different API response structures
+      const items = res?.data || res || []
+      setData(Array.isArray(items) ? items : [])
+    } catch (err) { console.error('Load failed:', err) }
+    setLoading(false)
+  }, [entity, search])
+
+  useEffect(() => { loadData() }, [loadData])
+
+
+  const [openAdd, setOpenAdd] = useState(false)
+  const [openEdit, setOpenEdit] = useState(false)
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+
+  const handleSuccess = (msg = 'Thành công!') => {
+    setOpenAdd(false)
+    setOpenEdit(false)
+    setSnackbar({ open: true, message: msg, severity: 'success' })
+    loadData()
+  }
 
   const handleDelete = async () => {
-    setBusy(true)
     try {
-      if (ac.entity === 'product' && ac.data?._id) await deleteProductAPI(ac.data._id)
-    } catch { /* */ }
-    setBusy(false); setConfirmOpen(false); onDismiss()
+      if (entity === 'product') await deleteProductAPI(deletingId)
+      else if (entity === 'account') await deleteUserAPI(deletingId)
+      else if (entity === 'category') await deleteCategoryAPI(deletingId)
+      else if (entity === 'order') await deleteOrderAPI(deletingId)
+      setSnackbar({ open: true, message: 'Đã xóa bản ghi!', severity: 'success' })
+      loadData()
+    } catch {
+      setSnackbar({ open: true, message: 'Lỗi khi xóa!', severity: 'error' })
+    } finally {
+      setOpenDeleteConfirm(false)
+      setDeletingId(null)
+    }
   }
 
   return (
-    <>
-      <Card sx={{ mt: 1.5, borderRadius: '14px', border: `1px solid ${isDel ? '#ff634740' : '#42a5f540'}`, backgroundColor: isDel ? '#1e1215' : '#121a28', overflow: 'hidden' }}>
-        <Box sx={{ px: 2, py: 1, backgroundColor: isDel ? '#ff634718' : '#42a5f518', display: 'flex', alignItems: 'center', gap: 1 }}>
-          {isDel ? <WarningAmberIcon sx={{ fontSize: 16, color: '#ff6347' }} /> : <InfoOutlinedIcon sx={{ fontSize: 16, color: '#42a5f5' }} />}
-          <Typography variant="caption" fontWeight={700} sx={{ color: isDel ? '#ff8a75' : '#7ec8f5' }}>
-            {isDel ? 'Xác nhận xóa' : 'Xác nhận chỉnh sửa'}
-          </Typography>
-        </Box>
-        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-          {ac.data?.image && (
-            <Box component="img" src={ac.data.image} alt="" sx={{ width: 60, height: 60, objectFit: 'cover', borderRadius: '10px', mb: 1, border: '1px solid #2a3040' }} />
-          )}
-          <Typography variant="body2" sx={{ color: '#ccc', mb: 0.5 }}>
-            {ac.data?.name || 'N/A'}
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#888' }}>
-            {ac.data?.price ? `${Number(ac.data.price).toLocaleString('vi-VN')}đ` : ''}
-            {ac.data?.stock != null ? ` • Kho: ${ac.data.stock}` : ''}
-          </Typography>
-          <Typography variant="caption" sx={{ display: 'block', color: '#999', mt: 1, fontStyle: 'italic' }}>
-            {ac.confirmMessage || ''}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
-            <Button size="small" variant="outlined" startIcon={<EditIcon sx={{ fontSize: 14 }} />}
-              onClick={() => { nav('/admin/product'); onDismiss() }}
-              sx={{ fontSize: '0.72rem', borderColor: '#42a5f540', color: '#7ec8f5', textTransform: 'none', borderRadius: '8px' }}>
-              Chỉnh sửa
-            </Button>
-            {isDel && (
-              <Button size="small" variant="contained" startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
-                onClick={() => setConfirmOpen(true)}
-                sx={{ fontSize: '0.72rem', backgroundColor: '#d32f2f', textTransform: 'none', borderRadius: '8px', '&:hover': { backgroundColor: '#b71c1c' } }}>
-                Xóa
-              </Button>
-            )}
-            <Button size="small" startIcon={<CloseOutlinedIcon sx={{ fontSize: 14 }} />} onClick={onDismiss}
-              sx={{ fontSize: '0.72rem', color: '#666', textTransform: 'none' }}>
-              Bỏ qua
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} PaperProps={{ sx: { backgroundColor: '#1a1e2e', color: '#eee', borderRadius: '16px' } }}>
-        <DialogTitle>⚠️ Xác nhận xóa</DialogTitle>
-        <DialogContent><DialogContentText sx={{ color: '#aaa' }}>Bạn có chắc không? Hành động này không thể hoàn tác.</DialogContentText></DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} sx={{ color: '#999' }}>Hủy</Button>
-          <Button onClick={handleDelete} disabled={busy} variant="contained" sx={{ backgroundColor: '#d32f2f' }}>{busy ? 'Đang xóa...' : 'Xóa'}</Button>
+    <Box sx={{ mt: 1.5, borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: '#0d131f', overflow: 'hidden' }}>
+      <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <TextField
+          size="small" fullWidth placeholder={`Tìm kiếm ${entity}...`}
+          value={search} onChange={(e) => setSearch(e.target.value)}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ color: '#555', mr: 1, fontSize: 18 }} />,
+            sx: { borderRadius: '10px', backgroundColor: 'rgba(0,0,0,0.2)', fontSize: '0.75rem', color: '#ccc' }
+          }}
+        />
+        <Button
+          variant="contained" size="small" startIcon={<AddIcon />}
+          onClick={() => { setEditingItem(null); setOpenAdd(true) }}
+          sx={{ backgroundColor: '#1e3a5f', color: '#60efff', textTransform: 'none', borderRadius: '10px', minWidth: '90px', fontSize: '0.7rem' }}
+        >
+          Thêm
+        </Button>
+        <IconButton size="small" onClick={onDismiss} sx={{ color: '#555' }}><CloseOutlinedIcon sx={{ fontSize: 18 }} /></IconButton>
+      </Box>
+
+      <Box sx={{ maxHeight: '240px', overflowY: 'auto', p: 1 }}>
+        {loading ? <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={20} /></Box> : (
+          data.slice(0, 10).map((item) => (
+            <Box key={item._id} sx={{
+              display: 'flex', alignItems: 'center', gap: 1.5, p: 1.2, mb: 0.5, borderRadius: '10px',
+              '&:hover': { backgroundColor: 'rgba(255,255,255,0.03)' }
+            }}>
+              <Avatar src={item.image || item.images?.[0] || item.avatar} sx={{ width: 32, height: 32, borderRadius: '8px' }} variant="rounded" />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="caption" sx={{ color: '#eee', fontWeight: 600, display: 'block', noWrap: true }}>{item.name || item.fullName || item.username || item._id}</Typography>
+                <Typography variant="caption" sx={{ color: '#555', fontSize: '0.65rem' }}>
+                  {item.price ? `${item.price.toLocaleString()}đ` : item.email || item.status || ''}
+                  {item.role && ` • ${item.role}`}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                <IconButton size="small" onClick={() => { setEditingItem(item); setOpenEdit(true) }} sx={{ color: '#42a5f5', p: 0.5 }}><EditIcon sx={{ fontSize: 14 }} /></IconButton>
+                <IconButton size="small" onClick={() => { setDeletingId(item._id); setOpenDeleteConfirm(true) }} sx={{ color: '#ff6347', p: 0.5 }}><DeleteIcon sx={{ fontSize: 14 }} /></IconButton>
+              </Box>
+            </Box>
+          ))
+        )}
+        {!loading && data.length === 0 && (
+          <Typography variant="caption" sx={{ color: '#444', display: 'block', textAlign: 'center', p: 2 }}>Không tìm thấy dữ liệu</Typography>
+        )}
+      </Box>
+
+      {/* --- REUSE OFFICIAL DIALOGS --- */}
+      {entity === 'product' && (
+        <>
+          <AddProduct open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={handleSuccess} />
+          {editingItem && <EditProduct open={openEdit} productId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={handleSuccess} />}
+        </>
+      )}
+      {entity === 'account' && (
+        <>
+          <AddAccount open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={handleSuccess} />
+          {editingItem && <EditAccount open={openEdit} accountId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={handleSuccess} />}
+        </>
+      )}
+      {entity === 'category' && (
+        <>
+          <AddCategory open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm danh mục!')} />
+          {editingItem && <EditCategory open={openEdit} categoryId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={() => handleSuccess('Đã cập nhật danh mục!')} />}
+        </>
+      )}
+
+      {/* Delete Confirm Dialog */}
+      <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)} PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
+        <DialogContent sx={{ color: '#ccc' }}>
+          Bạn có chắc chắn muốn xóa bản ghi này? Thao tác này không thể hoàn tác.
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleDelete} variant="contained" color="error" sx={{ fontWeight: 'bold' }}>Xóa ngay</Button>
         </DialogActions>
       </Dialog>
-    </>
+
+      {/* Snackbar Notification */}
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>{snackbar.message}</Alert>
+      </Snackbar>
+    </Box>
   )
+}
+
+// ─── Action Card (Legacy or Bridge) ───
+const ActionCard = ({ ac, onDismiss }) => {
+  if (!ac) return null
+  return <MiniManager entity={ac.entity} onDismiss={onDismiss} />
 }
 
 // ═══════════════════════════════════════════
@@ -113,38 +208,66 @@ const ActionCard = ({ ac, onDismiss }) => {
 // ═══════════════════════════════════════════
 const Dashboard = () => {
   const [messages, setMessages] = useState([])
+  const [conversations, setConversations] = useState([])
+  const [activeConversationId, setActiveConversationId] = useState(null)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [clearDialogOpen, setClearDialogOpen] = useState(false)
+  const [deleteTargetId, setDeleteTargetId] = useState(null) // Để xóa session cụ thể
   const endRef = useRef(null)
   const inputRef = useRef(null)
-  const autoTriggered = useRef(false)
 
   // Auto-scroll
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, isLoading])
 
-  // Load history + auto-trigger
+  // Load conversations list
+  const loadSessions = useCallback(async () => {
+    try {
+      const res = await getAdminConversationsAPI()
+      if (res.success) setConversations(res.data)
+    } catch { /* */ }
+  }, [])
+
+  // Initial Load
   useEffect(() => {
     const init = async () => {
+      await loadSessions()
       try {
-        const res = await getChatHistoryAPI()
-        if (res.success && res.data?.messages?.length > 0) {
+        const res = await getChatHistoryAPI() // Lấy phiên gần nhất
+        if (res.success && res.data?.messages) {
           setMessages(res.data.messages)
+          if (res.data.conversationId) setActiveConversationId(res.data.conversationId)
           setHistoryLoaded(true)
-          return // Đã có history → không auto-trigger
+          if (res.data.messages.length > 0) return
         }
       } catch { /* */ }
       setHistoryLoaded(true)
-      // Auto-trigger: gửi tóm tắt hôm nay
-      if (!autoTriggered.current) {
-        autoTriggered.current = true
-        sendMsg('Tóm tắt nhanh tình hình hôm nay cho tôi')
-      }
     }
     init()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loadSessions])
+
+  const handleSelectSession = async (id) => {
+    if (id === activeConversationId || isLoading) return
+    setIsLoading(true)
+    setHistoryLoaded(false)
+    try {
+      const res = await getChatHistoryAPI({ conversationId: id })
+      if (res.success) {
+        setMessages(res.data.messages || [])
+        setActiveConversationId(res.data.conversationId)
+      }
+    } catch { /* */ }
+    setIsLoading(false)
+    setHistoryLoaded(true)
+  }
+
+  const handleNewChat = () => {
+    setMessages([])
+    setActiveConversationId(null)
+    if (inputRef.current) inputRef.current.focus()
+  }
 
   const sendMsg = useCallback(async (text) => {
     const t = text || inputValue.trim()
@@ -156,8 +279,16 @@ const Dashboard = () => {
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }))
-      const res = await sendAdminMessageAPI({ message: t, history })
+      const res = await sendAdminMessageAPI({
+        message: t,
+        history,
+        conversationId: activeConversationId
+      })
       const d = res.data
+      if (d.conversationId && !activeConversationId) {
+        setActiveConversationId(d.conversationId)
+        loadSessions()
+      }
       setMessages(prev => [...prev, {
         role: 'assistant', content: d.reply, timestamp: new Date().toISOString(),
         actionCard: d.actionCard || null, quickReplies: d.quickReplies || []
@@ -171,11 +302,24 @@ const Dashboard = () => {
   }, [inputValue, isLoading, messages])
 
   const handleClear = async () => {
-    try { await clearChatHistoryAPI() } catch { /* */ }
-    setMessages([]); setClearDialogOpen(false); autoTriggered.current = false
+    try {
+      await clearChatHistoryAPI({ conversationId: deleteTargetId || activeConversationId })
+      if (deleteTargetId === activeConversationId || !deleteTargetId) {
+        setMessages([])
+        setActiveConversationId(null)
+      }
+      loadSessions()
+    } catch (err) {
+      console.error('[Dashboard Chat] Failed to clear history:', err)
+    } finally {
+      setClearDialogOpen(false)
+      setDeleteTargetId(null)
+    }
   }
 
-  const dismissAction = (idx) => setMessages(prev => prev.map((m, i) => i === idx ? { ...m, actionCard: null } : m))
+  const dismissAction = (idx) => setMessages(prev => prev.map((m, i) =>
+    i === idx ? { ...m, actionCard: null, metadata: m.metadata ? { ...m.metadata, actionCard: null } : null } : m
+  ))
 
   const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg() } }
 
@@ -195,34 +339,59 @@ const Dashboard = () => {
         backgroundColor: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(16px)', borderRadius: '20px',
         border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden'
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2.5, py: 2 }}>
-          <Typography variant="subtitle2" fontWeight={700} sx={{ color: 'white' }}>Lịch sử chat</Typography>
-          <IconButton size="small" onClick={() => setClearDialogOpen(true)} sx={{ color: '#888', '&:hover': { color: '#ff6347' } }}>
-            <DeleteSweepIcon fontSize="small" />
-          </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<AutoAwesomeIcon sx={{ fontSize: 16 }} />}
+            onClick={handleNewChat}
+            sx={{
+              justifyContent: 'flex-start', color: '#60efff', borderColor: 'rgba(96,239,255,0.2)',
+              textTransform: 'none', borderRadius: '12px', fontSize: '0.8rem',
+              '&:hover': { backgroundColor: 'rgba(96,239,255,0.05)', borderColor: 'rgba(96,239,255,0.4)' }
+            }}
+          >
+            Chat mới
+          </Button>
         </Box>
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.05)' }} />
-        <Box sx={{ flex: 1, overflowY: 'auto', px: 1.5, py: 1, '&::-webkit-scrollbar': { width: 3 }, '&::-webkit-scrollbar-thumb': { backgroundColor: '#2a3040', borderRadius: 2 } }}>
-          {Object.keys(grouped).length === 0 && (
-            <Typography variant="caption" sx={{ color: '#555', display: 'block', textAlign: 'center', mt: 4 }}>Chưa có lịch sử</Typography>
+        <Box sx={{ flex: 1, overflowY: 'auto', px: 1, py: 1.5, '&::-webkit-scrollbar': { width: 3 }, '&::-webkit-scrollbar-thumb': { backgroundColor: '#2a3040', borderRadius: 2 } }}>
+          {conversations.length === 0 && (
+            <Typography variant="caption" sx={{ color: '#555', display: 'block', textAlign: 'center', mt: 4 }}>Chưa có phiên chat</Typography>
           )}
-          {Object.entries(grouped).map(([date, msgs]) => (
-            <Box key={date} sx={{ mb: 2 }}>
-              <Typography variant="caption" sx={{ color: '#666', fontWeight: 600, px: 1, display: 'block', mb: 0.5 }}>{date}</Typography>
-              {msgs.filter(m => m.role === 'user').slice(-3).map((m, i) => (
-                <Box key={i} sx={{
-                  px: 1.5, py: 1, mb: 0.5, borderRadius: '10px', cursor: 'pointer',
-                  backgroundColor: 'rgba(255,255,255,0.02)', transition: 'all 0.2s',
-                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.06)' }
-                }}>
-                  <Typography variant="caption" sx={{ color: '#aaa', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontSize: '0.72rem' }}>
-                    {m.content}
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#555', fontSize: '0.6rem' }}>
-                    {m.timestamp ? new Date(m.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : ''}
-                  </Typography>
-                </Box>
-              ))}
+          {conversations.map((conv) => (
+            <Box
+              key={conv._id}
+              onClick={() => handleSelectSession(conv._id)}
+              sx={{
+                px: 1.5, py: 1.2, mb: 1, borderRadius: '12px', cursor: 'pointer',
+                backgroundColor: activeConversationId === conv._id ? 'rgba(96,239,255,0.08)' : 'transparent',
+                border: `1px solid ${activeConversationId === conv._id ? 'rgba(96,239,255,0.2)' : 'transparent'}`,
+                transition: 'all 0.2s', position: 'relative', group: 'true',
+                '&:hover': { backgroundColor: 'rgba(255,255,255,0.05)' },
+                '&:hover .del-btn': { opacity: 1 }
+              }}
+            >
+              <Typography variant="caption" sx={{
+                color: activeConversationId === conv._id ? '#60efff' : '#aaa',
+                display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                fontSize: '0.78rem', fontWeight: activeConversationId === conv._id ? 600 : 400, pr: 2
+              }}>
+                {conv.title}
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ color: '#555', fontSize: '0.62rem' }}>
+                  {new Date(conv.updatedAt).toLocaleDateString('vi-VN')}
+                </Typography>
+                <IconButton
+                  className="del-btn"
+                  size="small"
+                  onClick={(e) => { e.stopPropagation(); setDeleteTargetId(conv._id); setClearDialogOpen(true) }}
+                  sx={{ opacity: 0, p: 0.2, color: '#ff634750', '&:hover': { color: '#ff6347', backgroundColor: 'transparent' } }}
+                >
+                  <DeleteIcon sx={{ fontSize: 14 }} />
+                </IconButton>
+              </Box>
             </Box>
           ))}
         </Box>
@@ -287,11 +456,14 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
 
-                  {m.actionCard && <ActionCard ac={m.actionCard} onDismiss={() => dismissAction(idx)} />}
+                  {/* Lấy từ m trực tiếp (khi vừa chat) hoặc m.metadata (khi load lịch sử) */}
+                  {(m.actionCard || m.metadata?.actionCard) && (
+                    <ActionCard ac={m.actionCard || m.metadata.actionCard} onDismiss={() => dismissAction(idx)} />
+                  )}
 
-                  {m.quickReplies?.length > 0 && (
+                  {(m.quickReplies?.length > 0 || m.metadata?.quickReplies?.length > 0) && (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                      {m.quickReplies.map((r, ri) => (
+                      {(m.quickReplies || m.metadata?.quickReplies || []).map((r, ri) => (
                         <Chip key={ri} label={r} size="small" variant="outlined" onClick={() => sendMsg(r)}
                           sx={{ fontSize: '0.7rem', height: 26, borderColor: 'rgba(96,239,255,0.15)', color: '#7090b0',
                             '&:hover': { backgroundColor: 'rgba(96,239,255,0.06)', borderColor: 'rgba(96,239,255,0.3)' } }}

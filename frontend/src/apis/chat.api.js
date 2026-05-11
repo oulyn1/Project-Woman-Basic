@@ -19,15 +19,16 @@ export const sendCustomerMessageAPI = async ({ sessionId, message, history }) =>
 
 /**
  * Gửi tin nhắn từ admin (tự đính kèm JWT)
- * @param {{ message: string, history: Array }} data
- * @returns {{ success: boolean, data: { reply: string, actionCard: Object|null, quickReplies: Array } }}
+ * @param {{ message: string, history: Array, conversationId?: string }} data
+ * @returns {{ success: boolean, data: { reply: string, conversationId: string, actionCard: Object|null, quickReplies: Array } }}
  */
-export const sendAdminMessageAPI = async ({ message, history }) => {
+export const sendAdminMessageAPI = async ({ message, history, conversationId }) => {
   const token = localStorage.getItem('accessToken')
 
   const response = await axios.post(`${API_ROOT}/v1/chat/admin`, {
     message,
-    history
+    history,
+    conversationId
   }, {
     headers: {
       Authorization: `Bearer ${token}`
@@ -39,21 +40,25 @@ export const sendAdminMessageAPI = async ({ message, history }) => {
 
 /**
  * Lấy lịch sử chat
- * @param {{ sessionId?: string }} params — sessionId cho customer, bỏ trống cho admin (dùng JWT)
+ * @param {{ sessionId?: string, conversationId?: string }} params — sessionId cho customer, conversationId cho admin
  * @returns {{ success: boolean, data: { messages: Array, conversationId: string|null } }}
  */
-export const getChatHistoryAPI = async ({ sessionId } = {}) => {
+export const getChatHistoryAPI = async ({ sessionId, conversationId } = {}) => {
   const params = {}
   const headers = {}
 
   if (sessionId) {
     params.sessionId = sessionId
-  } else {
-    // Admin — đính kèm JWT
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
+  }
+  
+  if (conversationId) {
+    params.conversationId = conversationId
+  }
+
+  // Admin/Staff - đính kèm JWT nếu có
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
   }
 
   const response = await axios.get(`${API_ROOT}/v1/chat/history`, {
@@ -66,26 +71,44 @@ export const getChatHistoryAPI = async ({ sessionId } = {}) => {
 
 /**
  * Xóa lịch sử chat
- * @param {{ sessionId?: string }} params — sessionId cho customer, bỏ trống cho admin (dùng JWT)
+ * @param {{ sessionId?: string, conversationId?: string }} params
  * @returns {{ success: boolean, message: string }}
  */
-export const clearChatHistoryAPI = async ({ sessionId } = {}) => {
+export const clearChatHistoryAPI = async ({ sessionId, conversationId } = {}) => {
   const params = {}
   const headers = {}
 
   if (sessionId) {
     params.sessionId = sessionId
-  } else {
-    const token = localStorage.getItem('accessToken')
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
+  }
+
+  if (conversationId) {
+    params.conversationId = conversationId
+  }
+
+  const token = localStorage.getItem('accessToken')
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
   }
 
   const response = await axios.delete(`${API_ROOT}/v1/chat/history`, {
     params,
     headers,
     timeout: 15000
+  })
+  return response.data
+}
+
+/**
+ * Lấy danh sách các phiên chat của admin
+ * @returns {{ success: boolean, data: Array<{ _id: string, title: string, updatedAt: string }> }}
+ */
+export const getAdminConversationsAPI = async () => {
+  const token = localStorage.getItem('accessToken')
+  const response = await axios.get(`${API_ROOT}/v1/chat/admin/conversations`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   })
   return response.data
 }

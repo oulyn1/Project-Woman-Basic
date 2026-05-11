@@ -31,7 +31,7 @@ Router.use('/order', orderRoute)
 
 Router.use('/ratings', ratingRoute)
 
-Router.use('/promotion', authMiddleware, isStaff, promotionRoute)
+Router.use('/promotion', promotionRoute)
 
 Router.use('/customers', authMiddleware, isStaff, customerRoute)
 

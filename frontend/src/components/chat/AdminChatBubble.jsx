@@ -7,27 +7,39 @@ import {
   IconButton,
   Avatar,
   Chip,
-  Card,
-  CardContent,
   Button,
   Slide,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
+  Snackbar,
+  Alert,
+  CircularProgress
 } from '@mui/material'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import CloseIcon from '@mui/icons-material/Close'
 import SendIcon from '@mui/icons-material/Send'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
-import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { sendAdminMessageAPI } from '~/apis/chat.api'
-import { deleteProductAPI } from '~/apis/productAPIs'
+import { sendAdminMessageAPI, getChatHistoryAPI, clearChatHistoryAPI } from '~/apis/chat.api'
+import {
+  fetchAllProductsAPI, deleteProductAPI, updateProductAPI, createProductAPI
+} from '~/apis/productAPIs'
+import { AllUsersAPI, deleteUserAPI, updateAccountAPI, createUserAPI } from '~/apis/userAPIs'
+import { fetchAllCategoriesAPI, deleteCategoryAPI } from '~/apis/categoryAPIs'
+import { fetchAllOrdersAPI, deleteOrderAPI, updateOrderAPI } from '~/apis/orderAPIs'
+
+// Import chính chủ từ các trang quản lý
+import AddProduct from '../../pages/AdminPage/ProductPage/AddProduct/AddProduct'
+import EditProduct from '../../pages/AdminPage/ProductPage/EditProduct/EditProduct'
+import AddAccount from '../../pages/AdminPage/AccountPage/AddAccount/AddAccount'
+import EditAccount from '../../pages/AdminPage/AccountPage/EditAccount/EditAccount'
+import AddCategory from '../../pages/AdminPage/CategoryPage/AddCategory/AddCategory'
+import EditCategory from '../../pages/AdminPage/CategoryPage/EditCategory/EditCategory'
 
 // ─── Quick Action Chips ───
 const QUICK_ACTIONS = [
@@ -61,87 +73,62 @@ const TypingIndicator = () => (
   </Box>
 )
 
-// ─── Action Card (cho admin bubble popup) ───
-const ActionCardCompact = ({ actionCard, onDismiss }) => {
-  const navigate = useNavigate()
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
+// ─── Mini Manager (Đồng bộ từ Dashboard) ───
+const MiniManagerCompact = ({ ac, onEdit, onDelete, onAdd }) => {
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [search, setSearch] = useState('')
+  const entity = ac?.entity
 
-  if (!actionCard) return null
-
-  const isDelete = actionCard.type === 'delete'
-
-  const handleEdit = () => {
-    if (actionCard.entity === 'product' && actionCard.data?._id) {
-      navigate(`/admin/product`)
-    }
-    onDismiss()
-  }
-
-  const handleDelete = async () => {
-    setDeleting(true)
+  const loadData = useCallback(async () => {
+    setLoading(true)
     try {
-      if (actionCard.entity === 'product' && actionCard.data?._id) {
-        await deleteProductAPI(actionCard.data._id)
-      }
-    } catch { /* silent */ }
-    setDeleting(false)
-    setConfirmOpen(false)
-    onDismiss()
-  }
+      let res
+      if (entity === 'product') res = await fetchAllProductsAPI({ q: search })
+      else if (entity === 'account') res = await AllUsersAPI()
+      else if (entity === 'category') res = await fetchAllCategoriesAPI()
+      else if (entity === 'order') res = await fetchAllOrdersAPI()
+      const items = res?.data || res || []
+      setData(Array.isArray(items) ? items : [])
+    } catch { /* */ }
+    setLoading(false)
+  }, [entity, search])
+
+  useEffect(() => { loadData() }, [loadData])
 
   return (
-    <>
-      <Card
-        sx={{
-          mt: 1,
-          borderRadius: '12px',
-          border: `1px solid ${isDelete ? '#ff634755' : '#42a5f555'}`,
-          backgroundColor: isDelete ? '#2a1a1a' : '#1a2230',
-          overflow: 'hidden'
-        }}
-      >
-        <Box sx={{ px: 1.5, py: 0.8, backgroundColor: isDelete ? '#ff634520' : '#42a5f520', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <WarningAmberIcon sx={{ fontSize: 14, color: isDelete ? '#ff6347' : '#42a5f5' }} />
-          <Typography variant="caption" fontWeight={600} sx={{ color: isDelete ? '#ff8a75' : '#7ec8f5' }}>
-            {isDelete ? 'Xác nhận xóa' : 'Xác nhận sửa'}
-          </Typography>
-        </Box>
-        <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-          <Typography variant="caption" sx={{ color: '#ccc', display: 'block', mb: 1 }}>
-            {actionCard.data?.name || 'Unknown'}
-            {actionCard.data?.price && ` — ${Number(actionCard.data.price).toLocaleString('vi-VN')}đ`}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <Button size="small" variant="outlined" startIcon={<EditIcon sx={{ fontSize: 12 }} />} onClick={handleEdit}
-              sx={{ fontSize: '0.65rem', py: 0.2, borderColor: '#42a5f555', color: '#7ec8f5', textTransform: 'none' }}>
-              Chỉnh sửa
-            </Button>
-            {isDelete && (
-              <Button size="small" variant="contained" startIcon={<DeleteIcon sx={{ fontSize: 12 }} />} onClick={() => setConfirmOpen(true)}
-                sx={{ fontSize: '0.65rem', py: 0.2, backgroundColor: '#d32f2f', textTransform: 'none', '&:hover': { backgroundColor: '#b71c1c' } }}>
-                Xóa
-              </Button>
-            )}
-            <Button size="small" startIcon={<CloseOutlinedIcon sx={{ fontSize: 12 }} />} onClick={onDismiss}
-              sx={{ fontSize: '0.65rem', py: 0.2, color: '#888', textTransform: 'none' }}>
-              Bỏ qua
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} PaperProps={{ sx: { backgroundColor: '#1e1e2e', color: 'white', borderRadius: '16px' } }}>
-        <DialogTitle sx={{ fontSize: '1rem' }}>⚠️ Xác nhận xóa</DialogTitle>
-        <DialogContent><DialogContentText sx={{ color: '#ccc' }}>Bạn có chắc không? Hành động này không thể hoàn tác.</DialogContentText></DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} sx={{ color: '#999' }}>Hủy</Button>
-          <Button onClick={handleDelete} disabled={deleting} variant="contained" sx={{ backgroundColor: '#d32f2f', '&:hover': { backgroundColor: '#b71c1c' } }}>
-            {deleting ? 'Đang xóa...' : 'Xác nhận xóa'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+    <Box sx={{ mt: 1, borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: '#0d131f', overflow: 'hidden', width: '100%' }}>
+      <Box sx={{ px: 1, py: 0.8, display: 'flex', alignItems: 'center', gap: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <TextField
+          size="small" fullWidth placeholder={`Tìm ${entity}...`} value={search} onChange={e => setSearch(e.target.value)}
+          InputProps={{ sx: { height: 28, borderRadius: '6px', backgroundColor: 'rgba(0,0,0,0.2)', fontSize: '0.65rem', color: '#ccc' } }}
+        />
+        <Button
+          variant="contained" size="small" onClick={onAdd}
+          sx={{ minWidth: '40px', height: 28, backgroundColor: '#1e3a5f', color: '#60efff', textTransform: 'none', fontSize: '0.6rem' }}
+        >
+          + Thêm
+        </Button>
+      </Box>
+      <Box sx={{ maxHeight: '180px', overflowY: 'auto' }}>
+        {loading ? <Box sx={{ p: 2, textAlign: 'center' }}><CircularProgress size={16} /></Box> : (
+          data.slice(0, 5).map(item => (
+            <Box key={item._id} sx={{ px: 1.5, py: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.03)', '&:last-child': { borderBottom: 0 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+                <Avatar src={item.images?.[0] || item.avatar} sx={{ width: 24, height: 24, borderRadius: '4px' }} />
+                <Typography sx={{ color: 'white', fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {item.name || item.fullName || item.buyerInfo?.name}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 0.3 }}>
+                <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: '#42a5f5', p: 0.2 }}><EditIcon sx={{ fontSize: 14 }} /></IconButton>
+                <IconButton size="small" onClick={() => onDelete(item._id)} sx={{ color: '#ff6347', p: 0.2 }}><DeleteIcon sx={{ fontSize: 14 }} /></IconButton>
+              </Box>
+            </Box>
+          ))
+        )}
+      </Box>
+    </Box>
   )
 }
 
@@ -152,18 +139,69 @@ const AdminChatBubble = () => {
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([])
+  const [activeConversationId, setActiveConversationId] = useState(null)
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
+  // Dialog & Snackbar state (Sync from Dashboard)
+  const [activeEntity, setActiveEntity] = useState(null)
+  const [openAdd, setOpenAdd] = useState(false)
+  const [openEdit, setOpenEdit] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+  const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
+  const [deletingId, setDeletingId] = useState(null)
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
+
+  const handleSuccess = (msg = 'Thành công!') => {
+    setOpenAdd(false)
+    setOpenEdit(false)
+    setSnackbar({ open: true, message: msg, severity: 'success' })
+    // Re-trigger manager load if needed
+  }
+
+  const handleDelete = async () => {
+    try {
+      if (activeEntity === 'product') await deleteProductAPI(deletingId)
+      else if (activeEntity === 'account') await deleteUserAPI(deletingId)
+      else if (activeEntity === 'category') await deleteCategoryAPI(deletingId)
+      else if (activeEntity === 'order') await deleteOrderAPI(deletingId)
+      setSnackbar({ open: true, message: 'Đã xóa bản ghi!', severity: 'success' })
+    } catch {
+      setSnackbar({ open: true, message: 'Lỗi khi xóa!', severity: 'error' })
+    } finally {
+      setOpenDeleteConfirm(false)
+      setDeletingId(null)
+    }
+  }
+
   // Ẩn trên dashboard
   const isDashboard = location.pathname === '/admin' || location.pathname === '/admin/dashboard'
 
-  // Auto-scroll (hooks phải luôn được gọi — không được đặt sau early return)
+  // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
+
+  // Load history
+  useEffect(() => {
+    if (isOpen) {
+      const loadHistory = async () => {
+        setMessages([]) // Reset để load lại từ đầu
+        try {
+          const res = await getChatHistoryAPI()
+          if (res.success && res.data?.messages) {
+            setMessages(res.data.messages)
+            if (res.data.conversationId) setActiveConversationId(res.data.conversationId)
+          }
+        } catch (err) {
+          console.error('[AdminChat] Failed to load history:', err)
+        }
+      }
+      loadHistory()
+    }
+  }, [isOpen])
 
   const handleSend = useCallback(async (text) => {
     const messageText = text || inputValue.trim()
@@ -176,8 +214,13 @@ const AdminChatBubble = () => {
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }))
-      const res = await sendAdminMessageAPI({ message: messageText, history })
+      const res = await sendAdminMessageAPI({
+        message: messageText,
+        history,
+        conversationId: activeConversationId
+      })
       const data = res.data
+      if (data.conversationId) setActiveConversationId(data.conversationId)
 
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -297,9 +340,14 @@ const AdminChatBubble = () => {
                         <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', fontSize: '0.82rem' }}>{msg.content}</Typography>
                       </Box>
 
-                      {/* Action Card */}
-                      {msg.actionCard && (
-                        <ActionCardCompact actionCard={msg.actionCard} onDismiss={() => handleDismissAction(idx)} />
+                      {/* Action Card / Mini Manager */}
+                      {(msg.actionCard || msg.metadata?.actionCard) && (
+                        <MiniManagerCompact
+                          ac={msg.actionCard || msg.metadata?.actionCard}
+                          onAdd={() => { setActiveEntity((msg.actionCard || msg.metadata?.actionCard).entity); setOpenAdd(true) }}
+                          onEdit={(item) => { setActiveEntity((msg.actionCard || msg.metadata?.actionCard).entity); setEditingItem(item); setOpenEdit(true) }}
+                          onDelete={(id) => { setActiveEntity((msg.actionCard || msg.metadata?.actionCard).entity); setDeletingId(id); setOpenDeleteConfirm(true) }}
+                        />
                       )}
 
                       {/* Quick Replies */}
@@ -396,6 +444,41 @@ const AdminChatBubble = () => {
           {isOpen ? <CloseIcon sx={{ fontSize: 22 }} /> : <SmartToyIcon sx={{ fontSize: 24 }} />}
         </Fab>
       </Box>
+
+      {/* Dialogs chính chủ */}
+      {activeEntity === 'product' && (
+        <>
+          <AddProduct open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm sản phẩm!')} />
+          {editingItem && <EditProduct open={openEdit} productId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={() => handleSuccess('Đã cập nhật sản phẩm!')} />}
+        </>
+      )}
+      {activeEntity === 'account' && (
+        <>
+          <AddAccount open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm tài khoản!')} />
+          {editingItem && <EditAccount open={openEdit} accountId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={() => handleSuccess('Đã cập nhật tài khoản!')} />}
+        </>
+      )}
+      {activeEntity === 'category' && (
+        <>
+          <AddCategory open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm danh mục!')} />
+          {editingItem && <EditCategory open={openEdit} categoryId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={() => handleSuccess('Đã cập nhật danh mục!')} />}
+        </>
+      )}
+
+      {/* Delete Confirm */}
+      <Dialog open={openDeleteConfirm} onClose={() => setOpenDeleteConfirm(false)} PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px' } }}>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>Xác nhận xóa</DialogTitle>
+        <DialogContent sx={{ color: '#ccc' }}>Bạn có chắc muốn xóa bản ghi này? Thao tác không thể hoàn tác.</DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenDeleteConfirm(false)} sx={{ color: '#888' }}>Hủy</Button>
+          <Button onClick={handleDelete} variant="contained" color="error">Xóa ngay</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+        <Alert severity={snackbar.severity} variant="filled">{snackbar.message}</Alert>
+      </Snackbar>
     </>
   )
 }

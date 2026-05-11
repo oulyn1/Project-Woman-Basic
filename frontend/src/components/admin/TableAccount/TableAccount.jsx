@@ -134,7 +134,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
 
   const handleConfirmDelete = useCallback(async () => {
     try {
-      await deleteUserAPI(deletingId)
+      await deleteUserAPI(deletingId, token)
       setRows(prev => prev.filter(u => u._id !== deletingId))
       setSnackbar({ open: true, message: 'Đã xóa tài khoản!', severity: 'success' })
     } catch {

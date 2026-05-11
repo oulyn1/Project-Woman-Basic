@@ -35,7 +35,7 @@ function EditAccount({ open, onClose, onSuccess, accountId }) {
     const fetchUserData = async () => {
       setFetching(true)
       try {
-        const user = await getUserDetailAPI(accountId)
+        const user = await getUserDetailAPI(accountId, token)
         setFormData({
           name: user.name || '',
           email: user.email || '',

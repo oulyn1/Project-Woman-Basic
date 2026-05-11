@@ -1,6 +1,16 @@
 import axios from 'axios'
 import { API_ROOT } from '../util/constants'
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken')
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+}
+
 export const registerUserAPI = async (userData) => {
   const request = await axios.post(`${API_ROOT}/v1/user/register`, userData)
   return request.data
@@ -11,75 +21,53 @@ export const loginUserAPI = async (loginData) => {
   return request.data
 }
 
-export const getProfileAPI = async (token) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/profile`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+export const getProfileAPI = async () => {
+  const request = await axios.get(`${API_ROOT}/v1/user/profile`, getAuthHeaders())
   return request.data
 }
 
-export const updateUserAPI = async (updateData, token) => {
-  const request = await axios.put(`${API_ROOT}/v1/user/profile`, updateData, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+export const updateUserAPI = async (updateData) => {
+  const request = await axios.put(`${API_ROOT}/v1/user/profile`, updateData, getAuthHeaders())
   return request.data
 }
-export const updateAccountAPI = async (id, updateData, token) => {
-  const request = await axios.put(`${API_ROOT}/v1/user/${id}`, updateData, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+
+export const updateAccountAPI = async (id, updateData) => {
+  const request = await axios.put(`${API_ROOT}/v1/user/${id}`, updateData, getAuthHeaders())
   return request.data
 }
-export const searchUserAPI = async (query, token) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/search?name=${query}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+
+export const searchUserAPI = async (query) => {
+  const request = await axios.get(`${API_ROOT}/v1/user/search?name=${query}`, getAuthHeaders())
   return request.data
 }
-export const AllUsersAPI = async (token) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/`, { headers: {
-    Authorization: `Bearer ${token}`
-  }
-  })
+
+export const AllUsersAPI = async () => {
+  const request = await axios.get(`${API_ROOT}/v1/user/`, getAuthHeaders())
   return request.data
 }
-export const AllEmployeeAPI = async (token) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/employee?role=employee`, { headers: {
-    Authorization: `Bearer ${token}`
-  }
-  })
+
+export const AllEmployeeAPI = async () => {
+  const request = await axios.get(`${API_ROOT}/v1/user/employee?role=employee`, getAuthHeaders())
   return request.data
 }
-export const searchEmployeeAPI = async (query, token) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/employee/search?name=${query}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+
+export const searchEmployeeAPI = async (query) => {
+  const request = await axios.get(`${API_ROOT}/v1/user/employee/search?name=${query}`, getAuthHeaders())
   return request.data
 }
-export const createUserAPI = async (userData, token) => {
-  const response = await axios.post(`${API_ROOT}/v1/user/`, userData, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
+
+export const createUserAPI = async (userData) => {
+  const response = await axios.post(`${API_ROOT}/v1/user/`, userData, getAuthHeaders())
   return response.data
 }
+
 export const deleteUserAPI = async (userId) => {
-  const request = await axios.delete(`${API_ROOT}/v1/user/${userId}`)
+  const request = await axios.delete(`${API_ROOT}/v1/user/${userId}`, getAuthHeaders())
   return request.data
 }
+
 export const getUserDetailAPI = async (userId) => {
-  const request = await axios.get(`${API_ROOT}/v1/user/${userId}`)
+  const request = await axios.get(`${API_ROOT}/v1/user/${userId}`, getAuthHeaders())
   return request.data
 }
 export const checkEmailAPI = async (email) => {

@@ -67,17 +67,40 @@ const parseAIResponse = (responseText) => {
   let products = []
   let quickReplies = []
 
-  const productsMatch = responseText.match(/<!--PRODUCTS::([\s\S]*?)-->/)
-  if (productsMatch) {
-    try { products = JSON.parse(productsMatch[1]) } catch { products = [] }
-    reply = reply.replace(productsMatch[0], '').trim()
+  // Helper để lấy tất cả các tag và parse JSON an toàn
+  const extractTags = (text, regex) => {
+    const results = []
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      try {
+        // Làm sạch nội dung: xóa markdown code block nếu có
+        const cleanedJson = match[1]
+          .replace(/```(?:json)?/gi, '')
+          .replace(/```/gi, '')
+          .trim()
+        
+        const parsed = JSON.parse(cleanedJson)
+        if (Array.isArray(parsed)) {
+          results.push(...parsed)
+        } else {
+          results.push(parsed)
+        }
+      } catch (e) {
+        console.error('[AI Parser] JSON Error:', e.message, '| Content:', match[1])
+      }
+    }
+    return results
   }
 
-  const quickRepliesMatch = responseText.match(/<!--QUICK_REPLIES::([\s\S]*?)-->/)
-  if (quickRepliesMatch) {
-    try { quickReplies = JSON.parse(quickRepliesMatch[1]) } catch { quickReplies = [] }
-    reply = reply.replace(quickRepliesMatch[0], '').trim()
-  }
+  // 1. Xử lý PRODUCTS tag (dùng regex global để tìm tất cả và xóa sạch)
+  const productsRegex = /<!--\s*PRODUCTS::([\s\S]*?)\s*-->/gi
+  products = extractTags(responseText, productsRegex)
+  reply = reply.replace(productsRegex, '')
+
+  // 2. Xử lý QUICK_REPLIES tag
+  const qrRegex = /<!--\s*QUICK_REPLIES::([\s\S]*?)\s*-->/gi
+  quickReplies = extractTags(responseText, qrRegex)
+  reply = reply.replace(qrRegex, '').trim()
 
   return { reply, products, quickReplies }
 }
@@ -116,13 +139,27 @@ const sendCustomerMessage = async ({ sessionId, message, history = [] }) => {
   const systemPrompt = `Bạn là trợ lý AI của Woman Basic. Gợi ý sản phẩm và tư vấn size dựa trên dữ liệu:
 ${JSON.stringify(products, null, 2)}
 - Dùng tiếng Việt, thân thiện.
-- Trả về sản phẩm qua tag <!--PRODUCTS::[...]-->
+- Nếu có sản phẩm phù hợp, hãy trả về danh sách sản phẩm dưới dạng JSON array trong tag <!--PRODUCTS::[...]-->. 
+- MỖI SẢN PHẨM TRONG JSON PHẢI CÓ ĐỦ CÁC TRƯỜNG: _id, name, price, image.
 - Gợi ý câu hỏi qua tag <!--QUICK_REPLIES::[...]-->`
 
   const messages = [{ role: 'system', content: systemPrompt }, ...history.slice(-10).map(m => ({ role: m.role, content: m.content })), { role: 'user', content: message }]
 
   const aiResponseText = await aiHelper.callGroqAI({ contextName: 'CustomerChat', messages })
   const parsed = parseAIResponse(aiResponseText)
+
+  // Hậu xử lý để đảm bảo sản phẩm có đủ thông tin (tránh lỗi NaN hoặc thiếu ảnh ở frontend)
+  if (parsed.products?.length > 0) {
+    parsed.products = parsed.products.map(p => {
+      const original = products.find(op => op._id === p._id)
+      return {
+        _id: p._id,
+        name: p.name || original?.name || 'Sản phẩm',
+        price: p.price ?? original?.price ?? 0,
+        image: p.image || original?.image || ''
+      }
+    })
+  }
 
   if (history.length === 0 && parsed.reply) {
     await ChatCache.findOneAndUpdate({ normalizedQuestion: normalizedMsg }, { ...parsed, normalizedQuestion: normalizedMsg, originalQuestion: message }, { upsert: true })

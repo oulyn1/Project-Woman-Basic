@@ -44,6 +44,10 @@ const conversationSchema = new mongoose.Schema({
     enum: ['customer', 'admin'],
     required: true
   },
+  title: {
+    type: String,
+    default: 'Cuộc trò chuyện mới'
+  },
   messages: [messageSchema]
 }, {
   timestamps: true,
@@ -75,18 +79,20 @@ export const conversationModel = {
   },
 
   /**
-   * Tìm hoặc tạo conversation mới cho admin (theo userId)
+   * Tìm hoặc tạo conversation mới cho admin (theo userId và conversationId tùy chọn)
    */
-  findOrCreateAdminConversation: async (userId) => {
-    let conversation = await Conversation.findOne({ userId, role: 'admin' })
-    if (!conversation) {
-      conversation = await Conversation.create({
-        userId,
-        role: 'admin',
-        messages: []
-      })
+  findOrCreateAdminConversation: async (userId, conversationId = null) => {
+    if (conversationId) {
+      const conversation = await Conversation.findOne({ _id: conversationId, userId, role: 'admin' })
+      if (conversation) return conversation
     }
-    return conversation
+    // Nếu không có conversationId hoặc không tìm thấy -> Tạo mới
+    return await Conversation.create({
+      userId,
+      role: 'admin',
+      messages: [],
+      title: 'Cuộc trò chuyện mới'
+    })
   },
 
   /**
@@ -140,7 +146,27 @@ export const conversationModel = {
    * Lấy tất cả conversations của admin (cho sidebar lịch sử)
    */
   getAllAdminConversations: async (userId) => {
-    return await Conversation.find({ userId, role: 'admin' }).sort({ updatedAt: -1 })
+    return await Conversation.find({ userId, role: 'admin' })
+      .select('title updatedAt createdAt') // Chỉ lấy thông tin tóm tắt cho sidebar
+      .sort({ updatedAt: -1 })
+  },
+
+  /**
+   * Cập nhật tiêu đề cho conversation
+   */
+  updateTitle: async (conversationId, title) => {
+    return await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $set: { title } },
+      { returnDocument: 'after' }
+    )
+  },
+
+  /**
+   * Xóa một phiên chat cụ thể
+   */
+  deleteById: async (conversationId, userId) => {
+    return await Conversation.findOneAndDelete({ _id: conversationId, userId })
   }
 }
 

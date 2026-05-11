@@ -1,34 +1,34 @@
-# Project-Woman-Basic
+# Dự án Woman Basic
 
-Project-Woman-Basic is a comprehensive E-commerce solution tailored for the fashion industry. The project aims to enhance the user experience for the **Woman Basic** fashion shop through system optimization, performance improvements, and modern UI/UX design.
-
----
-
-## 🚀 Key Features
-
-### 👤 Customer Portal
-- **Home & Shopping**: Browse products with dynamic filtering and sorting.
-- **Cart & Checkout**: Seamless shopping experience with persistent cart management.
-- **Account Management**: Profile personalization and order tracking.
-- **Product Reviews**: View and submit ratings for purchased items.
-
-### 🛡️ Admin Dashboard
-- **Product & Category**: Full CRUD management for the inventory.
-- **Order Management**: Track and manage customer orders.
-- **Account Control**: Manage system users and roles.
-- **Promotions**: Create and manage discount campaigns.
-- **Ratings Oversight**: Monitor and moderate customer feedback.
-
-### 🤖 AI-Powered Capabilities
-- **AI Product Analysis**: Automatically generates product details (name, category, description, tags) from uploaded images using Groq (Llama-4).
-- **AI Size Chart Analysis**: Extracts size tables from images and converts them to Markdown for automated sizing advice.
-- **AI Stylist (Customer)**: Real-time chat assistant providing personalized product suggestions and sizing advice.
-- **AI Admin Copilot**: Intelligent dashboard assistant for business analytics, inventory tracking, and automated administrative tasks.
-- **Lightweight RAG**: Implements Retrieval-Augmented Generation using MongoDB Text Search to provide context-aware AI responses based on real-time store data.
+Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện được thiết kế riêng cho ngành thời trang. Dự án nhằm mục đích nâng cao trải nghiệm người dùng cho shop thời trang **Woman Basic** thông qua việc tối ưu hóa hệ thống, cải thiện hiệu suất và thiết kế UI/UX hiện đại.
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 Tính năng chính
+
+### 👤 Cổng thông tin khách hàng
+- **Trang chủ & Mua sắm**: Duyệt sản phẩm với bộ lọc và sắp xếp linh hoạt.
+- **Giỏ hàng & Thanh toán**: Trải nghiệm mua sắm liền mạch với quản lý giỏ hàng thông minh.
+- **Quản lý tài khoản**: Cá nhân hóa hồ sơ và theo dõi tình trạng đơn hàng.
+- **Đánh giá sản phẩm**: Xem và gửi nhận xét cho các sản phẩm đã mua.
+
+### 🛡️ Trang quản trị (Admin Dashboard)
+- **Sản phẩm & Danh mục**: Quản lý toàn diện (CRUD) kho hàng và danh mục.
+- **Quản lý đơn hàng**: Theo dõi và xử lý đơn hàng từ khách hàng.
+- **Kiểm soát tài khoản**: Quản lý người dùng hệ thống và phân quyền.
+- **Khuyến mãi**: Tạo và quản lý các chiến dịch giảm giá.
+- **Giám sát đánh giá**: Theo dõi và kiểm duyệt phản hồi từ khách hàng.
+
+### 🤖 Năng lực ứng dụng AI
+- **Phân tích sản phẩm AI**: Tự động tạo chi tiết sản phẩm (tên, danh mục, mô tả, tags) từ ảnh tải lên sử dụng Groq (Llama-4).
+- **Phân tích bảng size AI**: Trích xuất bảng size từ hình ảnh và chuyển đổi sang Markdown để tư vấn kích cỡ tự động.
+- **Trợ lý Stylist AI (Khách hàng)**: Trợ lý chat thời gian thực cung cấp gợi ý sản phẩm và tư vấn size cá nhân hóa.
+- **Admin AI Copilot**: Trợ lý bảng điều khiển thông minh giúp phân tích kinh doanh, theo dõi kho hàng và thực hiện các tác vụ quản trị tự động.
+- **Lightweight RAG**: Triển khai Retrieval-Augmented Generation sử dụng MongoDB Text Search để cung cấp các phản hồi AI chính xác dựa trên dữ liệu thực tế của cửa hàng.
+
+---
+
+## 🛠️ Công nghệ sử dụng
 
 ### Frontend
 - **Framework**: React.js (v19)
@@ -41,89 +41,89 @@ Project-Woman-Basic is a comprehensive E-commerce solution tailored for the fash
 ### Backend
 - **Runtime**: Node.js
 - **Framework**: Express.js
-- **Database**: MongoDB (using MongoDB Atlas)
+- **Database**: MongoDB (sử dụng MongoDB Atlas)
 - **AI Engine**: Groq (Llama-4 Scout)
 - **Authentication**: JWT (JSON Web Tokens)
-- **Utilities**: Joi (Validation), Bcrypt (Password hashing), Nodemailer, Axios.
+- **Utilities**: Joi (Validation), Bcrypt (Mã hóa mật khẩu), Nodemailer, Axios.
 
 ---
 
-## 📂 Project Structure
+## 📂 Cấu trúc dự án
 
-This project is organized as a **Monorepo** for easier management of both client and server code.
+Dự án được tổ chức theo mô hình **Monorepo** để dễ dàng quản lý cả mã nguồn client và server.
 
 ```text
 Project-Woman-Basic/
-├── backend/                # Express.js Server
+├── backend/                # Server Express.js
 │   ├── src/
-│   │   ├── config/         # App configurations (DB, Environment)
-│   │   ├── controllers/    # Request handlers
-│   │   ├── models/         # Database schemas
-│   │   ├── routes/         # API endpoints (v1, v2)
-│   │   ├── services/       # Business logic
-│   │   └── server.js       # Entry point
-├── frontend/               # React Application
+│   │   ├── config/         # Cấu hình ứng dụng (DB, Môi trường)
+│   │   ├── controllers/    # Xử lý yêu cầu (Request handlers)
+│   │   ├── models/         # Schema cơ sở dữ liệu
+│   │   ├── routes/         # Các đầu cuối API (v1, v2)
+│   │   ├── services/       # Logic nghiệp vụ
+│   │   └── server.js       # Điểm khởi chạy (Entry point)
+├── frontend/               # Ứng dụng React
 │   ├── src/
-│   │   ├── apis/           # API service layers
-│   │   ├── components/     # Reusable UI components
-│   │   ├── layouts/        # Layout wrappers (Admin, Customer)
-│   │   ├── pages/          # Individual screen components
-│   │   └── main.jsx        # Entry point
-├── package.json            # Root configuration (Workspaces)
-└── README.md               # You are here!
+│   │   ├── apis/           # Lớp dịch vụ gọi API
+│   │   ├── components/     # Các thành phần UI dùng chung
+│   │   ├── layouts/        # Layout bao ngoài (Admin, Customer)
+│   │   ├── pages/          # Các thành phần màn hình riêng biệt
+│   │   └── main.jsx        # Điểm khởi chạy (Entry point)
+├── package.json            # Cấu hình gốc (Workspaces)
+└── README.md               # Bạn đang ở đây!
 ```
 
 ---
 
-## 🚦 Getting Started
+## 🚦 Bắt đầu
 
-### 1. Prerequisites
-- **Node.js**: v18.x or higher
-- **npm**: v7.x or higher
-- **MongoDB**: Access to a MongoDB database (Local or Atlas)
+### 1. Yêu cầu hệ thống
+- **Node.js**: v18.x trở lên
+- **npm**: v7.x trở lên
+- **MongoDB**: Quyền truy cập vào cơ sở dữ liệu MongoDB (Local hoặc Atlas)
 
-### 2. Environment Configuration
+### 2. Cấu hình môi trường
 
 #### Backend
-Create a `.env` file in the `backend/` directory:
+Tạo file `.env` trong thư mục `backend/`:
 ```env
-MONGODB_URI=your_mongodb_connection_string
+MONGODB_URI=chuoi_ket_noi_mongodb_cua_ban
 DATABASE_NAME=WomanBasic
 APP_HOST=localhost
 APP_PORT=8017
-JWT_SECRET=your_secret_key
+JWT_SECRET=ma_bi_mat_jwt_cua_ban
 ```
 
 #### Frontend
-API connection is configured in `frontend/src/util/constants.js`:
+Cấu hình kết nối API trong `frontend/src/util/constants.js`:
 ```javascript
 export const API_ROOT = 'http://localhost:8017'
 ```
 
-### 3. Installation
-From the **root directory**, run the following to install dependencies for both Frontend and Backend:
+### 3. Cài đặt
+Tại **thư mục gốc**, chạy lệnh sau để cài đặt các thư viện cho cả Frontend và Backend:
 ```bash
 npm install
 ```
 
-### 4. Running the Development Server
-To start both applications simultaneously:
+### 4. Chạy môi trường phát triển (Development)
+Để khởi chạy cả hai ứng dụng cùng lúc:
 ```bash
 npm run dev
 ```
 
 ---
 
-## 🛠 Project Commands
+## 🛠 Lệnh dự án
 
-| Command | Description |
+| Lệnh | Mô tả |
 | :--- | :--- |
-| `npm run dev` | Runs both Frontend and Backend in development mode. |
-| `npm run backend` | Runs only the Express server. |
-| `npm run frontend` | Runs only the React/Vite development server. |
-| `npm install` | Installs dependencies for the entire project. |
+| `npm run dev` | Chạy cả Frontend và Backend trong chế độ phát triển. |
+| `npm run backend` | Chỉ chạy server Express. |
+| `npm run frontend` | Chỉ chạy server React/Vite. |
+| `npm install` | Cài đặt tất cả các phụ thuộc cho toàn bộ dự án. |
 
 ---
 
-## 📝 License
-This project is for internal use. All rights reserved.
+## 📝 Bản quyền
+Dự án này được sử dụng nội bộ. Mọi quyền được bảo lưu.

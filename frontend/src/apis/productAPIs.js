@@ -4,6 +4,16 @@ import { API_ROOT } from '../util/constants'
 const CLOUDINARY_CLOUD_NAME = 'dp7w5n0dr'
 const CLOUDINARY_UPLOAD_PRESET = 'PROJECTWB'
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken')
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+}
+
 export const uploadImageToCloudinaryAPI = async (file) => {
   const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
 
@@ -42,21 +52,21 @@ export const getProductBySlugAPI = async (slug) => {
 }
 
 export const deleteProductAPI = async (productId) => {
-  const request = await axios.delete(`${API_ROOT}/v1/product/${productId}`)
+  const request = await axios.delete(`${API_ROOT}/v1/product/${productId}`, getAuthHeaders())
   return request.data
 }
 
 export const updateProductAPI = async (productId, productData) => {
-  const request = await axios.patch(`${API_ROOT}/v1/product/${productId}`, productData)
+  const request = await axios.patch(`${API_ROOT}/v1/product/${productId}`, productData, getAuthHeaders())
   return request.data
 }
 
 export const updateVariantStockAPI = async (productId, variantId, quantity) => {
-  const request = await axios.patch(`${API_ROOT}/v1/product/${productId}/variants/${variantId}`, { quantity })
+  const request = await axios.patch(`${API_ROOT}/v1/product/${productId}/variants/${variantId}`, { quantity }, getAuthHeaders())
   return request.data
 }
 
 export const createProductAPI = async (productData) => {
-  const request = await axios.post(`${API_ROOT}/v1/product/`, productData)
+  const request = await axios.post(`${API_ROOT}/v1/product/`, productData, getAuthHeaders())
   return request.data
 }
