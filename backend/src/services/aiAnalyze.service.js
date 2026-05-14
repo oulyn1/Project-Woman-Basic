@@ -5,44 +5,63 @@ import { StatusCodes } from 'http-status-codes'
 /**
  * Analyze a fashion product image using Groq.
  */
-const analyzeProductWithAI = async (base64Image) => {
+const analyzeProductWithAI = async (base64Images) => {
+  // Hỗ trợ cả string đơn lẻ (backward compatible) và mảng
+  const imageList = Array.isArray(base64Images) ? base64Images : [base64Images]
   const groqPrompt = `Bạn là chuyên gia viết nội dung (Copywriter) cho website thời trang nữ "Woman Basic".
 Dựa trên hình ảnh sản phẩm, hãy tạo một đối tượng JSON với cấu trúc sau:
 {
-  "name": "Tên sản phẩm (không kèm màu sắc)",
+  "name": "Tên sản phẩm theo cấu trúc: [Loại sản phẩm] [Chi tiết kiểu dáng] [Mã sản phẩm]. Ví dụ: Quần Giả Váy Ngắn Chữ A GV08. KHÔNG kèm màu sắc.",
   "category": "Một trong: Áo, Quần, Đầm, Váy, Phụ kiện, Giày, Túi xách",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
-  "description": "Nội dung bài PR sản phẩm theo cấu trúc dưới đây"
+  "description": "Nội dung bài PR sản phẩm theo cấu trúc dưới đây (PHẢI là một chuỗi string thuần, KHÔNG ĐƯỢC trả về dạng object hay array)"
 }
 
 YÊU CẦU QUAN TRỌNG:
 1. TUYỆT ĐỐI KHÔNG nhắc đến màu sắc của sản phẩm trong tên, mô tả hay tags.
-2. Cấu trúc trường 'description' PHẢI tuân thủ chính xác mẫu sau:
+2. Trường 'description' PHẢI là một chuỗi string duy nhất, chứa ĐÚNG nội dung theo mẫu bên dưới. KHÔNG thêm tiêu đề phụ, label hay ghi chú nào khác ngoài những dòng trong mẫu.
+3. Mẫu description (chỉ copy nội dung, KHÔNG copy các dòng bắt đầu bằng "---"):
 
+---MẪU BẮT ĐẦU---
 Giới Thiệu Về [Tên Sản Phẩm]
-[Đoạn văn ngắn giới thiệu sản phẩm, phong cách Hàn Quốc/Cá tính/Năng động...]
+
+[Đoạn văn giới thiệu sản phẩm, nhấn mạnh thương hiệu Woman Basic, phong cách, đặc trưng thiết kế, đối tượng khách hàng. Viết 3-5 câu.]
 
 Đặc Điểm Nổi Bật Của [Tên Sản Phẩm]
-- [Đặc điểm nổi bật 1]
-- [Đặc điểm nổi bật 2]
-- [Đặc điểm nổi bật 3]
+
+    [Tiêu đề đặc điểm 1]: [Mô tả chi tiết]
+    [Tiêu đề đặc điểm 2]: [Mô tả chi tiết]
+    [Tiêu đề đặc điểm 3]: [Mô tả chi tiết]
+    [Tiêu đề đặc điểm 4]: [Mô tả chi tiết]
+    [Tiêu đề đặc điểm 5]: [Mô tả chi tiết]
 
 Thông Tin Chi Tiết Sản Phẩm
-- Kiểu dáng: [Mô tả form dáng: suông, ôm, oversize...]
-- Chi tiết: [Các chi tiết như xếp ly, cúc, túi, đường may...]
-- Phù hợp: [Dịp sử dụng: đi chơi, đi làm, dự tiệc...]
+
+    Kiểu dáng: [Mô tả form dáng chi tiết]
+    Chiều dài: [Ngắn/Dài/Midi...]
+    Mùa: [Mùa phù hợp]
+    Xuất xứ: Việt Nam
+    Phong cách: [Liệt kê các phong cách phù hợp]
+    Thương hiệu: Woman Basic
 
 Hướng Dẫn Phối Đồ Với [Tên Sản Phẩm]
-✦ Mix cùng [Item 1]: [Gợi ý phối đồ và phong cách tạo thành]
-✦ Mix cùng [Item 2]: [Gợi ý phối đồ và phong cách tạo thành]
+
+✦Mix cùng [Item 1 + phụ kiện]: [Mô tả phong cách và dịp phù hợp]
+✦Mix cùng [Item 2 + phụ kiện]: [Mô tả phong cách và dịp phù hợp]
+✦Mix cùng [Item 3 + phụ kiện]: [Mô tả phong cách và dịp phù hợp]
+✦Mix cùng [Item 4 + phụ kiện]: [Mô tả phong cách và dịp phù hợp]
 
 Lưu Ý Khi Mua Hàng
-- Sản phẩm có thể chênh lệch màu sắc nhẹ (5-10%) so với thực tế do điều kiện ánh sáng và hiển thị màn hình.
-- Để sản phẩm bền đẹp, khuyến khích giặt tay hoặc dùng túi giặt, tránh chất tẩy mạnh.
 
-👉 Theo dõi ngay Fanpage và Website của Woman Basic để cập nhật những xu hướng thời trang mới nhất và không bỏ lỡ các chương trình ưu đãi hấp dẫn!
+    Sản phẩm có thể chênh lệch màu sắc nhẹ so với thực tế do điều kiện ánh sáng và hiển thị màn hình.
+    Để bảo quản sản phẩm bền đẹp, nên giặt nhẹ nhàng bằng tay và phơi trong bóng râm.
 
-(Sử dụng tiếng Việt, văn phong tinh tế, hiện đại, thu hút khách hàng nữ)`
+[Tên Sản Phẩm] từ Woman Basic là sự kết hợp hoàn hảo giữa thời trang và tiện ích, giúp bạn tự tin tỏa sáng mọi lúc, mọi nơi!
+
+👉 Theo dõi ngay: Fanpage WomanBasic để không bỏ lỡ những ưu đãi siêu hấp dẫn!
+---MẪU KẾT THÚC---
+
+(TUYỆT ĐỐI CHỈ sử dụng tiếng Việt. KHÔNG ĐƯỢC dùng bất kỳ ký tự tiếng Nhật, tiếng Trung, tiếng Hàn hay ngôn ngữ nào khác. Văn phong tinh tế, hiện đại, thu hút khách hàng nữ.)`
 
   const content = await aiHelper.callGroqAI({
     contextName: 'ProductAnalysis',
@@ -52,7 +71,7 @@ Lưu Ý Khi Mua Hàng
         role: 'user',
         content: [
           { type: 'text', text: groqPrompt },
-          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}` } }
+          ...imageList.map(img => ({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${img}` } }))
         ]
       }
     ]
@@ -63,7 +82,13 @@ Lưu Ý Khi Mua Hàng
   // Validate các trường bắt buộc
   const name = parsed.name?.trim() || ''
   const category = parsed.category?.trim() || ''
-  const description = parsed.description?.trim() || ''
+  // AI có thể trả description dạng object thay vì string → chuyển đổi an toàn
+  let description = ''
+  if (typeof parsed.description === 'string') {
+    description = parsed.description.trim()
+  } else if (parsed.description && typeof parsed.description === 'object') {
+    description = JSON.stringify(parsed.description, null, 2)
+  }
   const tags = Array.isArray(parsed.tags) ? parsed.tags.map(t => String(t).trim()) : []
 
   if (!name || !category || !description) {

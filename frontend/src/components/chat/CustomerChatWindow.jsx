@@ -480,7 +480,7 @@ const CustomerChatWindow = () => {
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 8px 40px rgba(0,0,0,0.15), 0 2px 12px rgba(0,0,0,0.1)',
-          zIndex: 1300,
+          zIndex: 2147483647, // Bằng max z-index của Header để đè lên Header
           backgroundColor: 'white'
         }}
       >

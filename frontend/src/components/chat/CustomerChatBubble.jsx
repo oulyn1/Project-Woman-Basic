@@ -13,40 +13,32 @@ const CustomerChatBubble = () => {
       {/* Chat Window */}
       {isOpen && <CustomerChatWindow />}
 
-      {/* FAB Button */}
-      <Box
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          zIndex: 1299
-        }}
-      >
-        <Fab
-          onClick={toggleChat}
-          aria-label="Chat với Woman Basic"
+      {/* FAB Button - Chỉ hiển thị khi chat đóng */}
+      {!isOpen && (
+        <Box
           sx={{
-            width: 56,
-            height: 56,
-            background: isOpen
-              ? 'linear-gradient(135deg, #b0b0b0, #999)'
-              : 'linear-gradient(135deg, #f0b8cc 0%, #e8a0b8 50%, #d4789c 100%)',
-            color: 'white',
-            boxShadow: isOpen
-              ? '0 4px 16px rgba(0,0,0,0.2)'
-              : '0 4px 20px rgba(212, 120, 156, 0.4), 0 2px 8px rgba(232, 160, 184, 0.3)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              background: isOpen
-                ? 'linear-gradient(135deg, #999, #777)'
-                : 'linear-gradient(135deg, #e8a0b8 0%, #d4789c 50%, #c06888 100%)',
-              transform: 'scale(1.05)',
-              boxShadow: isOpen
-                ? '0 6px 20px rgba(0,0,0,0.25)'
-                : '0 6px 28px rgba(212, 120, 156, 0.5)'
-            },
-            // Animation rung nhẹ 1 lần sau 3 giây
-            ...(!isOpen && {
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 2147483647 // Đảm bảo đè lên Header (nếu bị che)
+          }}
+        >
+          <Fab
+            onClick={toggleChat}
+            aria-label="Chat với Woman Basic"
+            sx={{
+              width: 56,
+              height: 56,
+              background: 'linear-gradient(135deg, #f0b8cc 0%, #e8a0b8 50%, #d4789c 100%)',
+              color: 'white',
+              boxShadow: '0 4px 20px rgba(212, 120, 156, 0.4), 0 2px 8px rgba(232, 160, 184, 0.3)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #e8a0b8 0%, #d4789c 50%, #c06888 100%)',
+                transform: 'scale(1.05)',
+                boxShadow: '0 6px 28px rgba(212, 120, 156, 0.5)'
+              },
+              // Animation rung nhẹ 1 lần sau 3 giây
               animation: 'chatBubbleWiggle 0.6s ease-in-out 3s 1',
               '@keyframes chatBubbleWiggle': {
                 '0%': { transform: 'rotate(0deg)' },
@@ -57,18 +49,12 @@ const CustomerChatBubble = () => {
                 '75%': { transform: 'rotate(-3deg)' },
                 '100%': { transform: 'rotate(0deg)' }
               }
-            })
-          }}
-        >
-          {isOpen ? (
-            <CloseIcon sx={{ fontSize: 24 }} />
-          ) : (
+            }}
+          >
             <ChatBubbleOutlineIcon sx={{ fontSize: 24 }} />
-          )}
-        </Fab>
+          </Fab>
 
-        {/* Tooltip nhỏ khi chưa mở */}
-        {!isOpen && (
+          {/* Tooltip nhỏ khi chưa mở */}
           <Box
             sx={{
               position: 'absolute',
@@ -106,8 +92,8 @@ const CustomerChatBubble = () => {
           >
             Cần tư vấn? 💬
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
     </>
   )
 }

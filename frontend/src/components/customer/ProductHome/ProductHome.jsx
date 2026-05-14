@@ -1,9 +1,117 @@
-import { Box, Button, Typography, Container, Grid } from '@mui/material'
-import React, { useEffect, useState, useMemo } from 'react'
+import { Box, Button, Typography, Container, IconButton } from '@mui/material'
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import ProductCard from './ProductCard/ProductCard'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
 import { useNavigate } from 'react-router-dom'
+
+/** Scrollbar ngang có nút điều hướng */
+function HorizontalProductScroll({ products, navigate, promosForProduct }) {
+  const scrollRef = useRef(null)
+  const [showLeft, setShowLeft] = useState(false)
+  const [showRight, setShowRight] = useState(true)
+
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setShowLeft(el.scrollLeft > 10)
+    setShowRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10)
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.addEventListener('scroll', updateArrows, { passive: true })
+    updateArrows()
+    return () => el.removeEventListener('scroll', updateArrows)
+  }, [updateArrows, products])
+
+  const scroll = (direction) => {
+    const el = scrollRef.current
+    if (!el) return
+    const cardWidth = el.querySelector(':scope > div')?.offsetWidth || 260
+    el.scrollBy({ left: direction === 'left' ? -cardWidth * 2 : cardWidth * 2, behavior: 'smooth' })
+  }
+
+  return (
+    <Box sx={{ position: 'relative', '&:hover .scroll-arrow': { opacity: 1 } }}>
+      {/* Left Arrow */}
+      {showLeft && (
+        <IconButton
+          className="scroll-arrow"
+          onClick={() => scroll('left')}
+          sx={{
+            position: 'absolute', left: { xs: 0, md: -20 }, top: '40%', zIndex: 2,
+            bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            opacity: { xs: 1, md: 0 }, transition: 'opacity 0.3s',
+            '&:hover': { bgcolor: '#f5f5f5' },
+            width: 40, height: 40,
+          }}
+        >
+          <ArrowBackIosNewIcon sx={{ fontSize: 16, color: '#333' }} />
+        </IconButton>
+      )}
+
+      {/* Right Arrow */}
+      {showRight && (
+        <IconButton
+          className="scroll-arrow"
+          onClick={() => scroll('right')}
+          sx={{
+            position: 'absolute', right: { xs: 0, md: -20 }, top: '40%', zIndex: 2,
+            bgcolor: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            opacity: { xs: 1, md: 0 }, transition: 'opacity 0.3s',
+            '&:hover': { bgcolor: '#f5f5f5' },
+            width: 40, height: 40,
+          }}
+        >
+          <ArrowForwardIosIcon sx={{ fontSize: 16, color: '#333' }} />
+        </IconButton>
+      )}
+
+      {/* Scrollable Row */}
+      <Box
+        ref={scrollRef}
+        sx={{
+          display: 'flex',
+          gap: { xs: 1.5, md: 2 },
+          overflowX: 'auto',
+          scrollSnapType: 'x mandatory',
+          scrollBehavior: 'smooth',
+          pb: 1.5,
+          px: 0.5,
+          // Custom scrollbar
+          '&::-webkit-scrollbar': { height: 6 },
+          '&::-webkit-scrollbar-track': { bgcolor: '#f0f0f0', borderRadius: 3 },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: '#ccc', borderRadius: 3,
+            '&:hover': { bgcolor: '#aaa' },
+          },
+          // Firefox
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#ccc #f0f0f0',
+        }}
+      >
+        {products.map(product => (
+          <Box
+            key={product._id}
+            onClick={() => navigate(`/productdetail/${product._id}`)}
+            sx={{
+              flex: '0 0 auto',
+              width: { xs: '45%', sm: '30%', md: '23%' },
+              scrollSnapAlign: 'start',
+              cursor: 'pointer',
+            }}
+          >
+            <ProductCard product={product} promotions={promosForProduct(product)} />
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  )
+}
 
 function ProductHome() {
   const navigate = useNavigate()
@@ -63,7 +171,31 @@ function ProductHome() {
   }
   const promosForProduct = (prod) => promotions.filter(p => isProductPromo(p, prod._id) && isPromoActive(p) && isPromoEligibleForUser(p))
 
-  // Filter Discounted Products
+  // Tính % giảm giá cao nhất cho 1 sản phẩm
+  const getMaxDiscount = (product) => {
+    const now = new Date()
+    let maxDiscount = 0
+    promotions.forEach(promo => {
+      const isTarget = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)
+      const isActive = promo.computedStatus === 'active' && (!promo.startDate || new Date(promo.startDate) <= now) && (!promo.endDate || promo.endDate === null || new Date(promo.endDate) >= now)
+      if (!isTarget || !isActive) return
+      const cond = promo.condition ?? { type: 'all' }
+      let isEligible = true
+      switch (cond.type) {
+      case 'all': break
+      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
+      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      default: break
+      }
+      if (isEligible && (promo.discountPercent || 0) > maxDiscount) {
+        maxDiscount = promo.discountPercent || 0
+      }
+    })
+    return maxDiscount
+  }
+
+  // Lọc sản phẩm có khuyến mãi, sort theo % giảm giá cao nhất, lấy 10 sản phẩm
   const saleProducts = useMemo(() => {
     const now = new Date()
     const productWithPromo = allProducts.filter(p => promotions.some(promo => {
@@ -80,12 +212,15 @@ function ProductHome() {
       }
       return isTargetProduct && isActive && isEligible
     }))
-    return productWithPromo.slice(0, 10)
+    // Sort theo % giảm giá cao nhất
+    return productWithPromo
+      .sort((a, b) => getMaxDiscount(b) - getMaxDiscount(a))
+      .slice(0, 10)
   }, [allProducts, promotions, currentUser])
 
   return (
     <Box sx={{ pb: 8 }}>
-      <Container maxWidth="xl">
+      <Container maxWidth="lg">
         {/* New Arrivals Section */}
         <Box sx={{ mt: { xs: 4, md: 6 }, mb: { xs: 6, md: 8 } }}>
           <Typography
@@ -100,15 +235,11 @@ function ProductHome() {
           >
             HÀNG MỚI VỀ
           </Typography>
-          <Grid container spacing={{ xs: 1.5, md: 2 }}>
-            {newProducts.map(product => (
-              <Grid item xs={6} sm={4} md={4} lg={2.4} key={product._id}>
-                <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
-                  <ProductCard product={product} promotions={promosForProduct(product)} />
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+          <HorizontalProductScroll
+            products={newProducts}
+            navigate={navigate}
+            promosForProduct={promosForProduct}
+          />
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Button
               variant="outlined"
@@ -141,15 +272,11 @@ function ProductHome() {
           >
             WOMAN BASIC - GIẢM GIÁ ĐẾN 50%
           </Typography>
-          <Grid container spacing={{ xs: 1.5, md: 2 }}>
-            {saleProducts.map(product => (
-              <Grid item xs={6} sm={4} md={4} lg={2.4} key={product._id}>
-                <Box onClick={() => navigate(`/productdetail/${product._id}`)}>
-                  <ProductCard product={product} promotions={promosForProduct(product)} />
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
+          <HorizontalProductScroll
+            products={saleProducts}
+            navigate={navigate}
+            promosForProduct={promosForProduct}
+          />
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Button
               variant="outlined"
@@ -173,3 +300,4 @@ function ProductHome() {
 }
 
 export default ProductHome
+

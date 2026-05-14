@@ -15,6 +15,12 @@ const generateSkuPrefix = (name) => {
 
 const createNew = async (reqBody) => {
   try {
+    // Validate ảnh sản phẩm
+    if (!reqBody.images || !Array.isArray(reqBody.images) || reqBody.images.filter(Boolean).length === 0) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Sản phẩm phải có ít nhất 1 ảnh.')
+    }
+    reqBody.images = reqBody.images.filter(Boolean)
+
     // 1. Generate unique slug
     let slug = slugifyLib(reqBody.name, { lower: true, strict: true })
     const existingProduct = await productModel.getDetailsBySlug(slug)

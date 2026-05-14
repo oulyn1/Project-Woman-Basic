@@ -14,28 +14,36 @@ const MAX_BASE64_LENGTH = Math.ceil(4 * 1024 * 1024 * (4 / 3))
  */
 const analyzeProduct = async (req, res, next) => {
   try {
-    const { base64Image } = req.body
+    const { base64Image, base64Images } = req.body
 
-    if (!base64Image || typeof base64Image !== 'string') {
+    // Hỗ trợ cả gửi 1 ảnh (base64Image) và nhiều ảnh (base64Images)
+    let images = []
+    if (Array.isArray(base64Images) && base64Images.length > 0) {
+      images = base64Images
+    } else if (base64Image && typeof base64Image === 'string') {
+      images = [base64Image]
+    }
+
+    if (images.length === 0) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
-        'Trường base64Image là bắt buộc và phải là chuỗi base64 hợp lệ'
+        'Cần ít nhất 1 ảnh sản phẩm (base64Image hoặc base64Images)'
       )
     }
 
-    // Loại bỏ data URI prefix nếu có (data:image/jpeg;base64,...)
-    const cleanBase64 = base64Image.includes(',')
-      ? base64Image.split(',')[1]
-      : base64Image
+    // Loại bỏ data URI prefix và validate kích thước từng ảnh
+    const cleanImages = images.map((img, idx) => {
+      const clean = img.includes(',') ? img.split(',')[1] : img
+      if (clean.length > MAX_BASE64_LENGTH) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          `Ảnh ${idx + 1} vượt quá giới hạn 4MB. Vui lòng chọn ảnh nhỏ hơn.`
+        )
+      }
+      return clean
+    })
 
-    if (cleanBase64.length > MAX_BASE64_LENGTH) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        'Ảnh vượt quá giới hạn cho phép (tối đa 4MB). Vui lòng chọn ảnh nhỏ hơn.'
-      )
-    }
-
-    const result = await aiAnalyzeService.analyzeProductWithAI(cleanBase64)
+    const result = await aiAnalyzeService.analyzeProductWithAI(cleanImages)
 
     res.status(StatusCodes.OK).json({
       success: true,

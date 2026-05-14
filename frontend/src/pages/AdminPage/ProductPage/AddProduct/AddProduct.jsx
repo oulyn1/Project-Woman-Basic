@@ -218,11 +218,12 @@ function AddProduct({ open, onClose, onSuccess }) {
       return
     }
 
-    const imageFile = formData.files[0]
-
-    if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
-      setInlineError(`Ảnh quá lớn (${(imageFile.size / 1024 / 1024).toFixed(1)}MB). Giới hạn tối đa là 4MB.`)
-      return
+    // Validate kích thước từng ảnh
+    for (let i = 0; i < formData.files.length; i++) {
+      if (formData.files[i].size > MAX_IMAGE_SIZE_BYTES) {
+        setInlineError(`Ảnh ${i + 1} quá lớn (${(formData.files[i].size / 1024 / 1024).toFixed(1)}MB). Giới hạn tối đa là 4MB/ảnh.`)
+        return
+      }
     }
 
     const token = localStorage.getItem('accessToken')
@@ -236,8 +237,12 @@ function AddProduct({ open, onClose, onSuccess }) {
     setInlineError('')
 
     try {
-      const base64Image = await fileToBase64(imageFile)
-      const response = await analyzeProductWithAIAPI(base64Image, token)
+      // Convert TẤT CẢ ảnh sang base64
+      const base64Images = await Promise.all(
+        formData.files.map(file => fileToBase64(file))
+      )
+
+      const response = await analyzeProductWithAIAPI(base64Images, token)
       const { name, category, description, tags } = response.data
 
       let matchedCategoryId = ''
@@ -270,7 +275,7 @@ function AddProduct({ open, onClose, onSuccess }) {
 
       setSuccessSnackbar({
         open: true,
-        message: '✨ AI đã phân tích và điền thông tin sản phẩm thành công!',
+        message: `✨ AI đã phân tích ${base64Images.length} ảnh và điền thông tin thành công!`,
       })
     } catch (err) {
       const errorMsg =
@@ -290,15 +295,25 @@ function AddProduct({ open, onClose, onSuccess }) {
       setInlineError('Vui lòng điền các trường bắt buộc (Tên, Giá, Danh mục).')
       return
     }
+    if (!formData.files || formData.files.length === 0) {
+      setInlineError('Vui lòng upload ít nhất 1 ảnh sản phẩm.')
+      return
+    }
     setInlineError('')
 
     setSubmitting(true)
     try {
-      const imageUrls = await Promise.all(
+      const imageUrls = (await Promise.all(
         formData.files.map((file) =>
-          uploadImageToCloudinaryAPI(file).then((res) => res.secure_url),
+          uploadImageToCloudinaryAPI(file).then((res) => res.secure_url).catch(() => null),
         ),
-      )
+      )).filter(Boolean)
+
+      if (imageUrls.length === 0) {
+        setInlineError('Upload ảnh thất bại. Vui lòng thử lại.')
+        setSubmitting(false)
+        return
+      }
 
       const skuPrefix = generateSkuPrefix(formData.name)
 
