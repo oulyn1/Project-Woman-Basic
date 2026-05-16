@@ -7,7 +7,8 @@ import {
   Stack,
   Collapse,
   Avatar,
-  CircularProgress
+  CircularProgress,
+  Pagination
 } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
@@ -17,12 +18,11 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import BadgeIcon from '@mui/icons-material/Badge'
 
 import { AllEmployeeAPI, searchEmployeeAPI } from '~/apis/userAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TableEmployee = ({ searchQuery }) => {
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 10
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
@@ -55,7 +55,7 @@ const TableEmployee = ({ searchQuery }) => {
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress color="inherit" /></Box>
       ) : (
         <Stack spacing={2}>
-          {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+          {rows.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE).map((row) => (
             <Box
               key={row._id}
               sx={{
@@ -156,12 +156,29 @@ const TableEmployee = ({ searchQuery }) => {
         </Stack>
       )}
 
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={rows.length}
-        onChangePage={(_, p) => setPage(p)}
-      />
+      {rows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(rows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <Snackbar
         open={snackbar.open}

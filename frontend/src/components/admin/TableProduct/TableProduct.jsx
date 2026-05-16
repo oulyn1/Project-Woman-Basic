@@ -20,6 +20,7 @@ import {
   Button,
   Alert,
   Snackbar,
+  Pagination,
 } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -112,6 +113,19 @@ const TableProduct = ({
     )
   }, [rows, categoryId])
 
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 5
+
+  // Reset về trang 1 khi filter thay đổi hoặc dữ liệu thay đổi
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery, categoryId, rows.length])
+
+  const paginatedRows = React.useMemo(() => {
+    const startIndex = (page - 1) * ROWS_PER_PAGE
+    return filteredRows.slice(startIndex, startIndex + ROWS_PER_PAGE)
+  }, [filteredRows, page])
+
   const getCategoryName = (id) =>
     categories.find((cat) => cat._id === id)?.name || 'Không có'
 
@@ -178,7 +192,7 @@ const TableProduct = ({
           Không tìm thấy sản phẩm nào.
         </Typography>
       )}
-      {filteredRows.map((product) => {
+      {paginatedRows.map((product) => {
         const isExpanded = expandedId === product._id
         const totalStock =
           product.variants?.reduce((s, v) => s + (v.stock || 0), 0) || 0
@@ -248,16 +262,17 @@ const TableProduct = ({
                 </Stack>
 
                 {/* Badges */}
-                <Stack direction="row" spacing={1.5}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   <Box
                     sx={{
                       bgcolor: '#fffde7',
                       color: '#afb42b',
                       px: 1.5,
-                      py: 0.2,
-                      borderRadius: '50px',
-                      fontSize: '13px',
+                      py: 0.4,
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
                       fontWeight: 'bold',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {formatCurrency(product.price)}
@@ -267,9 +282,11 @@ const TableProduct = ({
                       bgcolor: '#e3f2fd',
                       color: '#1976d2',
                       px: 1.5,
-                      py: 0.2,
-                      borderRadius: '50px',
-                      fontSize: '13px',
+                      py: 0.4,
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 500,
                     }}
                   >
                     Đã bán: {product.sold || 0}
@@ -279,14 +296,16 @@ const TableProduct = ({
                       bgcolor: '#fff3e0',
                       color: '#e65100',
                       px: 1.5,
-                      py: 0.2,
-                      borderRadius: '50px',
-                      fontSize: '13px',
+                      py: 0.4,
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      whiteSpace: 'nowrap',
+                      fontWeight: 500,
                     }}
                   >
                     Kho: {totalStock}
                   </Box>
-                </Stack>
+                </Box>
               </Box>
 
               {/* Actions */}
@@ -424,6 +443,30 @@ const TableProduct = ({
           </Box>
         )
       })}
+
+      {filteredRows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(filteredRows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       {/* Action Menu */}
       <Menu

@@ -14,6 +14,7 @@ import {
   Stack,
   Menu,
   MenuItem,
+  Pagination
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -25,14 +26,13 @@ import {
   deleteCategoryAPI,
   searchCategoriesAPI,
 } from '~/apis/categoryAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingCategoryId, setDeletingCategoryId] = useState(null)
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 10
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
 
@@ -100,7 +100,7 @@ const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
         {rows
-          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+          .slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE)
           .map((row) => (
             <Box
               key={row._id}
@@ -156,12 +156,29 @@ const TableCategory = ({ onEditCategory, searchQuery, refreshTrigger }) => {
         )}
       </Stack>
 
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={rows.length}
-        onChangePage={(_, p) => setPage(p)}
-      />
+      {rows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(rows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <Menu
         anchorEl={anchorEl}

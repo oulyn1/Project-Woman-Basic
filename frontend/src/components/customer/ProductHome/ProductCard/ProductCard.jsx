@@ -97,7 +97,7 @@ const ProductCard = ({ product, promotions = [] }) => {
           image={product.images?.[0] || 'https://via.placeholder.com/300'}
           alt={product.name}
           sx={{
-            height: { xs: 180, sm: 240, md: 300 },
+            height: { xs: 380, sm: 240, md: 300 },
             width: '100%',
             objectFit: 'cover',
             transition: '0.5s transform ease'

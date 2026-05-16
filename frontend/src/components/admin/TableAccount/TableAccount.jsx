@@ -14,7 +14,8 @@ import {
   Menu,
   MenuItem,
   Collapse,
-  Avatar
+  Avatar,
+  Pagination
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -27,7 +28,6 @@ import LocationOnIcon from '@mui/icons-material/LocationOn'
 import ShieldIcon from '@mui/icons-material/Shield'
 
 import { AllUsersAPI, searchUserAPI, deleteUserAPI } from '~/apis/userAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const styles = {
   rowBox: {
@@ -78,8 +78,8 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 10
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
@@ -94,7 +94,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
           ? await AllUsersAPI(token)
           : await searchUserAPI(searchQuery, token)
         setRows(data)
-        setPage(0) // Reset page on new data
+        setPage(1) // Reset page on new data
       } catch {
         setRows([])
         setSnackbar({ open: true, message: 'Lỗi khi tải dữ liệu!', severity: 'error' })
@@ -109,8 +109,8 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
   }, [rows, roleFilter])
 
   const paginatedRows = useMemo(() => {
-    return filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-  }, [filteredRows, page, rowsPerPage])
+    return filteredRows.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE)
+  }, [filteredRows, page, ROWS_PER_PAGE])
 
   const handleOpenMenu = useCallback((event, id) => {
     event.stopPropagation()
@@ -225,12 +225,29 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
         )}
       </Stack>
 
-      <TablePageControls
-        page={page}
-        rowsPerPage={rowsPerPage}
-        count={filteredRows.length}
-        onChangePage={useCallback((_, p) => setPage(p), [])}
-      />
+      {filteredRows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(filteredRows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <Menu
         anchorEl={anchorEl}

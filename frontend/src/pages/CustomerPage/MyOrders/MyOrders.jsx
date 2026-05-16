@@ -225,10 +225,9 @@ const MyOrders = () => {
         </Box>
       ) : (
         <>
-          <Grid container spacing={2}>
+          <Stack spacing={2} sx={{ width: '100%' }}>
             {paginated.map((o) => (
-              <Grid key={o._id}>
-                <Card variant="outlined">
+              <Card key={o._id} variant="outlined" sx={{ width: '100%' }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'flex-start' }, flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 0 } }}>
                       <Box>
@@ -285,9 +284,8 @@ const MyOrders = () => {
                     )}
                   </CardActions>
                 </Card>
-              </Grid>
             ))}
-          </Grid>
+          </Stack>
 
           <Box sx={{ mt: 3 }}>
             <TablePageControls

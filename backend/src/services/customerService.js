@@ -14,9 +14,16 @@ const getCustomerDetail = async (id) => {
 
 const getCustomerSummary = async (id) => {
   const user = await getCustomerDetail(id)
-  // Lấy đơn theo userId, loại bỏ cancelled ở query để đảm bảo đúng tổng chi tiêu
-  const orders = await orderModel.getAll({ userId: id, status: { $nin: ['cancelled','Cancelled','CANCELLED'] } })
-  // validOrders là danh sách đơn đã loại bỏ cancelle d ở query
+  const currentYear = new Date().getFullYear()
+  const startOfYear = new Date(currentYear, 0, 1)
+  const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59, 999)
+
+  const orders = await orderModel.getAll({ 
+    userId: id, 
+    status: { $nin: ['cancelled','Cancelled','CANCELLED'] },
+    createdAt: { $gte: startOfYear, $lte: endOfYear }
+  })
+  // validOrders là danh sách đơn đã lọc theo năm và status
   const validOrders = orders
   const totalOrders = validOrders.length
   const totalAmount = validOrders.reduce((s, o) => s + Number(o?.total || 0), 0)

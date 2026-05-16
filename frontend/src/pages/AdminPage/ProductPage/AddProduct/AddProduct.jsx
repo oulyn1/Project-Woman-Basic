@@ -131,6 +131,7 @@ function AddProduct({ open, onClose, onSuccess }) {
   const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: '' })
   const [inlineError, setInlineError] = useState('') // lỗi hiện trực tiếp trong dialog
   const [submitting, setSubmitting] = useState(false)
+  const [bulkStock, setBulkStock] = useState('')
 
   // ── AI state ──────────────────────────────────────────────────────────────
   const [aiLoading, setAiLoading] = useState(false)
@@ -717,9 +718,59 @@ function AddProduct({ open, onClose, onSuccess }) {
 
           {/* Variant Matrix */}
           <Box sx={{ mt: 5 }}>
-            <Typography variant="subtitle2" sx={{ mb: 2, color: '#ccc' }}>
-              Tồn kho theo biến thể (size × màu)
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: '#ccc' }}>
+                Tồn kho theo biến thể (size × màu)
+              </Typography>
+              {currentVariants.length > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="caption" sx={{ color: '#888' }}>
+                    Điền nhanh cho tất cả:
+                  </Typography>
+                  <Box
+                    component="input"
+                    type="number"
+                    value={bulkStock}
+                    onChange={(e) => setBulkStock(e.target.value)}
+                    placeholder="0"
+                    sx={{
+                      width: 60,
+                      backgroundColor: '#1a1a1a',
+                      border: '1px solid #444',
+                      borderRadius: '4px',
+                      color: 'white',
+                      textAlign: 'center',
+                      py: 0.5,
+                      '&:focus': { outline: 'none', borderColor: '#2e7d32' },
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => {
+                      if (bulkStock === '') return;
+                      setVariantsMatrix(prev => {
+                        const newMatrix = { ...prev };
+                        currentVariants.forEach(v => {
+                          newMatrix[`${v.size}-${v.color.hex}`] = bulkStock;
+                        });
+                        return newMatrix;
+                      });
+                    }}
+                    sx={{
+                      borderColor: '#444',
+                      color: '#ccc',
+                      textTransform: 'none',
+                      py: 0.25,
+                      minWidth: 'auto',
+                      '&:hover': { borderColor: '#2e7d32', color: '#4caf50' },
+                    }}
+                  >
+                    Áp dụng
+                  </Button>
+                </Box>
+              )}
+            </Box>
             {currentVariants.length > 0 ? (
               <Box
                 sx={{

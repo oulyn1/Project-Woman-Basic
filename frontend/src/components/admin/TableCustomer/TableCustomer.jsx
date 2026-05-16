@@ -3,7 +3,7 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, Snackbar, Alert, Button,
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Box, Stack, Divider, CircularProgress, Avatar, IconButton, Tooltip
+  Box, Stack, Divider, CircularProgress, Avatar, IconButton, Tooltip, Pagination
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import PersonIcon from '@mui/icons-material/Person'
@@ -20,15 +20,14 @@ import {
   getCustomerSummaryAPI,
   getCustomerOrdersAPI
 } from '~/apis/customerAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const formatVND = (n) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(n) || 0)
 
 const TableCustomer = ({ searchQuery }) => {
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 10
   const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' })
   const token = localStorage.getItem('accessToken')
 
@@ -94,7 +93,7 @@ const TableCustomer = ({ searchQuery }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((customer) => (
+        {rows.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE).map((customer) => (
           <Box
             key={customer._id}
             sx={{
@@ -149,7 +148,29 @@ const TableCustomer = ({ searchQuery }) => {
         ))}
       </Stack>
 
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
+      {rows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(rows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       {/* Modernized Detail Dialog */}
       <Dialog

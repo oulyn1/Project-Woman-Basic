@@ -276,7 +276,7 @@ function ProductDetail() {
             <img
               src={mainImage}
               alt={product.name}
-              style={{ width: '100%', height: isMobile ? '300px' : '500px', objectFit: 'contain' }}
+              style={{ width: '100%', height: 'auto', maxHeight: isMobile ? '300px' : '400px', objectFit: 'contain' }}
             />
           </Box>
           <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 1 }}>

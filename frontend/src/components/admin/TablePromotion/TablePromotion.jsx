@@ -15,7 +15,8 @@ import {
   Avatar,
   Divider,
   Menu,
-  MenuItem
+  MenuItem,
+  Pagination
 } from '@mui/material'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
@@ -30,12 +31,11 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { Chip } from '@mui/material'
 
 import { fetchAllPromotionsAPI, deletePromotionAPI, clonePromotionAPI } from '~/apis/promotionAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }) => {
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 7
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [anchorEl, setAnchorEl] = useState(null)
@@ -51,7 +51,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
         if (computedStatus !== 'ALL') query.computedStatus = computedStatus
         const response = await fetchAllPromotionsAPI(query)
         setRows(response.items || [])
-        setPage(0)
+        setPage(1)
       } catch {
         setRows([])
         setSnackbar({ open: true, message: 'Lỗi khi tải khuyến mãi!', severity: 'error' })
@@ -114,7 +114,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((promo) => (
+        {rows.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE).map((promo) => (
           <Box
             key={promo._id}
             sx={{
@@ -208,7 +208,29 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
         )}
       </Stack>
 
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
+      {rows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(rows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <Menu
         anchorEl={anchorEl}

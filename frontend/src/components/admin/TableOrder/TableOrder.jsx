@@ -13,7 +13,8 @@ import {
   Collapse,
   Avatar,
   Divider,
-  IconButton
+  IconButton,
+  Pagination
 } from '@mui/material'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -30,12 +31,11 @@ import {
   searchOrdersAPI,
   confirmOrderAPI
 } from '~/apis/orderAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
   const [orders, setOrders] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 5
   const [expandedId, setExpandedId] = useState(null)
   const [, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
@@ -50,7 +50,7 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
           : await fetchAllOrdersAPI()
         const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         setOrders(sortedData)
-        setPage(0)
+        setPage(1)
       } catch {
         setOrders([])
         setSnackbar({ open: true, message: 'Lỗi khi tải đơn hàng!', severity: 'error' })
@@ -103,7 +103,7 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {filteredOrders.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => {
+        {filteredOrders.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE).map((order) => {
           const statusStyle = getStatusStyle(order.status)
           return (
             <Box
@@ -260,7 +260,29 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
         })}
       </Stack>
 
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={filteredOrders.length} onChangePage={(_, p) => setPage(p)} />
+      {filteredOrders.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(filteredOrders.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       {/* Confirm Dialog */}
       <Dialog

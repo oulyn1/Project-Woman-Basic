@@ -14,7 +14,8 @@ import {
   Collapse,
   Avatar,
   Divider,
-  Rating
+  Rating,
+  Pagination
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -24,12 +25,11 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import RateReviewIcon from '@mui/icons-material/RateReview'
 
 import { getAllRatingsAPI, searchRatingsAPI, deleteRatingAPI } from '~/apis/ratingAPIs'
-import TablePageControls from '../TablePageControls/TablePageControls'
 
 const TableRatings = ({ searchQuery }) => {
   const [rows, setRows] = useState([])
-  const [page, setPage] = useState(0)
-  const [rowsPerPage] = useState(10)
+  const [page, setPage] = useState(1)
+  const ROWS_PER_PAGE = 6
   const [expandedId, setExpandedId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [openDeleteConfirm, setOpenDeleteConfirm] = useState(false)
@@ -79,7 +79,7 @@ const TableRatings = ({ searchQuery }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Stack spacing={2}>
-        {rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+        {rows.slice((page - 1) * ROWS_PER_PAGE, (page - 1) * ROWS_PER_PAGE + ROWS_PER_PAGE).map((row) => (
           <Box
             key={row._id}
             sx={{
@@ -153,7 +153,29 @@ const TableRatings = ({ searchQuery }) => {
         )}
       </Stack>
 
-      <TablePageControls page={page} rowsPerPage={rowsPerPage} count={rows.length} onChangePage={(_, p) => setPage(p)} />
+      {rows.length > ROWS_PER_PAGE && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 1 }}>
+          <Pagination
+            count={Math.ceil(rows.length / ROWS_PER_PAGE)}
+            page={page}
+            onChange={(e, val) => setPage(val)}
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                color: '#ccc',
+                borderColor: '#444',
+              },
+              '& .MuiPaginationItem-root.Mui-selected': {
+                backgroundColor: '#2e7d32',
+                color: 'white',
+                borderColor: '#2e7d32',
+              },
+            }}
+            variant="outlined"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <Dialog
         open={openDeleteConfirm}

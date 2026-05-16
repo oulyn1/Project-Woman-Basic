@@ -318,16 +318,16 @@ function ListProduct() {
         </Box>
       )}
 
-      <Grid container spacing={4}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
         {/* Sidebar - desktop only */}
-        <Grid item xs={12} md={3} sx={{ display: { xs: 'none', md: 'block' } }}>
+        <Box sx={{ width: { md: '25%' }, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
           <Box sx={{ position: 'sticky', top: 120 }}>
             <SidebarContent />
           </Box>
-        </Grid>
+        </Box>
 
         {/* Main Content */}
-        <Grid item xs={12} md={9}>
+        <Box sx={{ flexGrow: 1, width: { xs: '100%', md: '75%' } }}>
           {/* Desktop: top bar with count and sort */}
           {!isMobile && (
             <Box
@@ -374,7 +374,7 @@ function ListProduct() {
           ) : (
             <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
               {processedProducts.map((product) => (
-                <Grid item xs={6} sm={6} md={4} key={product._id}>
+                <Grid item xs={12} sm={6} md={4} key={product._id}>
                   <Box
                     onClick={() => navigate(`/productdetail/${product._id}`)}
                   >
@@ -387,8 +387,8 @@ function ListProduct() {
               ))}
             </Grid>
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
 
       {/* Filter Drawer for mobile */}
       <Drawer
