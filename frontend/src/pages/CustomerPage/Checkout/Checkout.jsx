@@ -225,7 +225,7 @@ function Checkout() {
 
                     return (
                       <Box key={`${item.productId}-${item.variantId}`} sx={{ display: 'flex', gap: { xs: 1.5, md: 2 } }}>
-                        <Box component="img" src={item.product?.image} sx={{ width: { xs: 68, md: 100 }, height: { xs: 80, md: 120 }, objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+                        <Box component="img" src={item.product?.image || item.product?.images?.[0]} sx={{ width: { xs: 68, md: 100 }, height: { xs: 80, md: 120 }, objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="subtitle1" fontWeight="bold">{item.product?.name}</Typography>
                           <Typography variant="body2" color="text.secondary">

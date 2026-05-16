@@ -5,6 +5,7 @@ import { productModel } from "~/models/productModel";
 import Promotion from "~/models/promotionModel";
 import User from "~/models/userModel";
 import { calculateLoyaltyTier } from "~/utils/calculateLoyaltyTier";
+import { sendMail } from "~/services/mailService";
 
 const normalizeId = (value) => {
   if (!value) return "";
@@ -53,8 +54,19 @@ const createNew = async (reqBody, userFromToken) => {
   }
 
   // Trả về chi tiết order kèm product info
-  // Trả về chi tiết order kèm product info
   const getNewOrder = await orderModel.getDetailsWithProducts(createdOrder._id);
+
+  // Send confirmation email
+  try {
+    const { name, email } = newOrder.buyerInfo;
+    const orderId = createdOrder._id.toString();
+    const subject = 'Xác nhận đơn hàng của bạn từ Woman Basic';
+    const text = `Chào ${name},\n\nCảm ơn bạn đã đặt hàng tại Woman Basic.\nMã đơn hàng của bạn là: ${orderId}\nBạn có thể sử dụng mã đơn hàng này để tra cứu trạng thái đơn hàng của mình trên website.\n\nTrân trọng,\nĐội ngũ Woman Basic`;
+    await sendMail(email, subject, text);
+  } catch (error) {
+    console.error('Error sending confirmation email:', error);
+  }
+
   return getNewOrder;
 };
 

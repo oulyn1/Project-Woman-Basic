@@ -9,7 +9,7 @@ import {
 } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
 import CloseIcon from '@mui/icons-material/Close'
-import { fetchMyOrdersAPI, searchMyOrdersAPI, updateOrderAPI } from '~/apis/orderAPIs'
+import { fetchMyOrdersAPI, searchMyOrdersAPI, updateOrderAPI, getOrderDetailAPI } from '~/apis/orderAPIs'
 import TablePageControls from '~/components/admin/TablePageControls/TablePageControls'
 import { addRatingAPI } from '~/apis/ratingAPIs'
 const statusColor = (status) => {
@@ -62,6 +62,9 @@ const useDebounce = (value, delay = 300) => {
 }
 
 const MyOrders = () => {
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const isLoggedIn = !!user
+
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
@@ -80,17 +83,26 @@ const MyOrders = () => {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const data = debouncedSearch
-          ? await searchMyOrdersAPI(debouncedSearch)
-          : await fetchMyOrdersAPI()
+        if (!isLoggedIn) {
+          if (debouncedSearch) {
+             const data = await getOrderDetailAPI(debouncedSearch)
+             setOrders(data ? [data] : [])
+          } else {
+             setOrders([])
+          }
+        } else {
+          const data = debouncedSearch
+            ? await searchMyOrdersAPI(debouncedSearch)
+            : await fetchMyOrdersAPI()
 
-        const filtered = filterStatus === 'all'
-          ? data
-          : data.filter(o => o.status === filterStatus)
+          const filtered = filterStatus === 'all'
+            ? data
+            : data.filter(o => o.status === filterStatus)
 
-        const sorted = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          const sorted = filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
-        setOrders(sorted)
+          setOrders(sorted)
+        }
       } catch {
         setOrders([])
       } finally {
@@ -172,7 +184,7 @@ const MyOrders = () => {
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
         <TextField
           variant="outlined"
-          placeholder="Tìm kiếm theo mã đơn / tên / email..."
+          placeholder={isLoggedIn ? "Tìm kiếm theo mã đơn / tên / email..." : "Nhập mã đơn hàng để tra cứu..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
@@ -221,7 +233,9 @@ const MyOrders = () => {
         </Box>
       ) : orders.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 12 }}>
-          <Typography variant="h6" color="text.secondary">Chưa có đơn hàng.</Typography>
+          <Typography variant="h6" color="text.secondary">
+            {!isLoggedIn && !debouncedSearch ? "Vui lòng nhập mã đơn hàng của bạn để tra cứu." : "Không tìm thấy đơn hàng."}
+          </Typography>
         </Box>
       ) : (
         <>

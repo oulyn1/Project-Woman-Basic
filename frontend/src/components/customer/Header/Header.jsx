@@ -134,10 +134,8 @@ function Header() {
 
   const handleAccountClick = () =>
     token ? navigate('/editprofile') : setOpenAuthDialog(true)
-  const handleOrderClick = () =>
-    token ? navigate('/myorders') : setOpenAuthDialog(true)
-  const handleCartClick = () =>
-    token ? navigate('/cart') : setOpenAuthDialog(true)
+  const handleOrderClick = () => navigate('/myorders')
+  const handleCartClick = () => navigate('/cart')
 
   const closeDrawerAndNavigate = (path) => {
     setDrawerOpen(false)
@@ -371,25 +369,23 @@ function Header() {
 
         {/* Auth Actions */}
         <Box sx={{ px: 2, pt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={() => closeDrawerAndNavigate('/myorders')}
+            startIcon={<LocalMallOutlinedIcon />}
+          >
+            Đơn hàng của tôi
+          </Button>
           {token ? (
-            <>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => closeDrawerAndNavigate('/editprofile')}
-                startIcon={<PersonOutlineOutlinedIcon />}
-              >
-                Tài khoản của tôi
-              </Button>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => closeDrawerAndNavigate('/myorders')}
-                startIcon={<LocalMallOutlinedIcon />}
-              >
-                Đơn hàng của tôi
-              </Button>
-            </>
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={() => closeDrawerAndNavigate('/editprofile')}
+              startIcon={<PersonOutlineOutlinedIcon />}
+            >
+              Tài khoản của tôi
+            </Button>
           ) : (
             <Button
               variant="contained"

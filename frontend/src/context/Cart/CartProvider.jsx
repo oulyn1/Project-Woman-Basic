@@ -17,6 +17,8 @@ const CartProvider = ({ children }) => {
       setLoading(true)
       const userStr = localStorage.getItem('user')
       if (!userStr) {
+        const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
+        setCartItems(guestCart)
         return
       }
       const res = await getCartByUserAPI()
@@ -38,6 +40,37 @@ const CartProvider = ({ children }) => {
 
   const addToCart = async (product, variantId, quantity = 1, color = '', size = '') => {
     if (!product?._id || !variantId) return
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
+      const existingItemIndex = guestCart.findIndex(i => i.productId === product._id && i.variantId === variantId)
+      
+      const variant = product.variants?.find(v => v._id === variantId) || null
+
+      if (existingItemIndex >= 0) {
+        guestCart[existingItemIndex].quantity += quantity
+      } else {
+        guestCart.push({
+          productId: product._id,
+          variantId,
+          quantity,
+          color,
+          size,
+          product: {
+            _id: product._id,
+            name: product.name,
+            price: product.price,
+            image: product.images?.[0] || '',
+            slug: product.slug
+          },
+          variant
+        })
+      }
+      localStorage.setItem('guestCart', JSON.stringify(guestCart))
+      setCartItems(guestCart)
+      return { success: true, data: { items: guestCart } }
+    }
+
     try {
       const res = await addToCartAPI(product._id.toString(), variantId, quantity, color, size)
       if (res.success) {
@@ -50,6 +83,24 @@ const CartProvider = ({ children }) => {
   }
 
   const updateQuantity = async (productId, variantId, newQuantity) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      const guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
+      const existingItemIndex = guestCart.findIndex(i => i.productId === productId && i.variantId === variantId)
+      
+      if (existingItemIndex >= 0) {
+        const item = guestCart[existingItemIndex]
+        const maxQuantity = item.variant?.stock || Infinity
+        if (newQuantity > maxQuantity) newQuantity = maxQuantity
+        if (newQuantity < 1) newQuantity = 1
+
+        guestCart[existingItemIndex].quantity = newQuantity
+        localStorage.setItem('guestCart', JSON.stringify(guestCart))
+        setCartItems([...guestCart])
+      }
+      return
+    }
+
     try {
       const item = cartItems.find(i => i.productId === productId && i.variantId === variantId)
       if (!item) return
@@ -66,6 +117,15 @@ const CartProvider = ({ children }) => {
   }
 
   const removeFromCart = async (productId, variantId) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
+      guestCart = guestCart.filter(i => !(i.productId === productId && i.variantId === variantId))
+      localStorage.setItem('guestCart', JSON.stringify(guestCart))
+      setCartItems(guestCart)
+      return
+    }
+
     try {
       const res = await removeItemAPI(productId, variantId)
       if (res.success) {
@@ -75,6 +135,13 @@ const CartProvider = ({ children }) => {
   }
 
   const clearCart = async () => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      localStorage.removeItem('guestCart')
+      setCartItems([])
+      return
+    }
+
     try {
       const res = await clearCartAPI()
       if (res.success) setCartItems(res.data?.items || [])
@@ -82,6 +149,15 @@ const CartProvider = ({ children }) => {
   }
 
   const removeManyFromCart = async (items = []) => {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) {
+      let guestCart = JSON.parse(localStorage.getItem('guestCart') || '[]')
+      guestCart = guestCart.filter(cartItem => !items.some(i => i.productId === cartItem.productId && i.variantId === cartItem.variantId))
+      localStorage.setItem('guestCart', JSON.stringify(guestCart))
+      setCartItems(guestCart)
+      return
+    }
+
     try {
       // items are expected to be { productId, variantId } objects
       for (const item of items) {

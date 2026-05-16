@@ -180,11 +180,6 @@ function ProductDetail() {
   }, [currentVariant, cartItems, product, quantity])
 
   const handleCartClick = async () => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      setOpenAuthDialog(true)
-      return
-    }
     if (currentVariant && !isOutOfStock) {
       setIsAdding(true)
       const res = await addToCart(

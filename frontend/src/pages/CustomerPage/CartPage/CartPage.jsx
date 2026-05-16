@@ -252,7 +252,7 @@ function CartPage() {
                   />
                   <Box
                     component="img"
-                    src={item.product?.image}
+                    src={item.product?.image || item.product?.images?.[0]}
                     alt={item.product?.name}
                     sx={{
                       width: { xs: 68, sm: 80 },
