@@ -24,7 +24,17 @@ const productSchema = new mongoose.Schema({
   sizeChart: { type: String, default: '' },
   sizeGuide: { type: String, default: '' },
   isDeleted: { type: Boolean, default: false },
-  deletedAt: { type: Date, default: null }
+  deletedAt: { type: Date, default: null },
+
+  // === Recommendation Engine stats ===
+  // Dùng atomic $inc khi update — không dùng .save()
+  stats: {
+    viewCount:      { type: Number, default: 0 },
+    addToCartCount: { type: Number, default: 0 },
+    purchaseCount:  { type: Number, default: 0 },
+    // totalScore = viewCount*1 + addToCartCount*5 + purchaseCount*10
+    totalScore:     { type: Number, default: 0 }
+  }
 }, {
   timestamps: true,
   collection: 'products'

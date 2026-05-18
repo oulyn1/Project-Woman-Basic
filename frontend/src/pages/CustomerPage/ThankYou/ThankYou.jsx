@@ -1,11 +1,27 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { useLocation, useNavigate } from 'react-router-dom'
+import useTrackBehavior from '~/hooks/useTrackBehavior'
 
 function ThankYou() {
   const location = useLocation()
   const navigate = useNavigate()
   const order = location.state?.order
+  const { trackPurchase } = useTrackBehavior()
+
+  // Track purchase cho từng sản phẩm trong đơn hàng
+  useEffect(() => {
+    if (!order?.items) return
+    order.items.forEach(item => {
+      const productId = item.productId?.toString() || item.productId
+      // categoryId có thể không có ở đây — backend fallback sẽ tự tìm từ product
+      const categoryId = item.product?.categoryId || null
+      if (productId) {
+        trackPurchase(productId, categoryId)
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?._id])
 
   if (!order) {
     return (

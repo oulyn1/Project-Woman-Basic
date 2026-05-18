@@ -35,6 +35,26 @@ const userSchema = new mongoose.Schema(
       enum: ["online", "offline"],
       default: "offline",
     },
+
+    // === Recommendation Engine ===
+    // Điểm sở thích theo danh mục (key = categoryId dạng string)
+    categoryScores: {
+      type: Map,
+      of: Number,
+      default: {}
+    },
+
+    // 50 sự kiện hành vi gần nhất (để AI phân tích pattern)
+    behaviorEvents: [
+      {
+        categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category' },
+        productId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+        action:     { type: String, enum: ['view', 'add_to_cart', 'purchase'] },
+        score:      { type: Number },
+        createdAt:  { type: Date, default: Date.now }
+      }
+    ]
+    // Giới hạn 50 events dùng $push + $slice khi update (xem behaviorTracking.service)
   },
   {
     timestamps: true,

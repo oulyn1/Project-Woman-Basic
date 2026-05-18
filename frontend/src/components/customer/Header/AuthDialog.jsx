@@ -26,6 +26,8 @@ import {
   verifyOtpAPI,
   resetPasswordAPI
 } from '~/apis/userAPIs'
+import { mergeGuestBehaviorAPI } from '~/apis/recommendation.api'
+import { getSessionId, clearSessionId } from '~/utils/session'
 import { useNavigate } from 'react-router-dom'
 import OtpInput from '~/components/customer/OtpInput/OtpInput'
 
@@ -88,6 +90,16 @@ function AuthDialog({ open, onClose, tabValue = 0 }) {
       if (res.token) {
         localStorage.setItem('accessToken', res.token)
         localStorage.setItem('user', JSON.stringify(res.user))
+
+        // Merge dữ liệu hành vi guest vào tài khoản user
+        try {
+          const sessionId = getSessionId()
+          await mergeGuestBehaviorAPI(sessionId)
+          clearSessionId() // Xóa session cũ, tạo mới cho lần sau
+        } catch {
+          // Không cần xử lý lỗi — không ảnh hưởng login
+        }
+
         showMsg('Đăng nhập thành công!', 'success')
         setTimeout(() => {
           onClose()

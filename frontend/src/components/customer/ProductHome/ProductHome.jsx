@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 import ProductCard from './ProductCard/ProductCard'
+import RecommendedSection from './RecommendedSection'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
 import { useNavigate } from 'react-router-dom'
@@ -221,6 +222,9 @@ function ProductHome() {
   return (
     <Box sx={{ pb: 8 }}>
       <Container maxWidth="lg">
+        {/* Recommended Section — phía trên New Arrivals */}
+        <RecommendedSection />
+
         {/* New Arrivals Section */}
         <Box sx={{ mt: { xs: 4, md: 6 }, mb: { xs: 6, md: 8 } }}>
           <Typography

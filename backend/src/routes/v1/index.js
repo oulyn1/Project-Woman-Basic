@@ -10,6 +10,7 @@ import { promotionRoute } from "./promotionRoute"
 import { customerRoute } from "./customerRoute"
 import { aiRoute } from "./ai.route"
 import { chatRoute } from "./chat.route"
+import { recommendationRoute } from "./recommendation.route"
 import { authMiddleware } from "~/middlewares/authMiddleware"
 import { isAdmin, isStaff } from "~/middlewares/roleMiddleware"
 
@@ -38,5 +39,7 @@ Router.use('/customers', authMiddleware, isStaff, customerRoute)
 Router.use('/ai', authMiddleware, isStaff, aiRoute)
 
 Router.use('/chat', chatRoute)
+
+Router.use('/recommendations', recommendationRoute)
 
 export const APIs_V1 = Router

@@ -6,6 +6,8 @@ import Order from '~/models/orderModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 import { aiHelper } from '~/utils/aiHelper'
+import { getCategoryInsights } from '~/services/recommendation.service.js'
+import WeeklyInsight from '~/models/weeklyInsight.model.js'
 
 /**
  * Lấy context dữ liệu kinh doanh để inject vào admin system prompt.
@@ -16,7 +18,7 @@ const getAdminContext = async () => {
   const sevenDaysAgo = new Date(startOfToday)
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const [totalProducts, todayOrders, revenueResult, topProductsResult, allProducts] = await Promise.all([
+  const [totalProducts, todayOrders, revenueResult, topProductsResult, allProducts, catInsights, latestWeekly] = await Promise.all([
     Product.countDocuments({ isDeleted: { $ne: true } }),
     Order.find({ createdAt: { $gte: startOfToday } }).lean(),
     Order.aggregate([
@@ -48,7 +50,9 @@ const getAdminContext = async () => {
         }
       }
     ]),
-    Product.find({ isDeleted: { $ne: true } }).select('name price variants images').lean()
+    Product.find({ isDeleted: { $ne: true } }).select('name price variants images').lean(),
+    getCategoryInsights().catch(() => []),
+    WeeklyInsight.findOne().sort({ createdAt: -1 }).select('report weekStart weekEnd').lean().catch(() => null)
   ])
 
   const todayRevenue = todayOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0)
@@ -75,7 +79,9 @@ const getAdminContext = async () => {
     doanhThu7Ngay: revenueResult,
     top5BanChay7NgayQua: topProductsResult,
     sanPhamSapHetHangTheoSize: lowStockVariants.slice(0, 15),
-    donChoXuLy: todayOrders.filter(o => o.status === 'pending').length
+    donChoXuLy: todayOrders.filter(o => o.status === 'pending').length,
+    categoryInsights: catInsights,
+    latestWeeklyReport: latestWeekly
   }, null, 2)
 }
 
@@ -169,13 +175,14 @@ HƯỚNG DẪN TƯ DUY:
 - Dựa trên dữ liệu doanh thu, tồn kho (chi tiết theo Size/Màu), đơn hàng, hãy đưa ra các nhận xét sắc sảo.
 - Nếu doanh thu bằng 0, phải nhận định là vấn đề nghiêm trọng và đề xuất giải pháp ngay.
 - Khi báo cáo hàng sắp hết, hãy liệt kê cụ thể Tên sản phẩm - Màu - Size và số lượng tồn để admin có kế hoạch nhập hàng chính xác.
+- Khi admin hỏi về sản phẩm được ưa chuộng, xu hướng, hoặc insight kinh doanh — ưu tiên dùng dữ liệu categoryInsights và latestWeeklyReport để trả lời với số liệu cụ thể (viewCount, addToCartCount, purchaseCount, totalScore).
 
 QUY TẮC KỸ THUẬT:
 - LUÔN LUÔN trả lời bằng văn bản tiếng Việt trước khi đưa ra các thẻ kỹ thuật.
 - CHỈ hiển thị ACTION_CARD khi admin có yêu cầu trực tiếp về việc THÊM, SỬA, XÓA hoặc QUẢN LÝ danh sách thực thể: <!--ACTION_CARD::{"entity":"product"|"account"|"category"|"order"}-->.
 - TUYỆT ĐỐI KHÔNG hiển thị ACTION_CARD nếu admin chỉ đang hỏi thông tin, yêu cầu phân tích, nhận xét kinh doanh hoặc trò chuyện bình thường. Trong trường hợp này, CHỈ sử dụng QUICK_REPLIES.
 - Nếu đã có ACTION_CARD thì KHÔNG ĐƯỢC trả về QUICK_REPLIES.
-- Gợi ý phím tắt (chỉ khi KHÔNG có ACTION_CARD): <!--QUICK_REPLIES::["Nhận xét kinh doanh tuần này", "Sản phẩm sắp hết hàng"]-->`
+- Gợi ý phím tắt (chỉ khi KHÔNG có ACTION_CARD): <!--QUICK_REPLIES::["Danh mục được xem nhiều nhất", "Nhận xét kinh doanh tuần này", "Sản phẩm sắp hết hàng"]-->`
 
   const messages = [{ role: 'system', content: systemPrompt }, ...history.slice(-10).map(m => ({ role: m.role, content: m.content })), { role: 'user', content: message }]
 

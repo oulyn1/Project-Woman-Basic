@@ -25,6 +25,8 @@ import { getRatingsByProductId } from '~/apis/ratingAPIs'
 import { useCart } from '~/context/Cart/useCart'
 import { fetchAllPromotionsAPI } from '~/apis/promotionAPIs'
 import AuthDialog from '~/components/customer/Header/AuthDialog'
+import useTrackBehavior from '~/hooks/useTrackBehavior'
+import SimilarProductsSection from '~/components/product/SimilarProductsSection'
 
 const formatCurrency = (amount) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
@@ -56,6 +58,9 @@ function ProductDetail() {
   const [selectedColor, setSelectedColor] = useState(null)
   const [mainImage, setMainImage] = useState('')
   const [openAuthDialog, setOpenAuthDialog] = useState(false)
+
+  // Behavior tracking
+  const { trackView, trackAddToCart, viewTimerRef } = useTrackBehavior()
 
   // Load current user từ localStorage
   useEffect(() => {
@@ -142,6 +147,19 @@ function ProductDetail() {
     setQuantity(1)
   }, [selectedSize, selectedColor])
 
+  // Track view với debounce 5 giây
+  useEffect(() => {
+    if (product) {
+      const categoryId = product.categoryId?._id || product.categoryId
+      trackView(product._id, categoryId)
+    }
+    // Cleanup: cancel timer nếu user rời trang trước 5s
+    return () => {
+      if (viewTimerRef.current) clearTimeout(viewTimerRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?._id])
+
   const uniqueSizes = useMemo(() => {
     if (!product?.variants) return []
     return [...new Set(product.variants.map((v) => v.size))]
@@ -192,6 +210,10 @@ function ProductDetail() {
       setIsAdding(false)
 
       if (res?.success) {
+        // Track add to cart
+        const categoryId = product.categoryId?._id || product.categoryId
+        trackAddToCart(product._id, categoryId)
+
         setSnackbar({
           open: true,
           message: 'Đã thêm sản phẩm vào giỏ hàng!',
@@ -679,6 +701,9 @@ function ProductDetail() {
         open={openAuthDialog}
         onClose={() => setOpenAuthDialog(false)}
       />
+
+      {/* Sản phẩm tương tự */}
+      <SimilarProductsSection productId={productId} />
     </Container>
   )
 }

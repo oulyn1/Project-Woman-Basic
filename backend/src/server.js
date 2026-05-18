@@ -60,6 +60,8 @@ const START_SERVER = () => {
     if (ratingModel?.ensureUniqueIndex) {
       await ratingModel.ensureUniqueIndex()
     }
+    // Khởi động cron job weekly insight (phải sau khi DB ready)
+    await import('./jobs/weeklyInsight.job.js')
     START_SERVER()
   } catch (error) {
     console.error(error)
