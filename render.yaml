@@ -4,8 +4,9 @@ services:
     name: woman-basic-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build --workspace=backend
-    startCommand: npm run production --workspace=backend
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run production
     envVars:
       - key: BUILD_MODE
         value: production
@@ -28,8 +29,9 @@ services:
   - type: web
     name: woman-basic-frontend
     runtime: static
-    buildCommand: npm install && npm run build --workspace=frontend
-    staticPublishPath: frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_ROOT
         value: https://woman-basic-backend.onrender.com
