@@ -1,0 +1,36 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: woman-basic-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=backend
+    startCommand: npm run production --workspace=backend
+    envVars:
+      - key: BUILD_MODE
+        value: production
+      - key: DATABASE_NAME
+        value: WomanBasic
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: MAIL_USER
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: CLIENT_URL
+        value: https://woman-basic-frontend.onrender.com
+
+  # Frontend Static Site
+  - type: static
+    name: woman-basic-frontend
+    env: static
+    plan: free
+    buildCommand: npm install && npm run build --workspace=frontend
+    publishPath: frontend/dist
+    envVars:
+      - key: VITE_API_ROOT
+        value: https://woman-basic-backend.onrender.com

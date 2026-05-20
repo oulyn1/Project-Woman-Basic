@@ -42,8 +42,9 @@ const START_SERVER = () => {
 
   app.use(errorHandlingMiddleware)
 
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`Hello Oulyne, I am running at ${ env.APP_HOST }:${ env.APP_PORT }/`)
+  const host = env.BUILD_MODE === 'production' ? '0.0.0.0' : env.APP_HOST
+  app.listen(env.APP_PORT, host, () => {
+    console.log(`Hello Oulyne, I am running at ${ host }:${ env.APP_PORT }/`)
   })
 
   exitHook(() => {
