@@ -25,12 +25,12 @@ services:
         value: https://woman-basic-frontend.onrender.com
 
   # Frontend Static Site
-  - type: static
+  - type: web
     name: woman-basic-frontend
-    env: static
+    runtime: static
     plan: free
     buildCommand: npm install && npm run build --workspace=frontend
-    publishPath: frontend/dist
+    staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_ROOT
         value: https://woman-basic-backend.onrender.com
