@@ -28,7 +28,6 @@ services:
   - type: web
     name: woman-basic-frontend
     runtime: static
-    plan: free
     buildCommand: npm install && npm run build --workspace=frontend
     staticPublishPath: frontend/dist
     envVars:
