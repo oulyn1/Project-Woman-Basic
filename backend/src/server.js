@@ -38,6 +38,10 @@ const START_SERVER = () => {
   app.use('/v1/user/register', authLimiter)
   app.use('/v1/user/send-otp', authLimiter)
 
+  app.get('/ping', (req, res) => {
+    res.status(200).send('Sống')
+  })
+
   app.use('/v1', APIs_V1)
 
   app.use(errorHandlingMiddleware)
