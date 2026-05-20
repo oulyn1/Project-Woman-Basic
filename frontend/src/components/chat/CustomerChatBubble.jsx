@@ -18,7 +18,7 @@ const CustomerChatBubble = () => {
         <Box
           sx={{
             position: 'fixed',
-            bottom: 24,
+            bottom: { xs: 90, md: 24 },
             right: 24,
             zIndex: 2147483647 // Đảm bảo đè lên Header (nếu bị che)
           }}
