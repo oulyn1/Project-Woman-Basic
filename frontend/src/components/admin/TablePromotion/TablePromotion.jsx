@@ -32,7 +32,7 @@ import { Chip } from '@mui/material'
 
 import { fetchAllPromotionsAPI, deletePromotionAPI, clonePromotionAPI } from '~/apis/promotionAPIs'
 
-const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }) => {
+const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL', refreshTrigger }) => {
   const [rows, setRows] = useState([])
   const [page, setPage] = useState(1)
   const ROWS_PER_PAGE = 7
@@ -60,7 +60,7 @@ const TablePromotion = ({ onEditPromotion, searchQuery, computedStatus = 'ALL' }
       }
     }
     fetchPromotions()
-  }, [searchQuery, computedStatus])
+  }, [searchQuery, computedStatus, refreshTrigger])
 
   const handleOpenMenu = (event, id) => {
     event.stopPropagation()

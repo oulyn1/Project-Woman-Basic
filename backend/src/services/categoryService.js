@@ -1,5 +1,6 @@
 import { slugify } from '~/utils/formatters'
 import { categoryModel } from '~/models/categoryModel'
+import { productModel } from '~/models/productModel'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
  
@@ -48,6 +49,12 @@ const getAll = async () => {
 
 const deleteOne = async (categoryId) => {
   try {
+    // ✅ FIX: Chặn xóa danh mục nếu vẫn còn sản phẩm thuộc danh mục (Phương án 1)
+    const productCount = await productModel.countDocuments({ categoryId })
+    if (productCount > 0) {
+      throw new ApiError(StatusCodes.CONFLICT, 'Không thể xóa danh mục này vì vẫn còn sản phẩm thuộc danh mục!')
+    }
+
     const result = await categoryModel.deleteOne(categoryId)
     if (!result) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'No categorys found')
@@ -75,6 +82,11 @@ const updateOne = async (categoryId, reqBody) => {
     const updateData = {
       ...reqBody,
       updatedAt: Date.now()
+    }
+
+    // ✅ FIX: Nếu cập nhật tên danh mục, tự động tạo lại slug tương ứng
+    if (reqBody.name) {
+      updateData.slug = slugify(reqBody.name)
     }
 
     const updatedCategory = await categoryModel.updateOne(categoryId, updateData)

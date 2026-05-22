@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Box, Typography, TextField, IconButton, Avatar, Chip, Card, CardContent,
   Button, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Divider, CircularProgress, Snackbar, Alert
+  Divider, CircularProgress, Snackbar, Alert, Select, MenuItem
 } from '@mui/material'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import EditIcon from '@mui/icons-material/Edit'
@@ -21,7 +21,9 @@ import {
 import { fetchAllProductsAPI, deleteProductAPI, updateProductAPI, createProductAPI } from '~/apis/productAPIs'
 import { AllUsersAPI, deleteUserAPI, updateAccountAPI, createUserAPI } from '~/apis/userAPIs'
 import { fetchAllCategoriesAPI, deleteCategoryAPI } from '~/apis/categoryAPIs'
-import { fetchAllOrdersAPI, deleteOrderAPI, updateOrderAPI } from '~/apis/orderAPIs'
+import { fetchAllOrdersAPI, deleteOrderAPI, updateOrderAPI, confirmOrderAPI } from '~/apis/orderAPIs'
+import { fetchAllPromotionsAPI, deletePromotionAPI } from '~/apis/promotionAPIs'
+import { getAllRatingsAPI, deleteRatingAPI } from '~/apis/ratingAPIs'
 import SearchIcon from '@mui/icons-material/Search'
 import AddIcon from '@mui/icons-material/Add'
 
@@ -32,6 +34,8 @@ import AddAccount from '../AccountPage/AddAccount/AddAccount'
 import EditAccount from '../AccountPage/EditAccount/EditAccount'
 import AddCategory from '../CategoryPage/AddCategory/AddCategory'
 import EditCategory from '../CategoryPage/EditCategory/EditCategory'
+import AddPromotion from '../PromotionPage/AddPromotion/AddPromotion'
+import EditPromotion from '../PromotionPage/EditPromotion/EditPromotion'
 
 const QUICK_ACTIONS = [
   { label: '📊 Tóm tắt hôm nay', msg: 'Tóm tắt hôm nay' },
@@ -69,9 +73,11 @@ const MiniManager = ({ entity, onDismiss }) => {
       else if (entity === 'account') res = await AllUsersAPI()
       else if (entity === 'category') res = await fetchAllCategoriesAPI()
       else if (entity === 'order') res = await fetchAllOrdersAPI()
+      else if (entity === 'promotion') res = await fetchAllPromotionsAPI()
+      else if (entity === 'rating') res = await getAllRatingsAPI()
 
       // Handle different API response structures
-      const items = res?.data || res || []
+      const items = res?.items || res?.data || res || []
       setData(Array.isArray(items) ? items : [])
     } catch (err) { console.error('Load failed:', err) }
     setLoading(false)
@@ -99,6 +105,8 @@ const MiniManager = ({ entity, onDismiss }) => {
       else if (entity === 'account') await deleteUserAPI(deletingId)
       else if (entity === 'category') await deleteCategoryAPI(deletingId)
       else if (entity === 'order') await deleteOrderAPI(deletingId)
+      else if (entity === 'promotion') await deletePromotionAPI(deletingId)
+      else if (entity === 'rating') await deleteRatingAPI(deletingId)
       setSnackbar({ open: true, message: 'Đã xóa bản ghi!', severity: 'success' })
       loadData()
     } catch {
@@ -108,6 +116,8 @@ const MiniManager = ({ entity, onDismiss }) => {
       setDeletingId(null)
     }
   }
+
+  const showAddButton = entity !== 'order' && entity !== 'rating'
 
   return (
     <Box sx={{ mt: 1.5, borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', backgroundColor: '#0d131f', overflow: 'hidden' }}>
@@ -120,37 +130,62 @@ const MiniManager = ({ entity, onDismiss }) => {
             sx: { borderRadius: '10px', backgroundColor: 'rgba(0,0,0,0.2)', fontSize: '0.75rem', color: '#ccc' }
           }}
         />
-        <Button
-          variant="contained" size="small" startIcon={<AddIcon />}
-          onClick={() => { setEditingItem(null); setOpenAdd(true) }}
-          sx={{ backgroundColor: '#1e3a5f', color: '#60efff', textTransform: 'none', borderRadius: '10px', minWidth: '90px', fontSize: '0.7rem' }}
-        >
-          Thêm
-        </Button>
+        {showAddButton && (
+          <Button
+            variant="contained" size="small" startIcon={<AddIcon />}
+            onClick={() => { setEditingItem(null); setOpenAdd(true) }}
+            sx={{ backgroundColor: '#1e3a5f', color: '#60efff', textTransform: 'none', borderRadius: '10px', minWidth: '90px', fontSize: '0.7rem' }}
+          >
+            Thêm
+          </Button>
+        )}
         <IconButton size="small" onClick={onDismiss} sx={{ color: '#555' }}><CloseOutlinedIcon sx={{ fontSize: 18 }} /></IconButton>
       </Box>
 
       <Box sx={{ maxHeight: '240px', overflowY: 'auto', p: 1 }}>
         {loading ? <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress size={20} /></Box> : (
-          data.slice(0, 10).map((item) => (
-            <Box key={item._id} sx={{
-              display: 'flex', alignItems: 'center', gap: 1.5, p: 1.2, mb: 0.5, borderRadius: '10px',
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.03)' }
-            }}>
-              <Avatar src={item.image || item.images?.[0] || item.avatar} sx={{ width: 32, height: 32, borderRadius: '8px' }} variant="rounded" />
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="caption" sx={{ color: '#eee', fontWeight: 600, display: 'block', noWrap: true }}>{item.name || item.fullName || item.username || item._id}</Typography>
-                <Typography variant="caption" sx={{ color: '#555', fontSize: '0.65rem' }}>
-                  {item.price ? `${item.price.toLocaleString()}đ` : item.email || item.status || ''}
-                  {item.role && ` • ${item.role}`}
-                </Typography>
+          data.slice(0, 10).map((item) => {
+            let title = item.name || item.fullName || item.username || item.title || item._id
+            let subtitle = ''
+            let avatarUrl = item.image || item.images?.[0] || item.avatar || ''
+
+            if (entity === 'order') {
+              title = `Đơn hàng #${item.code || item._id?.substring(18) || item._id}`
+              subtitle = `${item.total?.toLocaleString()}đ • Trạng thái: ${item.status}`
+            } else if (entity === 'promotion') {
+              title = item.title || item._id
+              subtitle = `Giảm ${item.discountValue}${item.discountType === 'percent' ? '%' : 'đ'} • ${item.computedStatus || item.status || ''}`
+            } else if (entity === 'rating') {
+              title = item.productName || 'Đánh giá'
+              subtitle = `${'⭐'.repeat(item.star || 5)} • "${item.description}"`
+            } else {
+              subtitle = item.price ? `${item.price.toLocaleString()}đ` : item.email || item.status || ''
+              if (item.role) subtitle += ` • ${item.role}`
+            }
+
+            const canEdit = entity !== 'rating'
+
+            return (
+              <Box key={item._id} sx={{
+                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.2, mb: 0.5, borderRadius: '10px',
+                '&:hover': { backgroundColor: 'rgba(255,255,255,0.03)' }
+              }}>
+                <Avatar src={avatarUrl} sx={{ width: 32, height: 32, borderRadius: '8px' }} variant="rounded" />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography variant="caption" sx={{ color: '#eee', fontWeight: 600, display: 'block', noWrap: true }}>{title}</Typography>
+                  <Typography variant="caption" sx={{ color: '#555', fontSize: '0.65rem' }}>
+                    {subtitle}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  {canEdit && (
+                    <IconButton size="small" onClick={() => { setEditingItem(item); setOpenEdit(true) }} sx={{ color: '#42a5f5', p: 0.5 }}><EditIcon sx={{ fontSize: 14 }} /></IconButton>
+                  )}
+                  <IconButton size="small" onClick={() => { setDeletingId(item._id); setOpenDeleteConfirm(true) }} sx={{ color: '#ff6347', p: 0.5 }}><DeleteIcon sx={{ fontSize: 14 }} /></IconButton>
+                </Box>
               </Box>
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                <IconButton size="small" onClick={() => { setEditingItem(item); setOpenEdit(true) }} sx={{ color: '#42a5f5', p: 0.5 }}><EditIcon sx={{ fontSize: 14 }} /></IconButton>
-                <IconButton size="small" onClick={() => { setDeletingId(item._id); setOpenDeleteConfirm(true) }} sx={{ color: '#ff6347', p: 0.5 }}><DeleteIcon sx={{ fontSize: 14 }} /></IconButton>
-              </Box>
-            </Box>
-          ))
+            )
+          })
         )}
         {!loading && data.length === 0 && (
           <Typography variant="caption" sx={{ color: '#444', display: 'block', textAlign: 'center', p: 2 }}>Không tìm thấy dữ liệu</Typography>
@@ -175,6 +210,67 @@ const MiniManager = ({ entity, onDismiss }) => {
           <AddCategory open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm danh mục!')} />
           {editingItem && <EditCategory open={openEdit} categoryId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={() => handleSuccess('Đã cập nhật danh mục!')} />}
         </>
+      )}
+      {entity === 'promotion' && (
+        <>
+          <AddPromotion open={openAdd} onClose={() => setOpenAdd(false)} onSuccess={() => handleSuccess('Đã thêm khuyến mãi!')} />
+          {editingItem && <EditPromotion open={openEdit} promotionId={editingItem._id} onClose={() => setOpenEdit(false)} onSuccess={handleSuccess} />}
+        </>
+      )}
+      {entity === 'order' && editingItem && (
+        <Dialog
+          open={openEdit}
+          onClose={() => setOpenEdit(false)}
+          PaperProps={{ sx: { backgroundColor: '#1a1a1a', color: 'white', borderRadius: '12px', minWidth: '350px' } }}
+        >
+          <DialogTitle sx={{ fontWeight: 'bold' }}>Cập nhật đơn hàng #{editingItem.code || editingItem._id}</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Typography variant="body2" sx={{ color: '#ccc' }}>
+              Khách hàng: <b>{editingItem.fullName || editingItem.username || 'Khách vãng lai'}</b>
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#ccc' }}>
+              Tổng tiền: <b>{editingItem.total?.toLocaleString()}đ</b>
+            </Typography>
+            
+            <Box>
+              <Typography variant="caption" sx={{ color: '#888', display: 'block', mb: 1 }}>Cập nhật trạng thái:</Typography>
+              <Select
+                value={editingItem.status}
+                onChange={async (e) => {
+                  try {
+                    const newStatus = e.target.value
+                    let updated
+                    if (newStatus === 'confirmed' && editingItem.status === 'pending') {
+                      updated = await confirmOrderAPI(editingItem._id)
+                    } else {
+                      updated = await updateOrderAPI(editingItem._id, { status: newStatus })
+                    }
+                    handleSuccess('Đã cập nhật trạng thái đơn hàng!')
+                  } catch {
+                    setSnackbar({ open: true, message: 'Lỗi khi cập nhật trạng thái!', severity: 'error' })
+                  }
+                }}
+                fullWidth
+                size="small"
+                sx={{
+                  color: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' }
+                }}
+              >
+                <MenuItem value="pending">Chờ xử lý (Pending)</MenuItem>
+                <MenuItem value="confirmed">Đã xác nhận (Confirmed)</MenuItem>
+                <MenuItem value="shipped">Đang giao hàng (Shipped)</MenuItem>
+                <MenuItem value="delivered">Đã giao hàng (Delivered)</MenuItem>
+                <MenuItem value="cancelled">Đã hủy (Cancelled)</MenuItem>
+              </Select>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setOpenEdit(false)} sx={{ color: '#888' }}>Đóng</Button>
+          </DialogActions>
+        </Dialog>
       )}
 
       {/* Delete Confirm Dialog */}

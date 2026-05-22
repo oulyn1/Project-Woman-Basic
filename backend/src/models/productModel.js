@@ -108,6 +108,10 @@ export const productModel = {
       { $set: { isDeleted: true, deletedAt: new Date() } },
       { returnDocument: 'after' }
     )
+  },
+
+  countDocuments: async (filter) => {
+    return await Product.countDocuments({ ...filter, isDeleted: { $ne: true } })
   }
 }
 

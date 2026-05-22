@@ -95,10 +95,60 @@ export const search = async (keyword) => {
 };
 
 const updateOne = async (orderId, reqBody) => {
+  const currentOrder = await orderModel.getDetails(orderId);
+  if (!currentOrder)
+    throw new ApiError(StatusCodes.NOT_FOUND, "Order not found");
+
   const updateData = { ...reqBody, updatedAt: Date.now() };
   const updatedOrder = await orderModel.updateOne(orderId, updateData);
   if (!updatedOrder)
     throw new ApiError(StatusCodes.NOT_FOUND, "Order not found to update");
+
+  // ✅ FIX: Trả lại lượt dùng khuyến mãi nếu đơn hàng bị hủy
+  if (currentOrder.status !== "cancelled" && reqBody.status === "cancelled") {
+    const promoIdsToDecrement = new Set();
+    if (currentOrder.appliedOrderPromoId) {
+      promoIdsToDecrement.add(currentOrder.appliedOrderPromoId.toString());
+    }
+    (currentOrder.items || []).forEach((item) => {
+      if (item.appliedPromoId) {
+        promoIdsToDecrement.add(item.appliedPromoId.toString());
+      }
+    });
+
+    if (promoIdsToDecrement.size > 0) {
+      try {
+        await Promise.all(
+          Array.from(promoIdsToDecrement).map((id) =>
+            Promotion.findByIdAndUpdate(id, { $inc: { usageCount: -1 } }),
+          ),
+        );
+      } catch (error) {
+        console.warn("⚠️ Failed to decrement promotion usageCount:", error.message);
+      }
+    }
+
+    // Nếu đơn đã được confirmed và có userId, tính toán lại Loyalty Tier của User ngầm ở background
+    if (currentOrder.status === "confirmed" && currentOrder.userId) {
+      (async () => {
+        try {
+          const userOrders = await orderModel.getAll({
+            userId: currentOrder.userId,
+            status: "confirmed",
+          });
+          const totalSpending = (userOrders || []).reduce(
+            (sum, o) => sum + Number(o?.total || 0),
+            0,
+          );
+          const newTier = calculateLoyaltyTier(totalSpending);
+          await User.findByIdAndUpdate(currentOrder.userId, { loyaltyTier: newTier });
+        } catch (error) {
+          console.warn("⚠️ Failed to update loyalty tier after cancellation:", error.message);
+        }
+      })();
+    }
+  }
+
   return updatedOrder;
 };
 

@@ -11,11 +11,13 @@ function PromotionPage() {
   const [selectedStatus, setSelectedStatus] = useState('ALL')
   const [openAdd, setOpenAdd] = useState(false)
   const [editInfo, setEditInfo] = useState({ open: false, promotionId: null })
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   const handleEditClick = (id) => setEditInfo({ open: true, promotionId: id })
   const handleRefresh = () => {
     setOpenAdd(false)
     setEditInfo({ open: false, promotionId: null })
+    setRefreshTrigger(prev => prev + 1)
   }
 
   return (
@@ -95,7 +97,7 @@ function PromotionPage() {
       </Box>
 
       <Box sx={{ px: { xs: 2, md: 5 } }}>
-        <TablePromotion searchQuery={searchQuery} computedStatus={selectedStatus} onEditPromotion={handleEditClick} />
+        <TablePromotion searchQuery={searchQuery} computedStatus={selectedStatus} onEditPromotion={handleEditClick} refreshTrigger={refreshTrigger} />
       </Box>
 
       {/* Modals */}

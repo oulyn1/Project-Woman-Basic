@@ -33,10 +33,12 @@ export const getRatingsByProductId = async (productId) => {
   const request = await axios.get(`${API_ROOT}/v1/ratings/product/${productId}`)
   return request.data
 }
+
 export const deleteRatingAPI = async (id, token) => {
+  const finalToken = token || localStorage.getItem('accessToken')
   const request = await axios.delete(`${API_ROOT}/v1/ratings/${id}`, {
     headers: {
-      Authorization: `Bearer ${token}`
+      Authorization: `Bearer ${finalToken}`
     }
   })
   return request.data
