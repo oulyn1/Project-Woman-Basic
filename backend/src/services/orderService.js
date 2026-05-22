@@ -56,16 +56,14 @@ const createNew = async (reqBody, userFromToken) => {
   // Trả về chi tiết order kèm product info
   const getNewOrder = await orderModel.getDetailsWithProducts(createdOrder._id);
 
-  // Send confirmation email
-  try {
-    const { name, email } = newOrder.buyerInfo;
-    const orderId = createdOrder._id.toString();
-    const subject = 'Xác nhận đơn hàng của bạn từ Woman Basic';
-    const text = `Chào ${name},\n\nCảm ơn bạn đã đặt hàng tại Woman Basic.\nMã đơn hàng của bạn là: ${orderId}\nBạn có thể sử dụng mã đơn hàng này để tra cứu trạng thái đơn hàng của mình trên website.\n\nTrân trọng,\nĐội ngũ Woman Basic`;
-    await sendMail(email, subject, text);
-  } catch (error) {
-    console.error('Error sending confirmation email:', error);
-  }
+  // ✅ OPTIMIZATION: Gửi mail bất đồng bộ (không await) để tránh block response của khách hàng (giảm 1-2s delay)
+  const { name, email } = newOrder.buyerInfo;
+  const orderId = createdOrder._id.toString();
+  const subject = 'Xác nhận đơn hàng của bạn từ Woman Basic';
+  const text = `Chào ${name},\n\nCảm ơn bạn đã đặt hàng tại Woman Basic.\nMã đơn hàng của bạn là: ${orderId}\nBạn có thể sử dụng mã đơn hàng này để tra cứu trạng thái đơn hàng của mình trên website.\n\nTrân trọng,\nĐội ngũ Woman Basic`;
+  sendMail(email, subject, text).catch((error) => {
+    console.error('Error sending confirmation email in background:', error);
+  });
 
   return getNewOrder;
 };
@@ -111,65 +109,67 @@ const confirmOrder = async (orderId) => {
   if (order.status !== "pending")
     throw new ApiError(StatusCodes.BAD_REQUEST, "Chỉ đơn pending mới confirm");
 
-  // Pre-check biến thể và tồn kho đúng theo item trong đơn
-  await Promise.all(
-    order.items.map(async (item) => {
-      if (!item.variantId) {
-        throw new ApiError(
-          StatusCodes.BAD_REQUEST,
-          `Thiếu variantId cho sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-
-      const product = await productModel.getDetails(item.productId);
-      if (!product) {
-        throw new ApiError(
-          StatusCodes.NOT_FOUND,
-          `Không tìm thấy sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-
-      const targetVariant = (product.variants || []).find(
-        (variant) => normalizeId(variant._id) === normalizeId(item.variantId),
-      );
-
-      if (!targetVariant) {
-        throw new ApiError(
-          StatusCodes.BAD_REQUEST,
-          `Biến thể không hợp lệ cho sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-
-      if (item.size && targetVariant.size !== item.size) {
-        throw new ApiError(
-          StatusCodes.BAD_REQUEST,
-          `Sai kích thước biến thể cho sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-
-      const variantColorName = targetVariant.color?.name || targetVariant.color;
-      if (item.color && variantColorName !== item.color) {
-        throw new ApiError(
-          StatusCodes.BAD_REQUEST,
-          `Sai màu biến thể cho sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-
-      if ((targetVariant.stock || 0) < item.quantity) {
-        throw new ApiError(
-          StatusCodes.BAD_REQUEST,
-          `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`,
-        );
-      }
-    }),
-  );
-
   if (!order.items.length) {
     throw new ApiError(
       StatusCodes.BAD_REQUEST,
       "Đơn hàng không có sản phẩm hợp lệ để xác nhận",
     );
   }
+
+  // ✅ OPTIMIZATION: Lấy tất cả sản phẩm trong 1 query duy nhất bằng $in thay vì gọi DB từng sản phẩm trong loop RTT
+  const productIds = order.items.map(item => item.productId.toString());
+  const products = await productModel.findManyByIds(productIds);
+
+  // Pre-check biến thể và tồn kho đúng theo item trong đơn (Trong bộ nhớ)
+  order.items.forEach((item) => {
+    if (!item.variantId) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Thiếu variantId cho sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+
+    const product = products.find(p => p._id.toString() === item.productId.toString());
+    if (!product) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        `Không tìm thấy sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+
+    const targetVariant = (product.variants || []).find(
+      (variant) => normalizeId(variant._id) === normalizeId(item.variantId),
+    );
+
+    if (!targetVariant) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Biến thể không hợp lệ cho sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+
+    if (item.size && targetVariant.size !== item.size) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Sai kích thước biến thể cho sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+
+    const variantColorName = targetVariant.color?.name || targetVariant.color;
+    if (item.color && variantColorName !== item.color) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Sai màu biến thể cho sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+
+    if ((targetVariant.stock || 0) < item.quantity) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`,
+      );
+    }
+  });
 
   // Trừ stock theo đúng variantId của từng item
   for (const item of order.items) {
@@ -193,28 +193,25 @@ const confirmOrder = async (orderId) => {
     updatedAt: Date.now(),
   });
 
-  // Update loyalty tier cho user nếu có userId
+  // ✅ OPTIMIZATION: Tính toán và cập nhật Loyalty Tier của User bất đồng bộ ở background, không block response xác nhận đơn hàng
   if (order.userId) {
-    try {
-      // Lấy tất cả confirmed orders của user để tính tổng chi tiêu
-      const userOrders = await orderModel.getAll({
-        userId: order.userId,
-        status: "confirmed",
-      });
-      const totalSpending = (userOrders || []).reduce(
-        (sum, o) => sum + Number(o?.total || 0),
-        0,
-      );
+    (async () => {
+      try {
+        const userOrders = await orderModel.getAll({
+          userId: order.userId,
+          status: "confirmed",
+        });
+        const totalSpending = (userOrders || []).reduce(
+          (sum, o) => sum + Number(o?.total || 0),
+          0,
+        );
 
-      // Tính tier mới
-      const newTier = calculateLoyaltyTier(totalSpending);
-
-      // Update user với tier mới
-      await User.findByIdAndUpdate(order.userId, { loyaltyTier: newTier });
-    } catch (error) {
-      // Log error nhưng không throw, vì order đã confirm thành công
-      console.warn("⚠️ Failed to update loyalty tier:", error.message);
-    }
+        const newTier = calculateLoyaltyTier(totalSpending);
+        await User.findByIdAndUpdate(order.userId, { loyaltyTier: newTier });
+      } catch (error) {
+        console.warn("⚠️ Failed to update loyalty tier in background:", error.message);
+      }
+    })();
   }
 
   // Trả về chi tiết order mới nhất

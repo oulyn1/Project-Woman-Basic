@@ -61,6 +61,10 @@ export const productModel = {
     return await Product.findById(id)
   },
 
+  findManyByIds: async (ids) => {
+    return await Product.find({ _id: { $in: ids } }).lean()
+  },
+
   getDetailsBySlug: async (slug) => {
     return await Product.findOne({ slug, isDeleted: { $ne: true } })
   },
