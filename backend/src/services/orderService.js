@@ -94,10 +94,36 @@ export const search = async (keyword) => {
   return orders;
 };
 
-const updateOne = async (orderId, reqBody) => {
+const updateOne = async (orderId, reqBody, user) => {
   const currentOrder = await orderModel.getDetails(orderId);
   if (!currentOrder)
     throw new ApiError(StatusCodes.NOT_FOUND, "Order not found");
+
+  // Kiểm tra quyền hạn (Role-based access & ownership validation)
+  const isStaffUser = user && (user.role === 'admin' || user.role === 'employee');
+  const isOrderOwner = currentOrder.userId && user && currentOrder.userId.toString() === user.userId;
+
+  if (!isStaffUser && !isOrderOwner) {
+    throw new ApiError(StatusCodes.FORBIDDEN, "Bạn không có quyền sửa đổi đơn hàng này");
+  }
+
+  // Khách hàng (không phải staff) chỉ được phép hủy đơn hàng của mình khi đơn đang ở trạng thái pending
+  if (!isStaffUser) {
+    const allowedKeys = ['status', 'paymentStatus'];
+    const updateKeys = Object.keys(reqBody);
+    const hasInvalidKeys = updateKeys.some(key => !allowedKeys.includes(key));
+    if (hasInvalidKeys) {
+      throw new ApiError(StatusCodes.FORBIDDEN, "Khách hàng chỉ được phép hủy đơn hàng hoặc thanh toán lại");
+    }
+
+    if (reqBody.status && reqBody.status !== 'cancelled') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Khách hàng chỉ được phép chuyển trạng thái đơn sang hủy");
+    }
+
+    if (reqBody.status === 'cancelled' && currentOrder.status !== 'pending') {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Chỉ có thể hủy đơn hàng khi đơn hàng đang ở trạng thái chờ xử lý (pending)");
+    }
+  }
 
   const updateData = { ...reqBody, updatedAt: Date.now() };
   const updatedOrder = await orderModel.updateOne(orderId, updateData);

@@ -71,7 +71,8 @@ export const search = async (req, res, next) => {
 const updateOne = async (req, res, next) => {
   try {
     const orderId = req.params.id
-    const updatedOrder = await orderService.updateOne(orderId, req.body)
+    const user = req.user
+    const updatedOrder = await orderService.updateOne(orderId, req.body, user)
     res.status(StatusCodes.OK).json(updatedOrder)
   } catch (error) {
     next(error)

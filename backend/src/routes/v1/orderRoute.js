@@ -27,7 +27,7 @@ Router.route('/my-orders')
 Router.route('/detail/:id')
   .get(orderController.getDetails)
   .delete(authMiddleware, isStaff, orderController.deleteOne)
-  .put(authMiddleware, isStaff, orderController.updateOne)
+  .put(authMiddleware, orderController.updateOne)
 
 Router.post('/confirm/:id', authMiddleware, isStaff, orderController.confirmOrder)
 
