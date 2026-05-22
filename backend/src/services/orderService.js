@@ -76,12 +76,10 @@ const getDetails = async (orderId) => {
   return order;
 };
 
-const getAll = async (user) => {
-  const filter = {}
-  // ✅ FIX LỖI 3: JWT payload dùng key 'userId', không phải '_id' hay 'id'
-  if (user?.userId) filter.userId = user.userId
-
-  const orders = await orderModel.getAllWithProducts(filter)
+const getAll = async () => {
+  // ✅ FIX: getAll dùng cho Admin/Staff → luôn trả tất cả đơn hàng (không filter theo userId)
+  // Customer dùng getMyOrders riêng có filter theo userId
+  const orders = await orderModel.getAllWithProducts({})
   return orders || []
 }
 

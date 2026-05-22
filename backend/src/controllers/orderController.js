@@ -25,10 +25,11 @@ const getDetails = async (req, res, next) => {
   }
 }
 
-// Lấy tất cả đơn hàng
+// Lấy tất cả đơn hàng (chỉ dành cho Admin/Staff)
 const getAll = async (req, res, next) => {
   try {
-    const orders = await orderService.getAll(req.user)
+    // ✅ FIX: Staff/Admin xem tất cả đơn, không filter theo userId
+    const orders = await orderService.getAll()
     res.status(StatusCodes.OK).json(orders)
   } catch (error) {
     next(error)
