@@ -40,7 +40,8 @@ export const createOrderAPI = async (orderData) => {
 
 // Confirm order
 export const confirmOrderAPI = async (orderId) => {
-  const request = await axios.post(`${API_ROOT}/v1/order/confirm/${orderId}`)
+  // ✅ FIX: Gửi kèm token xác thực vì route confirmOrder yêu cầu auth + isStaff
+  const request = await axios.post(`${API_ROOT}/v1/order/confirm/${orderId}`, {}, getAuthHeaders())
   return request.data
 }
 
