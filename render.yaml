@@ -23,11 +23,11 @@ services:
       - key: MAIL_PASSWORD
         sync: false
       - key: CLIENT_URL
-        value: https://woman-basic-frontend.onrender.com
+        value: https://womanbasic.onrender.com
 
   # Frontend Static Site
   - type: web
-    name: woman-basic-frontend
+    name: womanbasic
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
