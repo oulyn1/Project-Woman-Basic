@@ -92,3 +92,18 @@ export const resetPasswordAPI = async (email, newPassword) => {
   })
   return request.data
 }
+
+export const sendHeartbeatAPI = async () => {
+  const token = localStorage.getItem('accessToken')
+  if (!token) return null
+  const request = await axios.post(`${API_ROOT}/v1/user/heartbeat`, {}, getAuthHeaders())
+  return request.data
+}
+
+export const logoutUserStatusAPI = async () => {
+  const token = localStorage.getItem('accessToken')
+  if (!token) return null
+  const request = await axios.post(`${API_ROOT}/v1/user/logout`, {}, getAuthHeaders())
+  return request.data
+}
+

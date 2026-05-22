@@ -43,11 +43,11 @@ Router.route('/verify-otp')
 Router.route('/reset-password')
   .post(userController.resetPassword)
 
-Router.route('/logout/:id')
-  .post(userController.logOut)
+Router.route('/heartbeat')
+  .post(authMiddleware, userController.heartbeat)
 
-Router.route('/login/:id')
-  .post(userController.logIn)
+Router.route('/logout')
+  .post(authMiddleware, userController.logoutAuth)
 
 // ✅ Dynamic route /:id PHẢI đặt sau tất cả route static
 Router.route('/:id')

@@ -15,7 +15,7 @@ Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện đ
 ### 🛡️ Trang quản trị (Admin Dashboard)
 - **Sản phẩm & Danh mục**: Quản lý toàn diện (CRUD) kho hàng và danh mục.
 - **Quản lý đơn hàng**: Theo dõi và xử lý đơn hàng từ khách hàng.
-- **Kiểm soát tài khoản**: Quản lý người dùng hệ thống và phân quyền.
+- **Kiểm soát tài khoản**: Quản lý người dùng hệ thống, phân quyền và hiển thị trạng thái hoạt động (Online/Offline) theo thời gian thực.
 - **Khuyến mãi**: Tạo và quản lý các chiến dịch giảm giá.
 - **Giám sát đánh giá**: Theo dõi và kiểm duyệt phản hồi từ khách hàng.
 
@@ -23,8 +23,9 @@ Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện đ
 - **Phân tích sản phẩm AI**: Tự động tạo chi tiết sản phẩm (tên, danh mục, mô tả, tags) từ ảnh tải lên sử dụng Groq (Llama-4).
 - **Phân tích bảng size AI**: Trích xuất bảng size từ hình ảnh và chuyển đổi sang Markdown để tư vấn kích cỡ tự động.
 - **Trợ lý Stylist AI (Khách hàng)**: Trợ lý chat thời gian thực cung cấp gợi ý sản phẩm và tư vấn size cá nhân hóa.
-- **Admin AI Copilot**: Trợ lý bảng điều khiển thông minh giúp phân tích kinh doanh, theo dõi kho hàng và thực hiện các tác vụ quản trị tự động.
+- **Admin AI Copilot**: Trợ lý bảng điều khiển thông minh giúp phân tích kinh doanh, hỗ trợ tra cứu dữ liệu. Hỗ trợ phân quyền chặt chẽ giữa vai trò **Admin** (đầy đủ quyền hạn, mở Mini-UI tự động) và **Nhân viên (Employee)** (bị giới hạn quyền truy cập mục Khuyến mãi, Quản trị tài khoản; chặn kích hoạt Mini-UI của Đơn hàng và Khách hàng).
 - **Lightweight RAG**: Triển khai Retrieval-Augmented Generation sử dụng MongoDB Text Search để cung cấp các phản hồi AI chính xác dựa trên dữ liệu thực tế của cửa hàng.
+- **Hệ thống Giám sát Hoạt động (Heartbeat Keep-Alive)**: Theo dõi trạng thái hoạt động thông qua cơ chế gửi tín hiệu Nhịp tim (Heartbeat) định kỳ từ client và tiến trình tự động ngoại tuyến hoá (Status Monitor) ngầm ở backend.
 
 ---
 

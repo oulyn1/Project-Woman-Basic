@@ -35,6 +35,10 @@ const userSchema = new mongoose.Schema(
       enum: ["online", "offline"],
       default: "offline",
     },
+    lastActiveAt: {
+      type: Date,
+      default: null,
+    },
 
     // === Recommendation Engine ===
     // Điểm sở thích theo danh mục (key = categoryId dạng string)
@@ -152,10 +156,29 @@ export const userModel = {
   },
 
   updateStatus: async (userId, updateData) => {
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return null
+    }
     return await User.findByIdAndUpdate(
       userId,
       { $set: updateData },
       { returnDocument: 'after' },
+    );
+  },
+
+  checkAndOfflineUsers: async (timeoutMs = 60000) => {
+    const threshold = new Date(Date.now() - timeoutMs);
+    return await User.updateMany(
+      {
+        status: 'online',
+        $or: [
+          { lastActiveAt: { $lt: threshold } },
+          { lastActiveAt: null }
+        ]
+      },
+      {
+        $set: { status: 'offline' }
+      }
     );
   },
 };

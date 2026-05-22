@@ -67,6 +67,7 @@ const START_SERVER = () => {
     }
     // Khởi động cron job weekly insight (phải sau khi DB ready)
     await import('./jobs/weeklyInsight.job.js')
+    await import('./jobs/statusMonitor.job.js')
     START_SERVER()
   } catch (error) {
     console.error(error)

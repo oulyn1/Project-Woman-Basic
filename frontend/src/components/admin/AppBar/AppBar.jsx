@@ -4,7 +4,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useNavigate } from 'react-router-dom'
 import EditAccount from '~/pages/AdminPage/AccountPage/EditAccount/EditAccount'
-import { API_ROOT } from '~/util/constants'
+import { logoutUserStatusAPI } from '~/apis/userAPIs'
 
 function AppBar({ onMenuToggle }) {
   const navigate = useNavigate()
@@ -20,11 +20,12 @@ function AppBar({ onMenuToggle }) {
     setOpenProfile(true)
   }
 
-  const handleLogout = () => {
-    const userStr = localStorage.getItem('user')
-    const user = JSON.parse(userStr)
-    const id = user._id
-    navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
+  const handleLogout = async () => {
+    try {
+      await logoutUserStatusAPI()
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visited')

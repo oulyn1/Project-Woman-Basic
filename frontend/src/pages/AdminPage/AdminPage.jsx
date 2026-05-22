@@ -5,39 +5,25 @@ import AdminBreadcrumbs from '~/components/admin/AdminBreadcrumbs/AdminBreadcrum
 import AppBar from '~/components/admin/AppBar/AppBar'
 import SideBar from '~/components/admin/SideBar/SideBar'
 import AdminChatBubble from '~/components/chat/AdminChatBubble'
-import { API_ROOT } from '~/util/constants'
+import { sendHeartbeatAPI } from '~/apis/userAPIs'
 
 function AdminPage() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
-    const userStr = localStorage.getItem('user')
-    let user = null
-    let id = null
+    if (!token) return
 
-    try {
-      user = userStr ? JSON.parse(userStr) : null
-      id = user?._id || null
-    } catch {
-      //
-    }
+    // Gửi heartbeat ngay khi vừa truy cập/mount
+    sendHeartbeatAPI().catch(() => {})
 
-    const hasVisited = sessionStorage.getItem('visited')
-    if (!hasVisited && id) {
-      navigator.sendBeacon(`${API_ROOT}/v1/user/login/${id}`, null)
-      sessionStorage.setItem('visited', 'true')
-    }
-    const handleBeforeUnload = () => {
-      if (!token || !id) return
-      navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
-      sessionStorage.removeItem('visited')
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    // Cứ 25 giây gửi heartbeat một lần để duy trì trạng thái online
+    const intervalId = setInterval(() => {
+      sendHeartbeatAPI().catch(() => {})
+    }, 25000)
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      clearInterval(intervalId)
     }
   }, [])
 

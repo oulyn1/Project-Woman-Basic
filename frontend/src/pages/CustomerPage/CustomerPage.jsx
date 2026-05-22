@@ -5,39 +5,23 @@ import Footer from '~/components/customer/Footer/Footer'
 import { useEffect } from 'react'
 import ChatProvider from '~/context/Chat/ChatProvider'
 import CustomerChatBubble from '~/components/chat/CustomerChatBubble'
-import { API_ROOT } from '~/util/constants'
+import { sendHeartbeatAPI } from '~/apis/userAPIs'
 
 function CustomerPage() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken')
-    const userStr = localStorage.getItem('user')
-    let user = null
-    let id = null
+    if (!token) return
 
-    try {
-      user = userStr ? JSON.parse(userStr) : null
-      id = user?._id || null
-    } catch {
-      //
-    }
+    // Gửi heartbeat ngay khi vừa truy cập/mount
+    sendHeartbeatAPI().catch(() => {})
 
-    const hasVisited = sessionStorage.getItem('visitedcustomer')
+    // Cứ 25 giây gửi heartbeat một lần để duy trì trạng thái online
+    const intervalId = setInterval(() => {
+      sendHeartbeatAPI().catch(() => {})
+    }, 25000)
 
-    if (!hasVisited && id) {
-      // ✅ FIX LỖI 9: Dùng API_ROOT thay vì hardcode localhost
-      navigator.sendBeacon(`${API_ROOT}/v1/user/login/${id}`, null)
-      sessionStorage.setItem('visitedcustomer', 'true')
-    }
-
-    const handleBeforeUnload = () => {
-      if (!token || !id) return
-      navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
-      sessionStorage.removeItem('visitedcustomer')
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      clearInterval(intervalId)
     }
   }, [])
   return (

@@ -180,20 +180,21 @@ const resetPassword = async (req, res, next) => {
   }
   
 }
-const logOut = async (req, res, next) => {
+const heartbeat = async (req, res, next) => {
   try {
-    const id = req.params.id
-    const result = await userService.logOut(id)
-    res.status(StatusCodes.OK).json(result)
+    const userId = req.user.userId
+    await userService.heartbeat(userId)
+    res.status(StatusCodes.OK).json({ success: true })
   } catch (error) {
     next(error)
   }
 }
-const logIn = async (req, res, next) => {
+
+const logoutAuth = async (req, res, next) => {
   try {
-    const id = req.params.id
-    const result = await userService.logIn(id)
-    res.status(StatusCodes.OK).json(result)
+    const userId = req.user.userId
+    await userService.logOut(userId)
+    res.status(StatusCodes.OK).json({ success: true })
   } catch (error) {
     next(error)
   }
@@ -214,8 +215,8 @@ export const userController = {
   sendOtp,
   verifyOtp,
   resetPassword,
-  logOut,
-  logIn,
+  heartbeat,
+  logoutAuth,
   employee,
   searchEmployee
 }

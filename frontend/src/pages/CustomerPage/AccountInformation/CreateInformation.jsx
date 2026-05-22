@@ -1,12 +1,11 @@
 import { Box, TextField, Button, Typography, Stack, Divider, LinearProgress, Paper, Avatar, Snackbar, Alert } from '@mui/material'
 import { useState, useEffect } from 'react'
-import { updateUserAPI } from '~/apis/userAPIs'
+import { updateUserAPI, logoutUserStatusAPI } from '~/apis/userAPIs'
 import { fetchMyOrdersAPI } from '~/apis/orderAPIs'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import EditIcon from '@mui/icons-material/Edit'
-import { API_ROOT } from '~/util/constants'
 
 function CreateInformation() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -53,11 +52,12 @@ function CreateInformation() {
   const progressPercent = tierInfo.next ? Math.min((totalSpent / tierInfo.threshold) * 100, 100) : 100
   const amountToNext = tierInfo.next ? (tierInfo.threshold - totalSpent) : 0
 
-  const handleLogout = () => {
-    const userStr = localStorage.getItem('user')
-    const user = JSON.parse(userStr)
-    const id = user._id
-    navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
+  const handleLogout = async () => {
+    try {
+      await logoutUserStatusAPI()
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visitedcustomer')

@@ -198,6 +198,10 @@ const updateStatus = async (userId, updateData) => {
   return updatedUser
 }
 
+const heartbeat = async (userId) => {
+  await userModel.updateStatus(userId, { status: 'online', lastActiveAt: new Date() })
+}
+
 export const userService = {
   register,
   login,
@@ -215,6 +219,7 @@ export const userService = {
   updateStatus,
   logOut,
   logIn,
+  heartbeat,
   employee,
   searchEmployee
 }
