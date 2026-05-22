@@ -93,7 +93,9 @@ export const orderModel = {
   },
 
   deleteOne: async (id) => {
-    return await Order.findByIdAndDelete(id)
+    // ✅ FIX LỖI 6: Trả về {deletedCount} để controller có thể đọc đúng
+    const result = await Order.findByIdAndDelete(id)
+    return { deletedCount: result ? 1 : 0 }
   },
 
   search: async (query) => {

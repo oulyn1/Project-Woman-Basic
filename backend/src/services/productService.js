@@ -45,7 +45,8 @@ const createNew = async (reqBody) => {
     }
 
     const createdProduct = await productModel.createNew(newProduct)
-    return await productModel.findOneId(createdProduct.insertedId)
+    // ✅ FIX LỖI 4: Mongoose .create() trả về document có ._id, không phải .insertedId
+    return await productModel.findOneId(createdProduct._id)
   } catch (error) {
     throw error
   }

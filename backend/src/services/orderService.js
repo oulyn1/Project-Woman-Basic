@@ -28,8 +28,8 @@ const createNew = async (reqBody, userFromToken) => {
     appliedOrderPromoId: reqBody.appliedOrderPromoId,
     total: reqBody.total,
     status: "pending",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    // ✅ FIX LỖI 17: Xóa createdAt/updatedAt thủ công
+    // orderSchema đã có timestamps:true → Mongoose tự quản lý, không cần set thủ công
   };
 
   const createdOrder = await orderModel.createNew(newOrder);
@@ -77,12 +77,13 @@ const getDetails = async (orderId) => {
 };
 
 const getAll = async (user) => {
-  const filter = {};
-  if (user?._id || user?.id) filter.userId = user._id || user.id;
+  const filter = {}
+  // ✅ FIX LỖI 3: JWT payload dùng key 'userId', không phải '_id' hay 'id'
+  if (user?.userId) filter.userId = user.userId
 
-  const orders = await orderModel.getAllWithProducts(filter);
-  return orders || [];
-};
+  const orders = await orderModel.getAllWithProducts(filter)
+  return orders || []
+}
 
 const deleteOne = async (orderId) => {
   const result = await orderModel.deleteOne(orderId);

@@ -117,8 +117,10 @@ export const userModel = {
   },
 
   employee: async (query) => {
-    const regex = new RegExp(query, "i");
-    return await User.find({ role: regex }).select("-password").lean();
+    // ✅ FIX LỖI 12: role là enum field, dùng exact match thay vì regex
+    // Regex trên enum có thể match partial string, ví dụ 'employee' match cả các case không mong muốn
+    const role = query.trim()
+    return await User.find({ role }).select("-password").lean()
   },
 
   searchemployee: async (query) => {

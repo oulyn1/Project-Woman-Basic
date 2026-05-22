@@ -14,8 +14,9 @@ export const getOrderDetailAPI = async (orderId) => {
 }
 
 // Xóa đơn hàng
+// ✅ FIX LỖI 7: Backend route là /detail/:id, frontend phải gọi đúng path
 export const deleteOrderAPI = async (orderId) => {
-  const request = await axios.delete(`${API_ROOT}/v1/order/${orderId}`, getAuthHeaders())
+  const request = await axios.delete(`${API_ROOT}/v1/order/detail/${orderId}`, getAuthHeaders())
   return request.data
 }
 

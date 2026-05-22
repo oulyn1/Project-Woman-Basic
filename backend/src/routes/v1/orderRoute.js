@@ -1,31 +1,34 @@
 import express from "express"
 import { orderController } from '~/controllers/orderController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
+import { isStaff } from '~/middlewares/roleMiddleware'
 
 const Router = express.Router()
 
-// Lấy danh sách đơn hàng hoặc tạo mới đơn hàng
+// ✅ FIX LỖI 2: GET /order/ yêu cầu auth (staff)
+// Trước đây route public, bất kỳ ai cũng xem được toàn bộ đơn hàng
 Router.route('/')
-  .get(orderController.getAll) // Admin lấy hết, User chỉ lấy của mình
-  .post(orderController.createNew)
+  .get(authMiddleware, isStaff, orderController.getAll)
+  .post(orderController.createNew) // Tạo đơn không cần auth (guest checkout)
 
 // Search đơn hàng (theo keyword: tên KH, email, status...)
 Router.route('/search')
-  .get(orderController.search)
+  .get(authMiddleware, isStaff, orderController.search)
+
+// User: lấy đơn hàng của mình
+Router.route('/my-orders')
+  .get(authMiddleware, orderController.getMyOrders)
+
+// User: tìm kiếm trong các đơn của mình
+Router.route('/my-orders/search')
+  .get(authMiddleware, orderController.searchMyOrders)
 
 // Các thao tác với 1 đơn hàng cụ thể
 Router.route('/detail/:id')
   .get(orderController.getDetails)
-  .delete(orderController.deleteOne)
-  .put(orderController.updateOne)
+  .delete(authMiddleware, isStaff, orderController.deleteOne)
+  .put(authMiddleware, isStaff, orderController.updateOne)
 
-Router.post('/confirm/:id', orderController.confirmOrder)
-
-Router.route('/my-orders')
-  .get(authMiddleware, orderController.getMyOrders)
-
-// 🔍 User: tìm kiếm trong các đơn của mình
-Router.route('/my-orders/search')
-  .get(authMiddleware, orderController.searchMyOrders)
+Router.post('/confirm/:id', authMiddleware, isStaff, orderController.confirmOrder)
 
 export const orderRoute = Router

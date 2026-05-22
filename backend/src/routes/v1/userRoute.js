@@ -1,6 +1,6 @@
 import express from 'express'
 import { userController } from '~/controllers/userController'
-import { authMiddleware } from '~/middlewares/authMiddleware'   
+import { authMiddleware } from '~/middlewares/authMiddleware'
 import { isAdmin, isStaff } from '~/middlewares/roleMiddleware'
 import { userValidation } from '~/validations/userValidation'
 
@@ -19,22 +19,19 @@ Router.route('/profile')
 Router.route('/search')
   .get(authMiddleware, isStaff, userController.search)
 
-Router.route('/employee')
-  .get(authMiddleware, isStaff, userController.employee)
-
 Router.route('/employee/search')
   .get(authMiddleware, isStaff, userController.searchEmployee)
 
+Router.route('/employee')
+  .get(authMiddleware, isStaff, userController.employee)
+
 Router.route('/')
-.get(authMiddleware, isStaff, userController.getAll)
-.post(authMiddleware, isStaff, userController.createUser)
+  .get(authMiddleware, isStaff, userController.getAll)
+  .post(authMiddleware, isStaff, userController.createUser)
 
-Router.route('/:id')
-  .get(authMiddleware, isStaff, userController.getDetails)
-  .put(authMiddleware, userController.updateAccount)
-  .delete(authMiddleware, isStaff, userController.deleteOne)
-
-  Router.route('/check-email')
+// ✅ FIX LỖI 1: Tất cả route static phải đặt TRƯỚC /:id
+// Nếu đặt sau, Express sẽ match /:id trước và các route này bị shadow
+Router.route('/check-email')
   .post(userController.checkEmail)
 
 Router.route('/send-otp')
@@ -45,8 +42,17 @@ Router.route('/verify-otp')
 
 Router.route('/reset-password')
   .post(userController.resetPassword)
+
 Router.route('/logout/:id')
   .post(userController.logOut)
-  Router.route('/login/:id')
+
+Router.route('/login/:id')
   .post(userController.logIn)
+
+// ✅ Dynamic route /:id PHẢI đặt sau tất cả route static
+Router.route('/:id')
+  .get(authMiddleware, isStaff, userController.getDetails)
+  .put(authMiddleware, userController.updateAccount)
+  .delete(authMiddleware, isStaff, userController.deleteOne)
+
 export const userRoute = Router

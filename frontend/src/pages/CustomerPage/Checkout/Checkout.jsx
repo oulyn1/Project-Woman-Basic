@@ -220,8 +220,11 @@ function Checkout() {
               ) : (
                 <Stack spacing={3}>
                   {products.map((item) => {
-                    const promo = getProductPromo(item.product._id)
-                    const calcItem = calculationResult?.items?.find(i => i.productId === item.product._id && i.variantId === item.variantId)
+                    // ✅ FIX LỖI 10: Dùng item.productId (string) thay vì item.product._id (object)
+                    // productIds trong promotion được lưu dạng string, cần so sánh nhất quán
+                    const productIdStr = typeof item.productId === 'object' ? item.productId._id?.toString() : item.productId?.toString()
+                    const promo = getProductPromo(productIdStr)
+                    const calcItem = calculationResult?.items?.find(i => i.productId === productIdStr && i.variantId === item.variantId)
 
                     return (
                       <Box key={`${item.productId}-${item.variantId}`} sx={{ display: 'flex', gap: { xs: 1.5, md: 2 } }}>

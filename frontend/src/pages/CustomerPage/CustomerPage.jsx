@@ -5,6 +5,7 @@ import Footer from '~/components/customer/Footer/Footer'
 import { useEffect } from 'react'
 import ChatProvider from '~/context/Chat/ChatProvider'
 import CustomerChatBubble from '~/components/chat/CustomerChatBubble'
+import { API_ROOT } from '~/util/constants'
 
 function CustomerPage() {
   useEffect(() => {
@@ -23,13 +24,14 @@ function CustomerPage() {
     const hasVisited = sessionStorage.getItem('visitedcustomer')
 
     if (!hasVisited && id) {
-      navigator.sendBeacon(`http://localhost:8017/v1/user/login/${id}`, null)
+      // ✅ FIX LỖI 9: Dùng API_ROOT thay vì hardcode localhost
+      navigator.sendBeacon(`${API_ROOT}/v1/user/login/${id}`, null)
       sessionStorage.setItem('visitedcustomer', 'true')
     }
 
     const handleBeforeUnload = () => {
       if (!token || !id) return
-      navigator.sendBeacon(`http://localhost:8017/v1/user/logout/${id}`, null)
+      navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
       sessionStorage.removeItem('visitedcustomer')
     }
 

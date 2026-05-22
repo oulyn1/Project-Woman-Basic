@@ -11,7 +11,8 @@ export const trackBehaviorController = async (req, res, next) => {
   try {
     const { productId, categoryId, action, sessionId } = req.body
     // req.user được set bởi optionalAuthMiddleware nếu có token hợp lệ
-    const userId = req.user?.id || req.user?._id || null
+    // ✅ FIX LỖI 3: JWT payload dùng key 'userId', không phải 'id' hay '_id'
+    const userId = req.user?.userId || null
 
     const result = await trackBehavior({ userId, sessionId, productId, categoryId, action })
     res.status(StatusCodes.OK).json(result)
@@ -26,7 +27,7 @@ export const trackBehaviorController = async (req, res, next) => {
  */
 export const getRecommendationsController = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.user?._id || null
+    const userId = req.user?.userId || null
     const sessionId = req.query.sessionId || null
     const limit = parseInt(req.query.limit) || 10
 
@@ -60,7 +61,7 @@ export const getSimilarProductsController = async (req, res, next) => {
  */
 export const mergeGuestBehaviorController = async (req, res, next) => {
   try {
-    const userId = req.user?.id || req.user?._id
+    const userId = req.user?.userId || null
     const { sessionId } = req.body
 
     if (!userId) {

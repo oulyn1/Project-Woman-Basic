@@ -180,7 +180,7 @@ export const getCategoryInsights = async () => {
     },
     {
       $lookup: {
-        from:         'category',
+        from:         'categories', // ✅ FIX LỖI 5: Mongoose pluralizes 'Category' → 'categories'
         localField:   '_id',
         foreignField: '_id',
         as:           'categoryInfo'

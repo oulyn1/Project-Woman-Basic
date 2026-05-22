@@ -85,10 +85,17 @@ const MyOrders = () => {
       try {
         if (!isLoggedIn) {
           if (debouncedSearch) {
-             const data = await getOrderDetailAPI(debouncedSearch)
-             setOrders(data ? [data] : [])
+            // ✅ FIX LỖI 11: Kiểm tra format ObjectId hợp lệ trước khi gọi API
+            // Nếu không phải ObjectId (24 ký tự hex), MongoDB sẽ throw CastError
+            const isValidObjectId = /^[a-f\d]{24}$/i.test(debouncedSearch.trim())
+            if (isValidObjectId) {
+              const data = await getOrderDetailAPI(debouncedSearch.trim())
+              setOrders(data ? [data] : [])
+            } else {
+              setOrders([])
+            }
           } else {
-             setOrders([])
+            setOrders([])
           }
         } else {
           const data = debouncedSearch
