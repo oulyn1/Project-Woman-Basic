@@ -4,6 +4,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useNavigate } from 'react-router-dom'
 import EditAccount from '~/pages/AdminPage/AccountPage/EditAccount/EditAccount'
+import { API_ROOT } from '~/util/constants'
 
 function AppBar({ onMenuToggle }) {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ function AppBar({ onMenuToggle }) {
     const userStr = localStorage.getItem('user')
     const user = JSON.parse(userStr)
     const id = user._id
-    navigator.sendBeacon(`http://localhost:8017/v1/user/logout/${id}`, null)
+    navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visited')

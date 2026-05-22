@@ -6,6 +6,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import EditIcon from '@mui/icons-material/Edit'
+import { API_ROOT } from '~/util/constants'
 
 function CreateInformation() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -56,7 +57,7 @@ function CreateInformation() {
     const userStr = localStorage.getItem('user')
     const user = JSON.parse(userStr)
     const id = user._id
-    navigator.sendBeacon(`http://localhost:8017/v1/user/logout/${id}`, null)
+    navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     sessionStorage.removeItem('visitedcustomer')

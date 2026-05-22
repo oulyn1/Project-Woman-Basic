@@ -5,6 +5,7 @@ import AdminBreadcrumbs from '~/components/admin/AdminBreadcrumbs/AdminBreadcrum
 import AppBar from '~/components/admin/AppBar/AppBar'
 import SideBar from '~/components/admin/SideBar/SideBar'
 import AdminChatBubble from '~/components/chat/AdminChatBubble'
+import { API_ROOT } from '~/util/constants'
 
 function AdminPage() {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
@@ -24,12 +25,12 @@ function AdminPage() {
 
     const hasVisited = sessionStorage.getItem('visited')
     if (!hasVisited && id) {
-      navigator.sendBeacon(`http://localhost:8017/v1/user/login/${id}`, null)
+      navigator.sendBeacon(`${API_ROOT}/v1/user/login/${id}`, null)
       sessionStorage.setItem('visited', 'true')
     }
     const handleBeforeUnload = () => {
       if (!token || !id) return
-      navigator.sendBeacon(`http://localhost:8017/v1/user/logout/${id}`, null)
+      navigator.sendBeacon(`${API_ROOT}/v1/user/logout/${id}`, null)
       sessionStorage.removeItem('visited')
     }
 
