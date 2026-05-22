@@ -13,7 +13,6 @@ const transporter = nodemailer.createTransport({
 // Hàm gửi mail
 export const sendMail = async (to, subject, text) => {
   const mailOptions = {
-    // ✅ FIX LỖI 8: Đổi brand từ "PNJ Support" → "Woman Basic"
     from: `"Woman Basic" <${env.MAIL_USER}>`,
     to,
     subject,
