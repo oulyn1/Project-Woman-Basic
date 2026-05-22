@@ -50,13 +50,14 @@ const adminChat = async (req, res, next) => {
       throw new ApiError(StatusCodes.BAD_REQUEST, 'message là bắt buộc')
     }
 
-    // Kiểm tra role admin
-    if (req.user?.role !== 'admin') {
-      throw new ApiError(StatusCodes.FORBIDDEN, 'Chỉ admin mới có quyền sử dụng chức năng này')
+    // Kiểm tra role admin hoặc employee
+    if (req.user?.role !== 'admin' && req.user?.role !== 'employee') {
+      throw new ApiError(StatusCodes.FORBIDDEN, 'Chỉ admin hoặc nhân viên mới có quyền sử dụng chức năng này')
     }
 
     const result = await adminChatService.sendAdminMessage({
       adminId,
+      role: req.user?.role,
       message,
       history: history || [],
       conversationId: req.body.conversationId || null

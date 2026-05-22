@@ -163,12 +163,24 @@ const parseAdminAIResponse = (responseText) => {
 /**
  * Gửi message từ admin đến AI và nhận response.
  */
-const sendAdminMessage = async ({ adminId, message, history = [], conversationId = null }) => {
+const sendAdminMessage = async ({ adminId, role = 'admin', message, history = [], conversationId = null }) => {
   if (!adminId || !message) throw new ApiError(StatusCodes.BAD_REQUEST, 'adminId và message là bắt buộc.')
 
   const adminContext = await getAdminContext()
+
+  let roleDirective = ''
+  if (role === 'employee') {
+    roleDirective = `
+LƯU Ý QUAN TRỌNG VỀ PHÂN QUYỀN TÀI KHOẢN (BẠN ĐANG TRÒ CHUYỆN VỚI NHÂN VIÊN):
+- Người dùng hiện tại là "Nhân viên" (role: employee), KHÔNG phải "Quản trị viên" (role: admin).
+- Bạn ĐƯỢC PHÉP trả lời, phân tích hoặc hỗ trợ các câu hỏi liên quan đến: Sản phẩm (product), Danh mục (category), Đơn hàng (order), Đánh giá/Nhận xét (rating), và Doanh thu / Báo cáo bán hàng (revenue/sales).
+- Đối với BẤT KỲ câu hỏi hoặc yêu cầu nào liên quan đến: Khuyến mãi (promotion), Quản lý tài khoản/nhân viên (account), hoặc cấu hình hệ thống khác, bạn TUYỆT ĐỐI KHÔNG ĐƯỢC tiết lộ thông tin hoặc trả lời chi tiết. Thay vào đó, bạn PHẢI từ chối và trả lời đúng nguyên văn câu sau: "Tài khoản của bạn không đủ thẩm quyền để truy cập thông tin này." và không được hiển thị bất kỳ ACTION_CARD nào của các phần bị cấm này.
+`
+  }
+
   const systemPrompt = `Bạn là Giám đốc kinh doanh (CEO) tài ba của Woman Basic.
 Dữ liệu thực tế hiện tại (tính đến ${new Date().toLocaleString('vi-VN')}): ${adminContext}
+${roleDirective}
 
 TUYỆT ĐỐI NGHIÊM NGẶT - GIỚI HẠN PHẠM VI TRẢ LỜI:
 - BẠN CHỈ ĐƯỢC PHÉP TRẢ LỜI các câu hỏi liên quan đến nghiệp vụ bán hàng, báo cáo doanh thu, tồn kho, quản lý sản phẩm, đơn hàng, khách hàng, khuyến mãi, nhận xét, hoặc vận hành hệ thống của project Woman Basic.
