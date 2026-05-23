@@ -11,6 +11,8 @@ const analyzeProductWithAI = async (base64Images) => {
   const groqPrompt = `Bạn là chuyên gia viết nội dung (Copywriter) cho website thời trang nữ "Woman Basic".
 Dựa trên hình ảnh sản phẩm, hãy tạo một đối tượng JSON với cấu trúc sau:
 {
+  "isValid": true,
+  "invalidReason": "",
   "name": "Tên sản phẩm theo cấu trúc: [Loại sản phẩm] [Chi tiết kiểu dáng] [Mã sản phẩm]. Ví dụ: Quần Giả Váy Ngắn Chữ A GV08. KHÔNG kèm màu sắc.",
   "category": "Một trong: Áo, Quần, Đầm, Váy, Phụ kiện, Giày, Túi xách",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
@@ -18,6 +20,7 @@ Dựa trên hình ảnh sản phẩm, hãy tạo một đối tượng JSON vớ
 }
 
 YÊU CẦU QUAN TRỌNG:
+0. TRƯỚC TIÊN, hãy kiểm tra ảnh: nếu ảnh KHÔNG phải quần áo, phụ kiện thời trang (ví dụ: ảnh người, phong cảnh, đồ vật, nội dung không phù hợp...) thì chỉ trả về JSON: { "isValid": false, "invalidReason": "[Lý do cụ thể bằng tiếng Việt]" } và DỪNG LẠI, không tạo các trường khác.
 1. TUYỆT ĐỐI KHÔNG nhắc đến màu sắc của sản phẩm trong tên, mô tả hay tags.
 2. Trường 'description' PHẢI là một chuỗi string duy nhất, chứa ĐÚNG nội dung theo mẫu bên dưới. KHÔNG thêm tiêu đề phụ, label hay ghi chú nào khác ngoài những dòng trong mẫu.
 3. Mẫu description (chỉ copy nội dung, KHÔNG copy các dòng bắt đầu bằng "---"):
@@ -78,6 +81,12 @@ Lưu Ý Khi Mua Hàng
   })
 
   const parsed = aiHelper.parseSafeJSON(content)
+
+  // Kiểm tra ảnh có hợp lệ không (quần áo / thời trang)
+  if (parsed.isValid === false) {
+    const reason = parsed.invalidReason || 'Ảnh không phải sản phẩm quần áo hoặc thời trang.'
+    throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, `Ảnh không hợp lệ: ${reason}`)
+  }
 
   // Validate các trường bắt buộc
   const name = parsed.name?.trim() || ''
