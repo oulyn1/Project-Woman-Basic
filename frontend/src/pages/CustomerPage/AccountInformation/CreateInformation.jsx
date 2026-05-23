@@ -188,7 +188,7 @@ function CreateInformation() {
               <Box>
                 <Typography variant="body2" color="#666" mb={0.5}>Số điện thoại</Typography>
                 {isEditing ? (
-                  <TextField fullWidth name="phone" type="tel" value={form.phone} onChange={handleChange} required size="small" />
+                  <TextField fullWidth name="phone" type="tel" value={form.phone} onChange={(e) => handleChange({ target: { name: 'phone', value: e.target.value.replace(/\D/g, '') } })} required size="small" inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
                 ) : (
                   <Typography variant="body1" fontWeight="500">{form.phone || 'Chưa cập nhật'}</Typography>
                 )}

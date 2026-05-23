@@ -48,7 +48,20 @@ const styles = {
     mr: 2,
     fontWeight: 'bold'
   }),
-  statusBox: (status) => {
+  statusBox: (status, isSelf) => {
+    if (isSelf) {
+      return {
+        px: 1.5,
+        py: 0.5,
+        borderRadius: '20px',
+        backgroundColor: 'rgba(33, 150, 243, 0.15)',
+        color: '#42a5f5',
+        border: '1px solid rgba(33, 150, 243, 0.4)',
+        fontSize: '0.75rem',
+        fontWeight: 'bold',
+        display: { xs: 'none', sm: 'block' }
+      }
+    }
     const isOnline = status === 'online'
     return {
       px: 1.5,
@@ -86,6 +99,7 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
   const token = localStorage.getItem('accessToken')
+  const currentUser = useMemo(() => JSON.parse(localStorage.getItem('user') || '{}'), [])
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -122,6 +136,15 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
     setAnchorEl(null)
     setSelectedId(null)
   }, [])
+
+  const canDelete = useMemo(() => {
+    if (!selectedId) return false
+    const target = rows.find(r => r._id === selectedId)
+    if (!target) return false
+    if (target.role === 'admin') return false
+    if (target._id === currentUser._id) return false
+    return true
+  }, [selectedId, rows, currentUser])
 
   const handleAction = useCallback((type) => {
     if (type === 'edit') onEditAccount(selectedId)
@@ -176,8 +199,8 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box sx={styles.statusBox(row.status)}>
-                  {row.status || 'Offline'}
+                <Box sx={styles.statusBox(row.status, row._id === currentUser._id)}>
+                  {row._id === currentUser._id ? 'Tôi' : (row.status || 'Offline')}
                 </Box>
                 <IconButton onClick={(e) => handleOpenMenu(e, row._id)} sx={{ color: '#888' }}>
                   <MoreVertIcon />
@@ -258,9 +281,11 @@ const TableAccount = ({ onEditAccount, searchQuery, roleFilter = 'ALL', fetchTri
         <MenuItem onClick={() => handleAction('edit')} sx={{ gap: 1.5 }}>
           <EditIcon fontSize="small" /> Chỉnh sửa
         </MenuItem>
-        <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}>
-          <DeleteIcon fontSize="small" /> Xóa tài khoản
-        </MenuItem>
+        {canDelete && (
+          <MenuItem onClick={() => handleAction('delete')} sx={{ gap: 1.5, color: '#f44336' }}>
+            <DeleteIcon fontSize="small" /> Xóa tài khoản
+          </MenuItem>
+        )}
       </Menu>
 
       <Dialog

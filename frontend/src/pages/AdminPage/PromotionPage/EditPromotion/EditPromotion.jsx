@@ -35,13 +35,18 @@ const darkField = {
   '& input[type="date"]::-webkit-calendar-picker-indicator': { filter: 'invert(0.5)' }
 }
 
-function F({ sxExtra, ...props }) {
+const BLOCK_KEYS = ['e', 'E', '+', '-', '.']
+function F({ sxExtra, type, ...props }) {
+  const isNumeric = type === 'number'
   return (
     <TextField
       fullWidth
       variant="outlined"
       size="small"
-      InputLabelProps={props.type === 'date' ? { shrink: true } : undefined}
+      type={type}
+      InputLabelProps={type === 'date' ? { shrink: true } : undefined}
+      inputProps={isNumeric ? { inputMode: 'numeric', min: 0 } : undefined}
+      onKeyDown={isNumeric ? (e) => BLOCK_KEYS.includes(e.key) && e.preventDefault() : undefined}
       sx={{ ...darkField, ...sxExtra }}
       {...props}
     />

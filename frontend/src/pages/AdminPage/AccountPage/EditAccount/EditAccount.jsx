@@ -58,7 +58,8 @@ function EditAccount({ open, onClose, onSuccess, accountId }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const cleaned = name === 'phone' ? value.replace(/\D/g, '') : value
+    setFormData(prev => ({ ...prev, [name]: cleaned }))
     setErrors(prev => ({ ...prev, [name]: '' }))
   }
 
@@ -117,7 +118,7 @@ function EditAccount({ open, onClose, onSuccess, accountId }) {
             <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               <FieldCustom label="Họ và tên" InputProps={{ readOnly: true }} value={formData.name} name="name" />
               <FieldCustom label="Email" required placeholder="Nhập email..." value={formData.email} onChange={handleChange} name="email" error={!!errors.email} helperText={errors.email} />
-              <FieldCustom label="Số điện thoại" placeholder="Nhập số điện thoại..." value={formData.phone} onChange={handleChange} name="phone" error={!!errors.phone} helperText={errors.phone} />
+              <FieldCustom label="Số điện thoại" placeholder="Nhập số điện thoại..." value={formData.phone} onChange={handleChange} name="phone" error={!!errors.phone} helperText={errors.phone} inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
               <FieldCustom label="Địa chỉ" placeholder="Nhập địa chỉ..." value={formData.address} onChange={handleChange} name="address" error={!!errors.address} helperText={errors.address} />
               <FieldCustom label="Vai trò" InputProps={{ readOnly: true }} value={formData.role} name="role" />
             </Box>

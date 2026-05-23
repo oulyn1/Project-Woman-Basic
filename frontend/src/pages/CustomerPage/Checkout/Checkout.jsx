@@ -268,7 +268,7 @@ function Checkout() {
               <Stack spacing={2.5}>
                 <TextField label="Họ và tên" fullWidth value={buyerInfo.name} onChange={(e) => setBuyerInfo({ ...buyerInfo, name: e.target.value })} />
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <TextField label="Số điện thoại" fullWidth value={buyerInfo.phone} onChange={(e) => setBuyerInfo({ ...buyerInfo, phone: e.target.value })} />
+                  <TextField label="Số điện thoại" fullWidth value={buyerInfo.phone} onChange={(e) => setBuyerInfo({ ...buyerInfo, phone: e.target.value.replace(/\D/g, '') })} inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
                   <TextField label="Email" fullWidth value={buyerInfo.email} onChange={(e) => setBuyerInfo({ ...buyerInfo, email: e.target.value })} />
                 </Stack>
                 <TextField label="Địa chỉ" fullWidth multiline rows={3} value={buyerInfo.address} onChange={(e) => setBuyerInfo({ ...buyerInfo, address: e.target.value })} />

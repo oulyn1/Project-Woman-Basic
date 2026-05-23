@@ -35,7 +35,8 @@ function AddAccount({ open, onClose, onSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const cleaned = name === 'phone' ? value.replace(/\D/g, '') : value
+    setFormData(prev => ({ ...prev, [name]: cleaned }))
     setErrors(prev => ({ ...prev, [name]: '' }))
   }
 
@@ -101,7 +102,7 @@ function AddAccount({ open, onClose, onSuccess }) {
               ]}
               value={formData.role} onChange={handleChange} name="role" error={!!errors.role} helperText={errors.role}
             />
-            <FieldCustom label="Số điện thoại" value={formData.phone} onChange={handleChange} name="phone" error={!!errors.phone} helperText={errors.phone} />
+            <FieldCustom label="Số điện thoại" value={formData.phone} onChange={handleChange} name="phone" error={!!errors.phone} helperText={errors.phone} inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
             <FieldCustom label="Địa chỉ" multiline rows={2} value={formData.address} onChange={handleChange} name="address" error={!!errors.address} helperText={errors.address} />
           </Box>
         </DialogContent>

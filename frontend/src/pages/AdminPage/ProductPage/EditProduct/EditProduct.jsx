@@ -335,6 +335,8 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                   onChange={(e) =>
                     setFormData({ ...formData, price: e.target.value })
                   }
+                  inputProps={{ inputMode: 'numeric', min: 0 }}
+                  onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
                 />
                 <FieldCustom
                   label="Slug"
@@ -504,7 +506,9 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                         type="number"
                         value={bulkStock}
                         onChange={(e) => setBulkStock(e.target.value)}
+                        onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
                         placeholder="0"
+                        inputMode="numeric"
                         sx={{
                           width: 60,
                           backgroundColor: '#1a1a1a',
@@ -620,6 +624,8 @@ function EditProduct({ open, productId, onClose, onSuccess }) {
                                     e.target.value,
                                   )
                                 }
+                                onKeyDown={(e) => ['e', 'E', '+', '-', '.'].includes(e.key) && e.preventDefault()}
+                                inputMode="numeric"
                                 sx={{
                                   width: 50,
                                   backgroundColor: '#1a1a1a',
