@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+const { ObjectId } = mongoose.Types
 
 const ratingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -22,7 +23,9 @@ export const ratingModel = {
   RATING_COLLECTION_NAME: 'ratings',
   
   createNew: async (data) => {
-    return await Rating.create(data)
+    const doc = await Rating.create(data)
+    // Trả về object có insertedId để tương thích với controller
+    return { insertedId: doc._id, ...doc.toObject() }
   },
 
   getAll: async () => {
@@ -47,7 +50,10 @@ export const ratingModel = {
   },
 
   findByProductId: async (productId) => {
-    return await Rating.find({ productId })
+    // Cast sang ObjectId để tránh lỗi type mismatch (string vs ObjectId)
+    let pid
+    try { pid = new ObjectId(productId) } catch { pid = productId }
+    return await Rating.find({ productId: pid }).sort({ createdAt: -1 })
   },
 
   findByUserProduct: async (userId, productId) => {

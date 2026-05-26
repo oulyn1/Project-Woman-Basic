@@ -14,6 +14,7 @@ import {
   IconButton,
   useMediaQuery,
   useTheme,
+  Avatar,
 } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
 import AddIcon from '@mui/icons-material/Add'
@@ -646,39 +647,83 @@ function ProductDetail() {
               key={i}
               sx={{
                 p: 3,
-                mb: 3,
+                mb: 2,
                 bgcolor: '#fafafa',
                 borderRadius: 4,
                 border: '1px solid #eee',
               }}
             >
-              <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
-              >
-                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  {[...Array(5)].map((_, star) => (
-                    <StarIcon
-                      key={star}
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                <Avatar
+                  sx={{
+                    bgcolor: '#ad2a36',
+                    width: 40,
+                    height: 40,
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold',
+                    flexShrink: 0,
+                  }}
+                >
+                  {review.productName?.[0]?.toUpperCase() || 'K'}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                    <Typography variant="body2" fontWeight="bold" color="#333">
+                      Khách hàng
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 0.5, mb: 1 }}>
+                    {[...Array(5)].map((_, star) => (
+                      <StarIcon
+                        key={star}
+                        sx={{
+                          fontSize: 16,
+                          color: star < review.star ? '#FFD700' : '#ddd',
+                        }}
+                      />
+                    ))}
+                  </Box>
+                  <Typography variant="body2" sx={{ color: '#444', lineHeight: 1.7 }}>
+                    {review.description}
+                  </Typography>
+                  {review.image && (
+                    <Box
+                      component="img"
+                      src={review.image}
+                      alt="Ảnh đánh giá"
                       sx={{
-                        fontSize: 18,
-                        color: star < review.star ? 'gold' : '#ddd',
+                        mt: 1.5,
+                        maxWidth: 120,
+                        maxHeight: 120,
+                        borderRadius: 2,
+                        objectFit: 'cover',
+                        border: '1px solid #eee',
                       }}
                     />
-                  ))}
+                  )}
                 </Box>
-                <Typography variant="caption" color="text.secondary">
-                  {new Date(review.createdAt).toLocaleDateString()}
-                </Typography>
               </Box>
-              <Typography variant="body2" sx={{ color: '#333' }}>
-                {review.description}
-              </Typography>
             </Box>
           ))
         ) : (
-          <Typography color="text.secondary">
-            Chưa có đánh giá nào cho sản phẩm này.
-          </Typography>
+          <Box
+            sx={{
+              py: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1,
+              color: 'text.secondary',
+            }}
+          >
+            <StarIcon sx={{ fontSize: 48, color: '#ddd' }} />
+            <Typography variant="body1" color="text.secondary">
+              Chưa có đánh giá nào cho sản phẩm này.
+            </Typography>
+          </Box>
         )}
       </Box>
       <Snackbar
