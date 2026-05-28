@@ -100,7 +100,8 @@ function ProductDetail() {
         const promosList = promos.items ?? []
         const user = currentUser
         const isProductPromo = (p) =>
-          p.productIds?.includes('ALL') || p.productIds?.includes(prodData._id)
+          p.type === 'product' &&
+          (p.productIds?.includes('ALL') || p.productIds?.includes(prodData._id))
         const isActivePromo = (p) => {
           if (p.status !== 'active') return false
           const startOk = !p.startDate || new Date(p.startDate) <= now
