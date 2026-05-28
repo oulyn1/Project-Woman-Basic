@@ -50,13 +50,19 @@ export const ratingModel = {
   },
 
   findByProductId: async (productId) => {
-    // Query cả string lẫn ObjectId để tránh type mismatch với data cũ trong DB
+    // Dùng native collection để bypass Mongoose schema casting.
+    // Mongoose tự cast string -> ObjectId khi dùng Rating.find(),
+    // nên data cũ lưu dạng string sẽ không match. Native driver không cast.
     let pid
     try { pid = new ObjectId(productId) } catch { pid = null }
-    const conditions = pid
-      ? { $or: [{ productId: pid }, { productId: productId.toString() }] }
-      : { productId: productId.toString() }
-    return await Rating.find(conditions).sort({ createdAt: -1 })
+    const orConditions = pid
+      ? [{ productId: pid }, { productId: productId.toString() }]
+      : [{ productId: productId.toString() }]
+    const results = await Rating.collection
+      .find({ $or: orConditions })
+      .sort({ createdAt: -1 })
+      .toArray()
+    return results
   },
 
   findByUserProduct: async (userId, productId) => {
