@@ -112,13 +112,17 @@ function ProductDetail() {
           const cond = p.condition ?? { type: 'all', loyalTiers: [] }
           switch (cond.type) {
           case 'all':
+            // Áp dụng cho tất cả, kể cả khách chưa đăng nhập
             return true
           case 'loyal':
+            // Yêu cầu đăng nhập và đúng tier
             return (
+              !!user?._id &&
               !!user?.loyaltyTier &&
                 (cond.loyalTiers ?? []).includes(user.loyaltyTier)
             )
           case 'specific':
+            // Yêu cầu đăng nhập và đúng customer ID
             return (
               !!user?._id &&
                 (cond.specificCustomerIds ?? []).some(
@@ -126,7 +130,9 @@ function ProductDetail() {
                 )
             )
           case 'new':
-            return (cond.newCustomerMaxOrders ?? null) == null
+            // Yêu cầu đăng nhập; backend sẽ kiểm tra số đơn hàng chính xác
+            // Frontend chỉ hiển thị nếu user đã login (tránh show nhầm cho guest)
+            return !!user?._id
           default:
             return true
           }
@@ -267,7 +273,8 @@ function ProductDetail() {
       bestPromotion.discountType === 'percent'
         ? Math.round(product.price * (bestPromotion.discountValue / 100))
         : bestPromotion.discountValue
-    return product.price - discount
+    // Đảm bảo giá không bao giờ âm
+    return Math.max(0, product.price - discount)
   }, [product, bestPromotion])
 
   if (loading || !product) {
