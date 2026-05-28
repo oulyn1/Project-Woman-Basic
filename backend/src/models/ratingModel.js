@@ -50,10 +50,13 @@ export const ratingModel = {
   },
 
   findByProductId: async (productId) => {
-    // Cast sang ObjectId để tránh lỗi type mismatch (string vs ObjectId)
+    // Query cả string lẫn ObjectId để tránh type mismatch với data cũ trong DB
     let pid
-    try { pid = new ObjectId(productId) } catch { pid = productId }
-    return await Rating.find({ productId: pid }).sort({ createdAt: -1 })
+    try { pid = new ObjectId(productId) } catch { pid = null }
+    const conditions = pid
+      ? { $or: [{ productId: pid }, { productId: productId.toString() }] }
+      : { productId: productId.toString() }
+    return await Rating.find(conditions).sort({ createdAt: -1 })
   },
 
   findByUserProduct: async (userId, productId) => {
