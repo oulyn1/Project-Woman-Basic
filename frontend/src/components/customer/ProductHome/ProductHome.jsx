@@ -156,27 +156,28 @@ function ProductHome() {
   // Helper: check if promo is active today
   const nowDate = new Date()
   const isPromoActive = (p) => p.computedStatus === 'active' && (!p.startDate || new Date(p.startDate) <= nowDate) && (!p.endDate || p.endDate === null || new Date(p.endDate) >= nowDate)
-  // Helper: check if promo targets given product
-  const isProductPromo = (p, productId) => p.productIds?.includes('ALL') || p.productIds?.includes(productId)
+  // Helper: check if promo targets given product (chỉ type=product, không tính order promo)
+  const isProductPromo = (p, productId) => p.type === 'product' && (p.productIds?.includes('ALL') || p.productIds?.includes(productId))
   // Helper: check user eligibility for promo
   const isPromoEligibleForUser = (p) => {
     const user = currentUser
     const cond = p.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
     switch (cond.type) {
     case 'all': return true
-    case 'loyal': return !!user?.loyaltyTier && (cond.loyalTiers ?? []).includes(user.loyaltyTier)
+    case 'loyal': return !!user?._id && !!user?.loyaltyTier && (cond.loyalTiers ?? []).includes(user.loyaltyTier)
     case 'specific': return !!user?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(user._id))
-    case 'new': return (cond.newCustomerMaxOrders ?? null) == null
+    case 'new': return !!user?._id  // yêu cầu login, backend xác thực số đơn
     default: return true
     }
   }
   const promosForProduct = (prod) => promotions.filter(p => isProductPromo(p, prod._id) && isPromoActive(p) && isPromoEligibleForUser(p))
 
-  // Tính % giảm giá cao nhất cho 1 sản phẩm
+  // Tính % giảm giá cao nhất cho 1 sản phẩm (chỉ type=product)
   const getMaxDiscount = (product) => {
     const now = new Date()
     let maxDiscount = 0
     promotions.forEach(promo => {
+      if (promo.type !== 'product') return  // bỏ qua order promo
       const isTarget = promo.productIds?.includes('ALL') || promo.productIds?.includes(product._id)
       const isActive = promo.computedStatus === 'active' && (!promo.startDate || new Date(promo.startDate) <= now) && (!promo.endDate || promo.endDate === null || new Date(promo.endDate) >= now)
       if (!isTarget || !isActive) return
@@ -184,9 +185,9 @@ function ProductHome() {
       let isEligible = true
       switch (cond.type) {
       case 'all': break
-      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'loyal': isEligible = !!currentUser?._id && !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
       case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
-      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      case 'new': isEligible = !!currentUser?._id; break
       default: break
       }
       if (isEligible && (promo.discountPercent || 0) > maxDiscount) {
@@ -196,19 +197,20 @@ function ProductHome() {
     return maxDiscount
   }
 
-  // Lọc sản phẩm có khuyến mãi, sort theo % giảm giá cao nhất, lấy 10 sản phẩm
+  // Lọc sản phẩm có khuyến mãi type=product, sort theo % giảm giá cao nhất, lấy 10 sản phẩm
   const saleProducts = useMemo(() => {
     const now = new Date()
     const productWithPromo = allProducts.filter(p => promotions.some(promo => {
+      if (promo.type !== 'product') return false  // bỏ qua order promo
       const isTargetProduct = promo.productIds?.includes('ALL') || promo.productIds?.includes(p._id)
       const isActive = promo.computedStatus === 'active' && (!promo.startDate || new Date(promo.startDate) <= now) && (!promo.endDate || promo.endDate === null || new Date(promo.endDate) >= now)
       let isEligible = true
       const cond = promo.condition ?? { type: 'all', loyalTiers: [], specificCustomerIds: [] }
       switch (cond.type) {
       case 'all': break
-      case 'loyal': isEligible = !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
+      case 'loyal': isEligible = !!currentUser?._id && !!currentUser?.loyaltyTier && (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier); break
       case 'specific': isEligible = !!currentUser?._id && (cond.specificCustomerIds ?? []).some(id => String(id) === String(currentUser._id)); break
-      case 'new': isEligible = (cond.newCustomerMaxOrders ?? null) == null; break
+      case 'new': isEligible = !!currentUser?._id; break
       default: break
       }
       return isTargetProduct && isActive && isEligible

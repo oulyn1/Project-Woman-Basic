@@ -43,7 +43,7 @@ const ProductCard = ({ product, promotions = [] }) => {
       : highestPromotion.discountValue
   }, [highestPromotion, product.price])
 
-  const finalPrice = product.price - discountAmount
+  const finalPrice = Math.max(0, product.price - discountAmount)
 
   const uniqueColors = useMemo(() => {
     const colors = []
