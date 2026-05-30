@@ -20,7 +20,7 @@ Dựa trên hình ảnh sản phẩm, hãy tạo một đối tượng JSON vớ
 }
 
 YÊU CẦU QUAN TRỌNG:
-0. TRƯỚC TIÊN, hãy kiểm tra ảnh: nếu ảnh KHÔNG phải quần áo, phụ kiện thời trang (ví dụ: ảnh người, phong cảnh, đồ vật, nội dung không phù hợp...) thì chỉ trả về JSON: { "isValid": false, "invalidReason": "[Lý do cụ thể bằng tiếng Việt]" } và DỪNG LẠI, không tạo các trường khác.
+0. TRƯỚC TIÊN, hãy kiểm tra ảnh: nếu ảnh KHÔNG chứa quần áo, phụ kiện thời trang (ví dụ: chỉ có phong cảnh, đồ vật không liên quan đến thời trang, ảnh tự sướng cá nhân không rõ trang phục, nội dung không phù hợp...) thì chỉ trả về JSON: { "isValid": false, "invalidReason": "[Lý do cụ thể bằng tiếng Việt]" } và DỪNG LẠI, không tạo các trường khác. Chú ý: Ảnh có người mẫu (model) đang mặc hoặc trình diễn trang phục/phụ kiện thời trang là HOÀN TOÀN HỢP LỆ và cần được phân tích.
 1. TUYỆT ĐỐI KHÔNG nhắc đến màu sắc của sản phẩm trong tên, mô tả hay tags.
 2. Trường 'description' PHẢI là một chuỗi string duy nhất, chứa ĐÚNG nội dung theo mẫu bên dưới. KHÔNG thêm tiêu đề phụ, label hay ghi chú nào khác ngoài những dòng trong mẫu.
 3. Mẫu description (chỉ copy nội dung, KHÔNG copy các dòng bắt đầu bằng "---"):

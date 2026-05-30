@@ -15,6 +15,7 @@ import {
   Divider,
   useMediaQuery,
   useTheme,
+  Pagination,
 } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { fetchAllProductsAPI } from '~/apis/productAPIs'
@@ -41,6 +42,23 @@ function ListProduct() {
   const [searchQuery, setSearchQuery] = useState('')
   const [priceRange, setPriceRange] = useState({ min: 0, max: Infinity })
   const [sortBy, setSortBy] = useState('newest')
+
+  // Pagination states
+  const [page, setPage] = useState(1)
+  const ITEMS_PER_PAGE = 12
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [categorySlug, searchQuery, priceRange, sortBy])
+
+  // Get products for current page
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE
+    return processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [processedProducts, page])
+
+  const totalPages = Math.ceil(processedProducts.length / ITEMS_PER_PAGE)
 
   // Load current user from localStorage
   useEffect(() => {
@@ -339,7 +357,7 @@ function ListProduct() {
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                Showing all {processedProducts.length} results
+                Hiển thị kết quả {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, processedProducts.length)} trong số {processedProducts.length} sản phẩm
               </Typography>
 
               <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -361,7 +379,7 @@ function ListProduct() {
           {/* Mobile: result count */}
           {isMobile && (
             <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-              {processedProducts.length} sản phẩm
+              Hiển thị {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, processedProducts.length)} trong số {processedProducts.length} sản phẩm
             </Typography>
           )}
 
@@ -372,20 +390,61 @@ function ListProduct() {
               </Typography>
             </Box>
           ) : (
-            <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
-              {processedProducts.map((product) => (
-                <Grid item xs={12} sm={6} md={4} key={product._id}>
-                  <Box
-                    onClick={() => navigate(`/productdetail/${product._id}`)}
-                  >
-                    <ProductCard
-                      product={product}
-                      promotions={promosForProduct(product)}
-                    />
-                  </Box>
-                </Grid>
-              ))}
-            </Grid>
+            <Box>
+              <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }}>
+                {paginatedProducts.map((product) => (
+                  <Grid item xs={12} sm={6} md={4} key={product._id}>
+                    <Box
+                      onClick={() => navigate(`/productdetail/${product._id}`)}
+                    >
+                      <ProductCard
+                        product={product}
+                        promotions={promosForProduct(product)}
+                      />
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {totalPages > 1 && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    mt: 6,
+                    mb: 2,
+                  }}
+                >
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(event, value) => {
+                      setPage(value)
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
+                    color="primary"
+                    shape="rounded"
+                    size={isMobile ? 'medium' : 'large'}
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          bgcolor: '#f5f5f5',
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: 'black',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: '#333',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
           )}
         </Box>
       </Box>
