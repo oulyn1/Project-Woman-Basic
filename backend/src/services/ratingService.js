@@ -1,4 +1,5 @@
 import { ratingModel } from '~/models/ratingModel.js'
+import { orderModel } from '~/models/orderModel.js'
 import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 
@@ -7,6 +8,11 @@ const addRating = async (data) => {
   // If userId/productId provided, enforce uniqueness conditionally
   if (data?.userId && data?.productId) {
     if (data?.orderId) {
+      const order = await orderModel.getDetails(data.orderId)
+      if (!order || order.status !== 'delivered') {
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Bạn chỉ được đánh giá các sản phẩm trong đơn hàng đã được nhận thành công (delivered)')
+      }
+
       const existing = await ratingModel.findByComposite(data.userId, data.orderId, data.productId)
       if (existing) {
         throw new ApiError(StatusCodes.CONFLICT, 'Bạn đã đánh giá sản phẩm này cho đơn hàng này')

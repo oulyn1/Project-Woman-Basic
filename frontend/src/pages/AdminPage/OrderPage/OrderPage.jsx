@@ -60,9 +60,9 @@ function OrderPage() {
             <MenuItem value="ALL">Tất cả trạng thái</MenuItem>
             <MenuItem value="pending">Chờ xác nhận</MenuItem>
             <MenuItem value="confirmed">Đã xác nhận</MenuItem>
-            <MenuItem value="shipped">Đang giao</MenuItem>
             <MenuItem value="delivered">Đã giao</MenuItem>
             <MenuItem value="cancelled">Đã hủy</MenuItem>
+            <MenuItem value="returned">Hoàn hàng</MenuItem>
           </Select>
         </FormControl>
       </Box>

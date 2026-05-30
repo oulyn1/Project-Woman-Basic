@@ -16,16 +16,28 @@ const statusColor = (status) => {
   switch (status) {
   case 'pending': return 'warning'
   case 'confirmed': return 'info'
-  case 'shipped': return 'secondary'
   case 'delivered': return 'success'
   case 'cancelled': return 'error'
+  case 'returned': return 'secondary'
   default: return 'default'
   }
 }
 
 // small timeline visual for order status
 const OrderStatusTimeline = ({ status }) => {
-  const steps = ['pending', 'confirmed', 'shipped', 'delivered']
+  if (status === 'cancelled' || status === 'returned') {
+    return (
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
+        <Chip
+          label={status === 'cancelled' ? 'Đã hủy' : 'Hoàn trả hàng'}
+          color={status === 'cancelled' ? 'error' : 'secondary'}
+          size="small"
+          sx={{ fontWeight: 'bold' }}
+        />
+      </Box>
+    )
+  }
+  const steps = ['pending', 'confirmed', 'delivered']
   return (
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 1 }}>
       {steps.map((s, i) => {
@@ -156,6 +168,22 @@ const MyOrders = () => {
     setConfirmDialog({ open: true, orderId, action: 'pay' })
   }
 
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      const updated = await updateOrderAPI(orderId, { status: newStatus })
+      setOrders(prev =>
+        prev.map(o => o._id === orderId
+          ? { ...o, status: updated.status }
+          : o
+        )
+      )
+      const msg = newStatus === 'delivered' ? 'Đã nhận hàng thành công!' : 'Đã yêu cầu hoàn trả hàng thành công!'
+      setSnackbar({ open: true, message: msg, severity: 'success' })
+    } catch (err) {
+      setSnackbar({ open: true, message: err?.response?.data?.message || 'Có lỗi xảy ra', severity: 'error' })
+    }
+  }
+
   const performAction = async () => {
     const { orderId, action } = confirmDialog
     if (!orderId) return
@@ -208,9 +236,9 @@ const MyOrders = () => {
             <MenuItem value="all">Tất cả</MenuItem>
             <MenuItem value="pending">Pending</MenuItem>
             <MenuItem value="confirmed">Confirmed</MenuItem>
-            <MenuItem value="shipped">Shipped</MenuItem>
             <MenuItem value="delivered">Delivered</MenuItem>
             <MenuItem value="cancelled">Cancelled</MenuItem>
+            <MenuItem value="returned">Returned</MenuItem>
           </Select>
         </FormControl>
 
@@ -290,12 +318,23 @@ const MyOrders = () => {
                     </Box>
                   </CardContent>
 
-                  <CardActions sx={{ justifyContent: 'flex-end', pr: 2, pb: 2 }}>
+                  <CardActions sx={{ justifyContent: 'flex-end', pr: 2, pb: 2, flexWrap: 'wrap', gap: 1 }}>
                     <Button size="small" onClick={() => handleViewDetail(o)}>Xem chi tiết</Button>
                     {o.status === 'pending' && (
                       <Button size="small" color="error" onClick={() => handleCancelOrder(o._id)}>
                         Hủy đơn
                       </Button>
+                    )}
+
+                    {o.status === 'confirmed' && (
+                      <>
+                        <Button size="small" variant="contained" color="success" onClick={() => handleUpdateStatus(o._id, 'delivered')}>
+                          Đã nhận hàng
+                        </Button>
+                        <Button size="small" variant="outlined" color="warning" onClick={() => handleUpdateStatus(o._id, 'returned')}>
+                          Hoàn hàng
+                        </Button>
+                      </>
                     )}
 
                     {o.paymentStatus === 'unpaid' && (
@@ -374,7 +413,7 @@ const MyOrders = () => {
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {(it.quantity * it.price).toLocaleString()}đ
                         </Typography>
-                        {['confirmed', 'shipped', 'delivered'].includes(detailDialog.order.status) && (
+                        {detailDialog.order.status === 'delivered' && (
                           <Tooltip title="Đánh giá sản phẩm này">
                             <IconButton
                               onClick={() => setRatingDialog({ open: true, productId: it.productId, productName: it.product?.name, image: it.product?.images?.[0] || it.product?.image })}
@@ -424,7 +463,19 @@ const MyOrders = () => {
             </>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
+          <Box>
+            {detailDialog.order?.status === 'confirmed' && (
+              <>
+                <Button size="small" variant="contained" color="success" onClick={() => { handleUpdateStatus(detailDialog.order._id, 'delivered'); setDetailDialog({ open: false, order: null }); }}>
+                  Đã nhận hàng
+                </Button>
+                <Button size="small" variant="outlined" color="warning" onClick={() => { handleUpdateStatus(detailDialog.order._id, 'returned'); setDetailDialog({ open: false, order: null }); }} sx={{ ml: 1 }}>
+                  Hoàn hàng
+                </Button>
+              </>
+            )}
+          </Box>
           <Button onClick={() => setDetailDialog({ open: false, order: null })}>Đóng</Button>
         </DialogActions>
       </Dialog>

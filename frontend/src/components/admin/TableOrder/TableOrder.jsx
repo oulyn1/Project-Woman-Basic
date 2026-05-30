@@ -91,9 +91,9 @@ const TableOrder = ({ searchQuery, statusFilter = 'ALL' }) => {
     switch (status) {
     case 'pending': return { bg: 'rgba(251, 192, 45, 0.1)', color: '#fbc02d' }
     case 'confirmed': return { bg: 'rgba(25, 118, 210, 0.1)', color: '#1976d2' }
-    case 'shipped': return { bg: 'rgba(255, 152, 0, 0.1)', color: '#ff9800' }
     case 'delivered': return { bg: 'rgba(56, 142, 60, 0.1)', color: '#388e3c' }
     case 'cancelled': return { bg: 'rgba(211, 47, 47, 0.1)', color: '#d32f2f' }
+    case 'returned': return { bg: 'rgba(230, 81, 0, 0.1)', color: '#e65100' }
     default: return { bg: 'rgba(117, 117, 117, 0.1)', color: '#757575' }
     }
   }

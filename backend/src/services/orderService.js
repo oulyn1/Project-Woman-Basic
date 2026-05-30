@@ -107,21 +107,34 @@ const updateOne = async (orderId, reqBody, user) => {
     throw new ApiError(StatusCodes.FORBIDDEN, "Bạn không có quyền sửa đổi đơn hàng này");
   }
 
-  // Khách hàng (không phải staff) chỉ được phép hủy đơn hàng của mình khi đơn đang ở trạng thái pending
+  // Đảm bảo chỉ khách hàng mới được chuyển trạng thái là đã nhận được hàng (delivered) hoặc hoàn hàng (returned), admin không làm được
+  if (reqBody.status && ['delivered', 'returned'].includes(reqBody.status)) {
+    if (isStaffUser) {
+      throw new ApiError(StatusCodes.FORBIDDEN, "Chỉ khách hàng sở hữu đơn hàng mới có quyền xác nhận đã nhận hàng hoặc hoàn hàng. Admin/Nhân viên không thể thực hiện thao tác này.");
+    }
+  }
+
+  // Khách hàng (không phải staff) chỉ được phép cập nhật trạng thái đơn hàng của mình hoặc thanh toán lại
   if (!isStaffUser) {
     const allowedKeys = ['status', 'paymentStatus'];
     const updateKeys = Object.keys(reqBody);
     const hasInvalidKeys = updateKeys.some(key => !allowedKeys.includes(key));
     if (hasInvalidKeys) {
-      throw new ApiError(StatusCodes.FORBIDDEN, "Khách hàng chỉ được phép hủy đơn hàng hoặc thanh toán lại");
+      throw new ApiError(StatusCodes.FORBIDDEN, "Khách hàng chỉ được phép cập nhật trạng thái đơn hàng hoặc thanh toán lại");
     }
 
-    if (reqBody.status && reqBody.status !== 'cancelled') {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Khách hàng chỉ được phép chuyển trạng thái đơn sang hủy");
-    }
+    if (reqBody.status) {
+      if (!['cancelled', 'delivered', 'returned'].includes(reqBody.status)) {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Khách hàng chỉ được phép chuyển trạng thái đơn sang hủy (cancelled), đã nhận (delivered) hoặc hoàn hàng (returned)");
+      }
 
-    if (reqBody.status === 'cancelled' && currentOrder.status !== 'pending') {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Chỉ có thể hủy đơn hàng khi đơn hàng đang ở trạng thái chờ xử lý (pending)");
+      if (reqBody.status === 'cancelled' && currentOrder.status !== 'pending') {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Chỉ có thể hủy đơn hàng khi đơn hàng đang ở trạng thái chờ xử lý (pending)");
+      }
+
+      if (['delivered', 'returned'].includes(reqBody.status) && currentOrder.status !== 'confirmed') {
+        throw new ApiError(StatusCodes.BAD_REQUEST, "Chỉ có thể chuyển trạng thái sang đã nhận hàng hoặc hoàn hàng khi đơn hàng đã được xác nhận (confirmed)");
+      }
     }
   }
 
@@ -154,13 +167,16 @@ const updateOne = async (orderId, reqBody, user) => {
       }
     }
 
-    // Nếu đơn đã được confirmed và có userId, tính toán lại Loyalty Tier của User ngầm ở background
-    if (currentOrder.status === "confirmed" && currentOrder.userId) {
+    // Nếu đơn hàng chuyển sang 'delivered', 'returned', hoặc 'cancelled' và có userId, tính toán lại Loyalty Tier của User ngầm ở background
+    const loyaltyTriggerStatuses = ['delivered', 'returned', 'cancelled'];
+    const isStatusChanged = reqBody.status && reqBody.status !== currentOrder.status;
+    if (isStatusChanged && loyaltyTriggerStatuses.includes(reqBody.status) && currentOrder.userId) {
       (async () => {
         try {
+          // Lấy tất cả đơn hàng đã giao (delivered) để tính hạng thành viên
           const userOrders = await orderModel.getAll({
             userId: currentOrder.userId,
-            status: "confirmed",
+            status: "delivered",
           });
           const totalSpending = (userOrders || []).reduce(
             (sum, o) => sum + Number(o?.total || 0),
@@ -169,7 +185,7 @@ const updateOne = async (orderId, reqBody, user) => {
           const newTier = calculateLoyaltyTier(totalSpending);
           await User.findByIdAndUpdate(currentOrder.userId, { loyaltyTier: newTier });
         } catch (error) {
-          console.warn("⚠️ Failed to update loyalty tier after cancellation:", error.message);
+          console.warn("⚠️ Failed to update loyalty tier in background:", error.message);
         }
       })();
     }
@@ -269,26 +285,7 @@ const confirmOrder = async (orderId) => {
     updatedAt: Date.now(),
   });
 
-  // ✅ OPTIMIZATION: Tính toán và cập nhật Loyalty Tier của User bất đồng bộ ở background, không block response xác nhận đơn hàng
-  if (order.userId) {
-    (async () => {
-      try {
-        const userOrders = await orderModel.getAll({
-          userId: order.userId,
-          status: "confirmed",
-        });
-        const totalSpending = (userOrders || []).reduce(
-          (sum, o) => sum + Number(o?.total || 0),
-          0,
-        );
 
-        const newTier = calculateLoyaltyTier(totalSpending);
-        await User.findByIdAndUpdate(order.userId, { loyaltyTier: newTier });
-      } catch (error) {
-        console.warn("⚠️ Failed to update loyalty tier in background:", error.message);
-      }
-    })();
-  }
 
   // Trả về chi tiết order mới nhất
   return updatedOrder || (await orderModel.getDetailsWithProducts(orderId));
