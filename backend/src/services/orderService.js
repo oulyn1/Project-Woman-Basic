@@ -175,7 +175,7 @@ const updateOne = async (orderId, reqBody, user) => {
     }
   }
 
-  return updatedOrder;
+  return await orderModel.getDetailsWithProducts(orderId);
 };
 
 const confirmOrder = async (orderId) => {
@@ -291,7 +291,7 @@ const confirmOrder = async (orderId) => {
   }
 
   // Trả về chi tiết order mới nhất
-  return updatedOrder || (await orderModel.getDetailsWithProducts(orderId));
+  return await orderModel.getDetailsWithProducts(orderId);
 };
 
 const getMyOrders = async (userId) => {
