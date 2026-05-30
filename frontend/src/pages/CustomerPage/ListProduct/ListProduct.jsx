@@ -52,14 +52,6 @@ function ListProduct() {
     setPage(1)
   }, [categorySlug, searchQuery, priceRange, sortBy])
 
-  // Get products for current page
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (page - 1) * ITEMS_PER_PAGE
-    return processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [processedProducts, page])
-
-  const totalPages = Math.ceil(processedProducts.length / ITEMS_PER_PAGE)
-
   // Load current user from localStorage
   useEffect(() => {
     try {
@@ -93,12 +85,18 @@ function ListProduct() {
     if (!prod) return []
     const now = new Date()
     return promotions.filter((p) => {
+      // 1. Chỉ áp dụng khuyến mãi cấp sản phẩm (ẩn khuyến mãi cấp đơn hàng)
       const isProductPromo =
-        p.productIds?.includes('ALL') || p.productIds?.includes(prod._id)
+        p.type === 'product' &&
+        (p.productIds?.includes('ALL') || p.productIds?.includes(prod._id))
+
+      // 2. Kiểm tra trạng thái hoạt động của khuyến mãi
       const isActive =
         p.computedStatus === 'active' &&
         (!p.startDate || new Date(p.startDate) <= now) &&
         (!p.endDate || p.endDate === null || new Date(p.endDate) >= now)
+
+      // 3. Kiểm tra điều kiện áp dụng cho user (đồng bộ hoàn hảo với ProductDetail)
       const cond = p.condition ?? {
         type: 'all',
         loyalTiers: [],
@@ -107,14 +105,18 @@ function ListProduct() {
       let eligible = true
       switch (cond.type) {
       case 'all':
+        // Áp dụng cho tất cả, kể cả khách chưa đăng nhập
         eligible = true
         break
       case 'loyal':
+        // Yêu cầu đăng nhập và đúng hạng thành viên
         eligible =
+            !!currentUser?._id &&
             !!currentUser?.loyaltyTier &&
             (cond.loyalTiers ?? []).includes(currentUser.loyaltyTier)
         break
       case 'specific':
+        // Yêu cầu đăng nhập và đúng ID khách hàng chỉ định
         eligible =
             !!currentUser?._id &&
             (cond.specificCustomerIds ?? []).some(
@@ -122,7 +124,8 @@ function ListProduct() {
             )
         break
       case 'new':
-        eligible = (cond.newCustomerMaxOrders ?? null) == null
+        // Yêu cầu đăng nhập mới có thể xác thực khách hàng mới (tránh hiển thị cho guest)
+        eligible = !!currentUser?._id
         break
       default:
         eligible = true
@@ -197,6 +200,14 @@ function ListProduct() {
     priceRange,
     sortBy,
   ])
+
+  // Get products for current page
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE
+    return processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [processedProducts, page])
+
+  const totalPages = Math.ceil(processedProducts.length / ITEMS_PER_PAGE)
 
   const handlePriceClick = (min, max) => {
     if (priceRange.min === min && priceRange.max === max) {
