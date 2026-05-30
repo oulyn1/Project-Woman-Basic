@@ -100,12 +100,28 @@ export const orderModel = {
 
   search: async (query) => {
     const regex = new RegExp(query, 'i')
-    return await Order.find({
+    const orders = await Order.find({
       $or: [
         { 'buyerInfo.name': regex },
         { 'buyerInfo.email': regex },
         { status: regex }
       ]
+    }).populate('items.productId')
+    return orders.map(order => {
+      const orderObj = order.toObject()
+      orderObj.items = orderObj.items.map(item => {
+        const product = item.productId
+        const variant = (product?.variants && item.variantId) 
+          ? product.variants.find(v => v._id.toString() === item.variantId.toString())
+          : null
+        return {
+          ...item,
+          productId: product?._id || item.productId,
+          product: product || null,
+          variant: variant || null
+        }
+      })
+      return orderObj
     })
   },
 
@@ -115,13 +131,29 @@ export const orderModel = {
 
   searchByUser: async (userId, query) => {
     const regex = new RegExp(query, 'i')
-    return await Order.find({
+    const orders = await Order.find({
       userId,
       $or: [
         { 'buyerInfo.name': regex },
         { 'buyerInfo.email': regex },
         { status: regex }
       ]
+    }).populate('items.productId')
+    return orders.map(order => {
+      const orderObj = order.toObject()
+      orderObj.items = orderObj.items.map(item => {
+        const product = item.productId
+        const variant = (product?.variants && item.variantId) 
+          ? product.variants.find(v => v._id.toString() === item.variantId.toString())
+          : null
+        return {
+          ...item,
+          productId: product?._id || item.productId,
+          product: product || null,
+          variant: variant || null
+        }
+      })
+      return orderObj
     })
   },
 

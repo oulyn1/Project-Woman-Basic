@@ -273,7 +273,7 @@ const MyOrders = () => {
                         {o.items?.slice(0, 3).map((it, idx) => (
                           <Avatar
                             key={idx}
-                            src={it.product?.image || ''}
+                            src={it.product?.images?.[0] || it.product?.image || ''}
                             variant="rounded"
                             sx={{ width: 64, height: 64 }}
                           />
@@ -349,7 +349,7 @@ const MyOrders = () => {
                     const variantLabel = [it.size, it.color].filter(Boolean).join(' / ')
                     return (
                       <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
-                        <Avatar src={it.product?.image} variant="rounded" sx={{ width: 56, height: 56 }} />
+                        <Avatar src={it.product?.images?.[0] || it.product?.image} variant="rounded" sx={{ width: 56, height: 56 }} />
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="body2" fontWeight="500">{it.product?.name || it.productId}</Typography>
                           {variantLabel && (
@@ -374,10 +374,10 @@ const MyOrders = () => {
                         <Typography variant="body2" sx={{ fontWeight: 700 }}>
                           {(it.quantity * it.price).toLocaleString()}đ
                         </Typography>
-                        {detailDialog.order.status === 'confirmed' && (
+                        {['confirmed', 'shipped', 'delivered'].includes(detailDialog.order.status) && (
                           <Tooltip title="Đánh giá sản phẩm này">
                             <IconButton
-                              onClick={() => setRatingDialog({ open: true, productId: it.productId, productName: it.product?.name, image: it.product?.image })}
+                              onClick={() => setRatingDialog({ open: true, productId: it.productId, productName: it.product?.name, image: it.product?.images?.[0] || it.product?.image })}
                               sx={{ ml: 1, p: 0 }}
                             >
                               <StarIcon sx={{ color: 'gray', '&:hover': { color: 'gold' } }} fontSize="small" />
@@ -507,9 +507,11 @@ const MyOrders = () => {
               }
               // Gửi ratingValue + ratingComment cho backend
               const ratingData = {
+                userId: user?._id,
+                orderId: detailDialog.order?._id,
                 productId: ratingDialog.productId,
-                productName: ratingDialog.productName,
-                image: ratingDialog.image,
+                productName: ratingDialog.productName || 'Sản phẩm',
+                image: ratingDialog.image || '',
                 star: ratingValue,
                 description: ratingComment
               }
