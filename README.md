@@ -1,6 +1,6 @@
-# Dự án Woman Basic
+# 🛍️ Woman Basic — E-Commerce Platform
 
-Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện được thiết kế riêng cho ngành thời trang. Dự án nhằm mục đích nâng cao trải nghiệm người dùng cho shop thời trang **Woman Basic** thông qua việc tối ưu hóa hệ thống, cải thiện hiệu suất và thiết kế UI/UX hiện đại.
+**Woman Basic** là nền tảng thương mại điện tử toàn diện được thiết kế riêng cho ngành thời trang nữ. Hệ thống tích hợp trí tuệ nhân tạo (AI) để hỗ trợ phân tích sản phẩm, tư vấn style và vận hành cửa hàng.
 
 ---
 
@@ -11,6 +11,7 @@ Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện đ
 - **Giỏ hàng & Thanh toán**: Trải nghiệm mua sắm liền mạch với quản lý giỏ hàng thông minh.
 - **Quản lý tài khoản**: Cá nhân hóa hồ sơ và theo dõi tình trạng đơn hàng.
 - **Đánh giá sản phẩm**: Xem và gửi nhận xét cho các sản phẩm đã mua.
+- **Gợi ý cá nhân hóa**: Hệ thống đề xuất sản phẩm dựa trên hành vi duyệt web.
 
 ### 🛡️ Trang quản trị (Admin Dashboard)
 - **Sản phẩm & Danh mục**: Quản lý toàn diện (CRUD) kho hàng và danh mục.
@@ -19,112 +20,223 @@ Project-Woman-Basic là giải pháp Thương mại điện tử toàn diện đ
 - **Khuyến mãi**: Tạo và quản lý các chiến dịch giảm giá.
 - **Giám sát đánh giá**: Theo dõi và kiểm duyệt phản hồi từ khách hàng.
 
-### 🤖 Năng lực ứng dụng AI
-- **Phân tích sản phẩm AI**: Tự động tạo chi tiết sản phẩm (tên, danh mục, mô tả, tags) từ ảnh tải lên sử dụng Groq (Llama-4).
-- **Phân tích bảng size AI**: Trích xuất bảng size từ hình ảnh và chuyển đổi sang Markdown để tư vấn kích cỡ tự động.
-- **Trợ lý Stylist AI (Khách hàng)**: Trợ lý chat thời gian thực cung cấp gợi ý sản phẩm và tư vấn size cá nhân hóa.
-- **Admin AI Copilot**: Trợ lý bảng điều khiển thông minh giúp phân tích kinh doanh, hỗ trợ tra cứu dữ liệu. Hỗ trợ phân quyền chặt chẽ giữa vai trò **Admin** (đầy đủ quyền hạn, mở Mini-UI tự động) và **Nhân viên (Employee)** (bị giới hạn quyền truy cập mục Khuyến mãi, Quản trị tài khoản; chặn kích hoạt Mini-UI của Đơn hàng và Khách hàng).
-- **Lightweight RAG**: Triển khai Retrieval-Augmented Generation sử dụng MongoDB Text Search để cung cấp các phản hồi AI chính xác dựa trên dữ liệu thực tế của cửa hàng.
-- **Hệ thống Giám sát Hoạt động (Heartbeat Keep-Alive)**: Theo dõi trạng thái hoạt động thông qua cơ chế gửi tín hiệu Nhịp tim (Heartbeat) định kỳ từ client và tiến trình tự động ngoại tuyến hoá (Status Monitor) ngầm ở backend.
+### 🤖 Năng lực AI
+- **Phân tích sản phẩm AI**: Tự động tạo chi tiết sản phẩm từ ảnh tải lên (Groq – Llama-4).
+- **Phân tích bảng size AI**: Trích xuất bảng size từ hình ảnh, chuyển đổi sang Markdown.
+- **Trợ lý Stylist AI (Khách hàng)**: Chat thời gian thực, gợi ý sản phẩm và tư vấn size.
+- **Admin AI Copilot**: Trợ lý phân tích kinh doanh, báo cáo tuần, tra cứu dữ liệu nhanh.
+- **Lightweight RAG**: Truy vấn AI dựa trên dữ liệu thực tế của cửa hàng qua MongoDB Text Search.
+- **Heartbeat Keep-Alive**: Theo dõi trạng thái người dùng Online/Offline theo thời gian thực.
 
 ---
 
 ## 🛠️ Công nghệ sử dụng
 
-### Frontend
-- **Framework**: React.js (v19)
-- **Build Tool**: Vite
-- **UI Library**: Material UI (MUI)
-- **State Management**: React Context API
-- **Routing**: React Router (v7)
-- **Icons**: Material Icons
-
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB (sử dụng MongoDB Atlas)
-- **AI Engine**: Groq (Llama-4 Scout)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Utilities**: Joi (Validation), Bcrypt (Mã hóa mật khẩu), Nodemailer, Axios.
+| Phần | Công nghệ |
+|------|-----------|
+| **Frontend** | React 19, Vite, Material UI (MUI), React Router v7 |
+| **Backend** | Node.js, Express.js |
+| **Database** | MongoDB (Atlas) |
+| **AI Engine** | Groq API (Llama-4 Scout) |
+| **Auth** | JWT (JSON Web Tokens) |
+| **Email** | Nodemailer |
+| **Validation** | Joi |
+| **Bảo mật** | Bcrypt |
+| **Deploy** | Render (backend + frontend static) |
 
 ---
 
 ## 📂 Cấu trúc dự án
 
-Dự án được tổ chức theo mô hình **Monorepo** để dễ dàng quản lý cả mã nguồn client và server.
-
 ```text
 Project-Woman-Basic/
-├── backend/                # Server Express.js
+├── backend/                  # Server Express.js
 │   ├── src/
-│   │   ├── config/         # Cấu hình ứng dụng (DB, Môi trường)
-│   │   ├── controllers/    # Xử lý yêu cầu (Request handlers)
-│   │   ├── models/         # Schema cơ sở dữ liệu
-│   │   ├── routes/         # Các đầu cuối API (v1, v2)
-│   │   ├── services/       # Logic nghiệp vụ
-│   │   └── server.js       # Điểm khởi chạy (Entry point)
-├── frontend/               # Ứng dụng React
+│   │   ├── config/           # Cấu hình (DB, môi trường)
+│   │   ├── controllers/      # Xử lý request
+│   │   ├── jobs/             # Background jobs (heartbeat, weekly insight)
+│   │   ├── middlewares/      # Auth, role, CORS
+│   │   ├── models/           # Mongoose schemas
+│   │   ├── routes/           # API endpoints (v1)
+│   │   ├── services/         # Business logic
+│   │   ├── utils/            # Helper functions
+│   │   └── server.js         # Entry point
+│   ├── .env                  # Biến môi trường (tạo thủ công, xem bên dưới)
+│   └── package.json
+├── frontend/                 # Ứng dụng React/Vite
 │   ├── src/
-│   │   ├── apis/           # Lớp dịch vụ gọi API
-│   │   ├── components/     # Các thành phần UI dùng chung
-│   │   ├── layouts/        # Layout bao ngoài (Admin, Customer)
-│   │   ├── pages/          # Các thành phần màn hình riêng biệt
-│   │   └── main.jsx        # Điểm khởi chạy (Entry point)
-├── package.json            # Cấu hình gốc (Workspaces)
-└── README.md               # Bạn đang ở đây!
+│   │   ├── apis/             # Lớp gọi API
+│   │   ├── components/       # UI components dùng chung
+│   │   ├── layouts/          # Layout (Admin, Customer)
+│   │   ├── pages/            # Màn hình (Admin, Customer, Auth)
+│   │   ├── util/             # Constants, helpers
+│   │   └── main.jsx          # Entry point
+│   ├── .env                  # Biến môi trường Vite (tạo thủ công, xem bên dưới)
+│   └── package.json
+├── package.json              # Monorepo root (npm workspaces)
+├── render.yaml               # Cấu hình deploy lên Render
+└── README.md
 ```
 
 ---
 
-## 🚦 Bắt đầu
+## ⚙️ Cài đặt & Chạy ở Local
 
-### 1. Yêu cầu hệ thống
-- **Node.js**: v18.x trở lên
-- **npm**: v7.x trở lên
-- **MongoDB**: Quyền truy cập vào cơ sở dữ liệu MongoDB (Local hoặc Atlas)
+### Yêu cầu hệ thống
 
-### 2. Cấu hình môi trường
+| Công cụ | Phiên bản tối thiểu |
+|---------|---------------------|
+| Node.js | v18.x |
+| npm | v8.x |
+| Git | Bất kỳ |
+| MongoDB | Atlas (cloud) hoặc local v6+ |
 
-#### Backend
-Tạo file `.env` trong thư mục `backend/`:
+---
+
+### Bước 1 — Clone repository
+
+```bash
+git clone https://github.com/<your-username>/Project-Woman-Basic.git
+cd Project-Woman-Basic
+```
+
+---
+
+### Bước 2 — Tạo file biến môi trường
+
+#### `backend/.env`
+
 ```env
-MONGODB_URI=chuoi_ket_noi_mongodb_cua_ban
+# Kết nối MongoDB (Atlas Connection String hoặc local)
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/
 DATABASE_NAME=WomanBasic
+
+# Server
 APP_HOST=localhost
 APP_PORT=8017
-JWT_SECRET=ma_bi_mat_jwt_cua_ban
+BUILD_MODE=dev
+
+# JWT — đặt chuỗi bí mật ngẫu nhiên, dài ít nhất 32 ký tự
+JWT_SECRET=your_super_secret_jwt_key_here
+
+# Groq AI API Key — lấy tại https://console.groq.com
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+# Nodemailer — tài khoản Gmail dùng để gửi OTP / xác nhận đơn hàng
+MAIL_USER=your_email@gmail.com
+MAIL_PASSWORD=your_gmail_app_password
 ```
 
-#### Frontend
-Cấu hình kết nối API trong `frontend/src/util/constants.js`:
-```javascript
-export const API_ROOT = 'http://localhost:8017'
+> **Lưu ý `MAIL_PASSWORD`:** Đây phải là **App Password** của Gmail (không phải mật khẩu đăng nhập thông thường).  
+> Tạo tại: Google Account → Bảo mật → Xác minh 2 bước → **Mật khẩu ứng dụng**.
+
+#### `frontend/.env`
+
+```env
+# Địa chỉ backend API khi chạy local
+VITE_API_ROOT=http://localhost:8017
 ```
 
-### 3. Cài đặt
-Tại **thư mục gốc**, chạy lệnh sau để cài đặt các thư viện cho cả Frontend và Backend:
+---
+
+### Bước 3 — Cài đặt dependencies
+
+Tại **thư mục gốc** của dự án, chạy:
+
 ```bash
-npm install
+npm install && npm install --workspaces
 ```
 
-### 4. Chạy môi trường phát triển (Development)
-Để khởi chạy cả hai ứng dụng cùng lúc:
+Lệnh này sẽ cài đặt dependencies cho cả `backend/` và `frontend/` nhờ npm Workspaces.
+
+---
+
+### Bước 4 — Chạy ứng dụng
+
 ```bash
 npm run dev
 ```
 
+Lệnh này khởi chạy đồng thời cả hai server:
+
+| Service | Địa chỉ |
+|---------|---------|
+| Backend API | `http://localhost:8017` |
+| Frontend | `http://localhost:5173` |
+
+Hoặc chạy riêng từng phần:
+
+```bash
+npm run backend    # Chỉ chạy Express server
+npm run frontend   # Chỉ chạy Vite dev server
+```
+
 ---
 
-## 🛠 Lệnh dự án
+### Bước 5 — Khởi tạo tài khoản Admin (lần đầu)
+
+Sau khi server chạy, tạo tài khoản admin đầu tiên bằng cách **đăng ký thông thường**, rồi vào MongoDB Atlas / MongoDB Compass, tìm collection `users`, cập nhật trường `role` từ `"customer"` → `"admin"` cho tài khoản vừa tạo.
+
+---
+
+## 🌐 Deploy lên Render
+
+Dự án đã có sẵn file `render.yaml` hỗ trợ **Blueprint Deploy** một lệnh:
+
+### Các bước
+
+1. Đăng nhập [render.com](https://render.com) → **New → Blueprint**.
+2. Kết nối GitHub repository của bạn.
+3. Render tự đọc `render.yaml` và tạo 2 services:
+   - `woman-basic-backend` — Node.js Web Service
+   - `womanbasic` — Static Site (React build)
+4. Vào **Environment Variables** của service `woman-basic-backend`, thêm thủ công các biến **bí mật** (Render không sync từ file):
+
+| Biến | Ghi chú |
+|------|---------|
+| `MONGODB_URI` | Connection string MongoDB Atlas |
+| `GROQ_API_KEY` | Lấy từ console.groq.com |
+| `MAIL_USER` | Email Gmail |
+| `MAIL_PASSWORD` | Gmail App Password |
+
+5. Deploy và chờ build hoàn tất (~3-5 phút).
+
+---
+
+## 🛠 Lệnh tham khảo
 
 | Lệnh | Mô tả |
-| :--- | :--- |
-| `npm run dev` | Chạy cả Frontend và Backend trong chế độ phát triển. |
-| `npm run backend` | Chỉ chạy server Express. |
-| `npm run frontend` | Chỉ chạy server React/Vite. |
-| `npm install` | Cài đặt tất cả các phụ thuộc cho toàn bộ dự án. |
+|------|-------|
+| `npm run dev` | Chạy cả Frontend + Backend (development) |
+| `npm run backend` | Chỉ chạy Express server |
+| `npm run frontend` | Chỉ chạy Vite dev server |
+| `npm install && npm install --workspaces` | Cài đặt toàn bộ dependencies |
+
+---
+
+## 🔑 Biến môi trường — Tổng hợp
+
+### Backend (`backend/.env`)
+
+| Biến | Bắt buộc | Mô tả |
+|------|----------|-------|
+| `MONGODB_URI` | ✅ | MongoDB connection string |
+| `DATABASE_NAME` | ✅ | Tên database (mặc định: `WomanBasic`) |
+| `APP_PORT` | ❌ | Port server (mặc định: `8017`) |
+| `BUILD_MODE` | ✅ | `dev` hoặc `production` |
+| `JWT_SECRET` | ✅ | Chuỗi bí mật ký JWT |
+| `GROQ_API_KEY` | ✅ | Key Groq AI (tính năng AI) |
+| `MAIL_USER` | ✅ | Gmail gửi email |
+| `MAIL_PASSWORD` | ✅ | Gmail App Password |
+
+### Frontend (`frontend/.env`)
+
+| Biến | Bắt buộc | Mô tả |
+|------|----------|-------|
+| `VITE_API_ROOT` | ✅ | URL backend API (local: `http://localhost:8017`) |
 
 ---
 
 ## 📝 Bản quyền
+
 Dự án này được sử dụng nội bộ. Mọi quyền được bảo lưu.
