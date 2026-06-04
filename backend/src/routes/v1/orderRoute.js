@@ -5,16 +5,16 @@ import { isStaff } from '~/middlewares/roleMiddleware'
 
 const Router = express.Router()
 
-// ✅ Admin/Staff: Lấy tất cả đơn hàng
+// Admin/Staff: Lấy tất cả đơn hàng
 Router.route('/')
   .get(authMiddleware, isStaff, orderController.getAll)
   .post(orderController.createNew) // Tạo đơn không cần auth (guest checkout)
 
-// ✅ Admin/Staff: Search đơn hàng (theo keyword: tên KH, email, status...)
+// Admin/Staff: Search đơn hàng (theo keyword: tên KH, email, status...)
 Router.route('/search')
   .get(authMiddleware, isStaff, orderController.search)
 
-// ✅ PHẢI đặt /my-orders/search TRƯỚC /my-orders để tránh route shadow
+// Đặt /my-orders/search TRƯỚC /my-orders để tránh route shadow
 // User: tìm kiếm trong các đơn của mình
 Router.route('/my-orders/search')
   .get(authMiddleware, orderController.searchMyOrders)

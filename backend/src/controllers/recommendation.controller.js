@@ -11,7 +11,6 @@ export const trackBehaviorController = async (req, res, next) => {
   try {
     const { productId, categoryId, action, sessionId } = req.body
     // req.user được set bởi optionalAuthMiddleware nếu có token hợp lệ
-    // ✅ FIX LỖI 3: JWT payload dùng key 'userId', không phải 'id' hay '_id'
     const userId = req.user?.userId || null
 
     const result = await trackBehavior({ userId, sessionId, productId, categoryId, action })

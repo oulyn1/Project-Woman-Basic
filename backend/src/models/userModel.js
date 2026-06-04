@@ -121,8 +121,6 @@ export const userModel = {
   },
 
   employee: async (query) => {
-    // ✅ FIX LỖI 12: role là enum field, dùng exact match thay vì regex
-    // Regex trên enum có thể match partial string, ví dụ 'employee' match cả các case không mong muốn
     const role = query.trim()
     return await User.find({ role }).select("-password").lean()
   },
@@ -143,6 +141,7 @@ export const userModel = {
     return await User.findById(id).select("-password").lean();
   },
 
+  // QUAN TRỌNG: Mongoose pre('save') không chạy với findOneAndUpdate — hash thủ công bên dưới là bắt buộc
   updateByEmail: async (email, updateData) => {
     if (updateData.password) {
       const salt = await bcrypt.genSalt(10);

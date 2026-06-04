@@ -148,7 +148,7 @@ const parseAdminAIResponse = (responseText) => {
   reply = reply.replace(/<!--\s*QUICK_REPLIES::[\s\S]*?\s*-->/gi, '')
   reply = reply.replace(/ACTION_CARD::[\s\S]*?(\n|$)/gi, '')
   reply = reply.replace(/QUICK_REPLIES::[\s\S]*?(\n|$)/gi, '')
-  reply = reply.trim() // ✅ FIX LỖI 13: Xóa trim() thừa (đã từng gọi 2 lần)
+  reply = reply.trim()
 
   // Cơ chế dự phòng nếu AI chỉ trả về thẻ mà quên viết văn bản
   if (!reply) {

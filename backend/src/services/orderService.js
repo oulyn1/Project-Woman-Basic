@@ -28,8 +28,6 @@ const createNew = async (reqBody, userFromToken) => {
     appliedOrderPromoId: reqBody.appliedOrderPromoId,
     total: reqBody.total,
     status: "pending",
-    // ✅ FIX LỖI 17: Xóa createdAt/updatedAt thủ công
-    // orderSchema đã có timestamps:true → Mongoose tự quản lý, không cần set thủ công
   };
 
   const createdOrder = await orderModel.createNew(newOrder);
@@ -40,8 +38,8 @@ const createNew = async (reqBody, userFromToken) => {
     promoIdsToIncrement.add(newOrder.appliedOrderPromoId.toString());
   }
   (newOrder.items || []).forEach((item) => {
-    if (item.appliedPromo && item.appliedPromo._id) {
-      promoIdsToIncrement.add(item.appliedPromo._id.toString());
+    if (item.appliedPromoId) {
+      promoIdsToIncrement.add(item.appliedPromoId.toString());
     }
   });
 
@@ -56,7 +54,7 @@ const createNew = async (reqBody, userFromToken) => {
   // Trả về chi tiết order kèm product info
   const getNewOrder = await orderModel.getDetailsWithProducts(createdOrder._id);
 
-  // ✅ OPTIMIZATION: Gửi mail bất đồng bộ (không await) để tránh block response của khách hàng (giảm 1-2s delay)
+  // Gửi mail xác nhận bất đồng bộ để không block response
   const { name, email } = newOrder.buyerInfo;
   const orderId = createdOrder._id.toString();
   const subject = 'Xác nhận đơn hàng của bạn từ Woman Basic';
@@ -75,8 +73,7 @@ const getDetails = async (orderId) => {
 };
 
 const getAll = async () => {
-  // ✅ FIX: getAll dùng cho Admin/Staff → luôn trả tất cả đơn hàng (không filter theo userId)
-  // Customer dùng getMyOrders riêng có filter theo userId
+  // Admin/Staff: luôn trả tất cả đơn hàng. Customer dùng getMyOrders
   const orders = await orderModel.getAllWithProducts({})
   return orders || []
 }
@@ -143,7 +140,7 @@ const updateOne = async (orderId, reqBody, user) => {
   if (!updatedOrder)
     throw new ApiError(StatusCodes.NOT_FOUND, "Order not found to update");
 
-  // ✅ FIX: Trả lại lượt dùng khuyến mãi nếu đơn hàng bị hủy
+  // Trả lại lượt dùng khuyến mãi nếu đơn hàng bị hủy
   if (currentOrder.status !== "cancelled" && reqBody.status === "cancelled") {
     const promoIdsToDecrement = new Set();
     if (currentOrder.appliedOrderPromoId) {
@@ -166,29 +163,29 @@ const updateOne = async (orderId, reqBody, user) => {
         console.warn("⚠️ Failed to decrement promotion usageCount:", error.message);
       }
     }
+  }
 
-    // Nếu đơn hàng chuyển sang 'delivered', 'returned', hoặc 'cancelled' và có userId, tính toán lại Loyalty Tier của User ngầm ở background
-    const loyaltyTriggerStatuses = ['delivered', 'returned', 'cancelled'];
-    const isStatusChanged = reqBody.status && reqBody.status !== currentOrder.status;
-    if (isStatusChanged && loyaltyTriggerStatuses.includes(reqBody.status) && currentOrder.userId) {
-      (async () => {
-        try {
-          // Lấy tất cả đơn hàng đã giao (delivered) để tính hạng thành viên
-          const userOrders = await orderModel.getAll({
-            userId: currentOrder.userId,
-            status: "delivered",
-          });
-          const totalSpending = (userOrders || []).reduce(
-            (sum, o) => sum + Number(o?.total || 0),
-            0,
-          );
-          const newTier = calculateLoyaltyTier(totalSpending);
-          await User.findByIdAndUpdate(currentOrder.userId, { loyaltyTier: newTier });
-        } catch (error) {
-          console.warn("⚠️ Failed to update loyalty tier in background:", error.message);
-        }
-      })();
-    }
+  // Tính lại Loyalty Tier khi đơn chuyển sang delivered/returned/cancelled
+  const loyaltyTriggerStatuses = ['delivered', 'returned', 'cancelled'];
+  const isStatusChanged = reqBody.status && reqBody.status !== currentOrder.status;
+  if (isStatusChanged && loyaltyTriggerStatuses.includes(reqBody.status) && currentOrder.userId) {
+    (async () => {
+      try {
+        // Lấy tất cả đơn hàng đã giao (delivered) để tính hạng thành viên
+        const userOrders = await orderModel.getAll({
+          userId: currentOrder.userId,
+          status: "delivered",
+        });
+        const totalSpending = (userOrders || []).reduce(
+          (sum, o) => sum + Number(o?.total || 0),
+          0,
+        );
+        const newTier = calculateLoyaltyTier(totalSpending);
+        await User.findByIdAndUpdate(currentOrder.userId, { loyaltyTier: newTier });
+      } catch (error) {
+        console.warn("⚠️ Failed to update loyalty tier in background:", error.message);
+      }
+    })();
   }
 
   return updatedOrder;
@@ -208,7 +205,7 @@ const confirmOrder = async (orderId) => {
     );
   }
 
-  // ✅ OPTIMIZATION: Lấy tất cả sản phẩm trong 1 query duy nhất bằng $in thay vì gọi DB từng sản phẩm trong loop RTT
+  // Lấy toàn bộ sản phẩm trong 1 query duy nhất
   const productIds = order.items.map(item => item.productId.toString());
   const products = await productModel.findManyByIds(productIds);
 

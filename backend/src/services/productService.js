@@ -45,7 +45,6 @@ const createNew = async (reqBody) => {
     }
 
     const createdProduct = await productModel.createNew(newProduct)
-    // ✅ FIX LỖI 4: Mongoose .create() trả về document có ._id, không phải .insertedId
     return await productModel.findOneId(createdProduct._id)
   } catch (error) {
     throw error
@@ -121,7 +120,7 @@ const fetchAll = async (query) => {
         page: Number(page),
         limit: Number(limit),
         total: result.total,
-        totalPages: Math.ceil(result.total / limit)
+        totalPages: Math.ceil(result.total / Number(limit))
       }
     }
   } catch (error) {

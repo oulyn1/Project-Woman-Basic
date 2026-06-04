@@ -24,8 +24,6 @@ const register = async (data) => {
 
   const createdUser = await userModel.createNew(data)
   const newUser = await userModel.findOneId(createdUser._id)
-  // ✅ FIX LỖI 16: findOneId dùng .select('-password') nên password không bao giờ có trong kết quả
-  // 'delete newUser.password' trước đây là dư thừa
   return newUser
 }
 
@@ -51,7 +49,6 @@ const login = async (email, password) => {
 const getProfile = async (userId) => {
   const user = await userModel.findOneId(userId)
   if (!user) throw new ApiError(StatusCodes.NOT_FOUND, 'User không tồn tại')
-  // ✅ findOneId dùng .select('-password'), delete ở đây là dư thừa
   return user
 }
 
@@ -65,7 +62,6 @@ const updateProfile = async (userId, updateData) => {
 }
 const search = async (name) => {
   try {
-    // ✅ FIX LỖI 15: Đổi tên biến 'products' -> 'users' cho đúng nghĩa
     const users = await userModel.search(name)
     if (!users) {
       throw new ApiError(StatusCodes.NOT_FOUND, 'No Account found matching your query')

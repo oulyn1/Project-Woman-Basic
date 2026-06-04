@@ -65,24 +65,39 @@ const getPromotions = async (query) => {
     }
   }
 
+  // Khi có customerId: lọc eligibility trên toàn bộ list trước, sau đó mới phân trang thủ công
+  if (customerId) {
+    // Load toàn bộ docs khớp filter cơ bản (không skip/limit)
+    const allPromotions = await Promotion.find(filter).sort({ createdAt: -1 });
+
+    // Lọc eligibility trên toàn bộ list
+    const eligiblePromos = [];
+    for (const promo of allPromotions) {
+      const isEligible = await isCustomerEligible(promo, customerId);
+      if (isEligible) eligiblePromos.push(promo);
+    }
+
+    // Phân trang thủ công sau khi đã có list đúng
+    const totalEligible = eligiblePromos.length;
+    const skip = (page - 1) * limit;
+    const paginated = eligiblePromos.slice(skip, skip + limit);
+
+    return {
+      items: paginated.map((p) => ({
+        ...p.toObject(),
+        computedStatus: computePromoStatus(p),
+      })),
+      meta: { total: totalEligible, page, limit },
+    };
+  }
+
+  // Không có customerId → phân trang bình thường
   const skip = (page - 1) * limit;
   const total = await Promotion.countDocuments(filter);
-  let promotions = await Promotion.find(filter)
+  const promotions = await Promotion.find(filter)
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
-
-  // Filter by customer eligibility if customerId is provided
-  if (customerId) {
-    const eligiblePromos = [];
-    for (const promo of promotions) {
-      const isEligible = await isCustomerEligible(promo, customerId);
-      if (isEligible) {
-        eligiblePromos.push(promo);
-      }
-    }
-    promotions = eligiblePromos;
-  }
 
   return {
     items: promotions.map((p) => ({

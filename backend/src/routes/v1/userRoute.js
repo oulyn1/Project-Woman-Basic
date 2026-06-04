@@ -29,8 +29,7 @@ Router.route('/')
   .get(authMiddleware, isStaff, userController.getAll)
   .post(authMiddleware, isStaff, userController.createUser)
 
-// ✅ FIX LỖI 1: Tất cả route static phải đặt TRƯỚC /:id
-// Nếu đặt sau, Express sẽ match /:id trước và các route này bị shadow
+// Route static phải đặt TRƯỚC /:id để tránh bị Express match nhầm
 Router.route('/check-email')
   .post(userController.checkEmail)
 
@@ -49,7 +48,7 @@ Router.route('/heartbeat')
 Router.route('/logout')
   .post(authMiddleware, userController.logoutAuth)
 
-// ✅ Dynamic route /:id PHẢI đặt sau tất cả route static
+// Dynamic route /:id đặt sau tất cả route static
 Router.route('/:id')
   .get(authMiddleware, isStaff, userController.getDetails)
   .put(authMiddleware, userController.updateAccount)
