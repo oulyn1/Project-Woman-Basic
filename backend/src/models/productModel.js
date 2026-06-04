@@ -102,6 +102,51 @@ export const productModel = {
     )
   },
 
+  // Atomic: trừ stock ngay khi tạo đơn (reserve).
+  // Chỉ thành công nếu stock >= quantity — tránh oversell khi đặt đồng thời.
+  reserveStock: async (productId, variantId, quantity) => {
+    return await Product.findOneAndUpdate(
+      {
+        _id: productId,
+        variants: {
+          $elemMatch: {
+            _id: variantId,
+            stock: { $gte: quantity }
+          }
+        }
+      },
+      { $inc: { 'variants.$.stock': -quantity } },
+      { returnDocument: 'after' }
+    )
+  },
+
+  // Hoàn trả stock khi đơn bị hủy hoặc hoàn hàng.
+  releaseStock: async (productId, variantId, quantity) => {
+    return await Product.findOneAndUpdate(
+      { _id: productId, 'variants._id': variantId },
+      { $inc: { 'variants.$.stock': quantity } },
+      { returnDocument: 'after' }
+    )
+  },
+
+  // Tăng sold khi admin confirm đơn hàng.
+  incrementSold: async (productId, quantity) => {
+    return await Product.findByIdAndUpdate(
+      productId,
+      { $inc: { sold: quantity } },
+      { returnDocument: 'after' }
+    )
+  },
+
+  // Giảm sold khi đơn bị hủy (sau confirm) hoặc hoàn hàng.
+  decrementSold: async (productId, quantity) => {
+    return await Product.findByIdAndUpdate(
+      productId,
+      { $inc: { sold: -quantity } },
+      { returnDocument: 'after' }
+    )
+  },
+
   softDelete: async (productId) => {
     return await Product.findByIdAndUpdate(
       productId,

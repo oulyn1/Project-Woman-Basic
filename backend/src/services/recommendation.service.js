@@ -180,7 +180,7 @@ export const getCategoryInsights = async () => {
     },
     {
       $lookup: {
-        from:         'categories',
+        from:         'category',
         localField:   '_id',
         foreignField: '_id',
         as:           'categoryInfo'

@@ -30,6 +30,25 @@ const createNew = async (reqBody, userFromToken) => {
     status: "pending",
   };
 
+  // Reserve stock cho từng item — atomic, chặn oversell ngay khi đặt hàng
+  const reservedItems = [];
+  for (const item of newOrder.items) {
+    const productId = item.productId?._id || item.productId;
+    const variantId = item.variantId?._id || item.variantId;
+    const reserved = await productModel.reserveStock(productId, variantId, item.quantity);
+    if (!reserved) {
+      // Rollback: hoàn lại stock cho các item đã reserve trước đó
+      for (const r of reservedItems) {
+        await productModel.releaseStock(r.productId, r.variantId, r.quantity).catch(() => {});
+      }
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Sản phẩm không đủ tồn kho để đặt hàng. Vui lòng kiểm tra lại giỏ hàng.`
+      );
+    }
+    reservedItems.push({ productId, variantId, quantity: item.quantity });
+  }
+
   const createdOrder = await orderModel.createNew(newOrder);
 
   // Increment usage count for promotions
@@ -163,6 +182,38 @@ const updateOne = async (orderId, reqBody, user) => {
         console.warn("⚠️ Failed to decrement promotion usageCount:", error.message);
       }
     }
+
+    // Hoàn lại stock đã reserve khi đặt đơn
+    for (const item of currentOrder.items) {
+      if (item.productId && item.variantId) {
+        await productModel.releaseStock(item.productId, item.variantId, item.quantity)
+          .catch((err) => console.warn('⚠️ Failed to release stock on cancel:', err.message));
+      }
+    }
+
+    // Nếu đơn đã được confirm (sold đã tăng), giảm lại sold
+    if (currentOrder.status === 'confirmed') {
+      for (const item of currentOrder.items) {
+        if (item.productId) {
+          await productModel.decrementSold(item.productId, item.quantity)
+            .catch((err) => console.warn('⚠️ Failed to decrement sold on cancel:', err.message));
+        }
+      }
+    }
+  }
+
+  // Hoàn lại stock + giảm sold khi khách hoàn hàng (returned từ confirmed)
+  if (reqBody.status === 'returned' && currentOrder.status === 'confirmed') {
+    for (const item of currentOrder.items) {
+      if (item.productId && item.variantId) {
+        await productModel.releaseStock(item.productId, item.variantId, item.quantity)
+          .catch((err) => console.warn('⚠️ Failed to release stock on return:', err.message));
+      }
+      if (item.productId) {
+        await productModel.decrementSold(item.productId, item.quantity)
+          .catch((err) => console.warn('⚠️ Failed to decrement sold on return:', err.message));
+      }
+    }
   }
 
   // Tính lại Loyalty Tier khi đơn chuyển sang delivered/returned/cancelled
@@ -192,7 +243,6 @@ const updateOne = async (orderId, reqBody, user) => {
 };
 
 const confirmOrder = async (orderId) => {
-  // Lấy chi tiết đơn hàng
   const order = await orderModel.getDetailsWithProducts(orderId);
   if (!order) throw new ApiError(StatusCodes.NOT_FOUND, "Order not found");
   if (order.status !== "pending")
@@ -205,86 +255,16 @@ const confirmOrder = async (orderId) => {
     );
   }
 
-  // Lấy toàn bộ sản phẩm trong 1 query duy nhất
-  const productIds = order.items.map(item => item.productId.toString());
-  const products = await productModel.findManyByIds(productIds);
-
-  // Pre-check biến thể và tồn kho đúng theo item trong đơn (Trong bộ nhớ)
-  order.items.forEach((item) => {
-    if (!item.variantId) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Thiếu variantId cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-
-    const product = products.find(p => p._id.toString() === item.productId.toString());
-    if (!product) {
-      throw new ApiError(
-        StatusCodes.NOT_FOUND,
-        `Không tìm thấy sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-
-    const targetVariant = (product.variants || []).find(
-      (variant) => normalizeId(variant._id) === normalizeId(item.variantId),
-    );
-
-    if (!targetVariant) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Biến thể không hợp lệ cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-
-    if (item.size && targetVariant.size !== item.size) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Sai kích thước biến thể cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-
-    const variantColorName = targetVariant.color?.name || targetVariant.color;
-    if (item.color && variantColorName !== item.color) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Sai màu biến thể cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-
-    if ((targetVariant.stock || 0) < item.quantity) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
-  });
-
-  // Trừ stock theo đúng variantId của từng item
+  // Stock đã được reserve ngay khi tạo đơn — chỉ cần tăng sold và đổi status
   for (const item of order.items) {
-    const updatedProduct = await productModel.updateVariantStock(
-      item.productId,
-      item.variantId,
-      item.quantity,
-    );
-
-    if (!updatedProduct) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Không đủ tồn kho cho sản phẩm ${item.product?.name || item.productId}`,
-      );
-    }
+    await productModel.incrementSold(item.productId, item.quantity);
   }
 
-  // Cập nhật trạng thái đơn hàng
   const updatedOrder = await orderModel.updateOne(orderId, {
     status: "confirmed",
     updatedAt: Date.now(),
   });
 
-
-
-  // Trả về chi tiết order mới nhất
   return updatedOrder || (await orderModel.getDetailsWithProducts(orderId));
 };
 

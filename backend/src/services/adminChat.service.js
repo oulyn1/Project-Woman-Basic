@@ -18,7 +18,7 @@ const getAdminContext = async () => {
   const sevenDaysAgo = new Date(startOfToday)
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const [totalProducts, todayOrders, revenueResult, topProductsResult, allProducts, catInsights, latestWeekly] = await Promise.all([
+  const [totalProducts, todayOrders, revenueResult, topProductsResult, allProducts, catInsights, latestWeekly, totalPendingOrders] = await Promise.all([
     Product.countDocuments({ isDeleted: { $ne: true } }),
     Order.find({ createdAt: { $gte: startOfToday } }).lean(),
     Order.aggregate([
@@ -52,7 +52,8 @@ const getAdminContext = async () => {
     ]),
     Product.find({ isDeleted: { $ne: true } }).select('name price variants images').lean(),
     getCategoryInsights().catch(() => []),
-    WeeklyInsight.findOne().sort({ createdAt: -1 }).select('report weekStart weekEnd').lean().catch(() => null)
+    WeeklyInsight.findOne().sort({ createdAt: -1 }).select('report weekStart weekEnd').lean().catch(() => null),
+    Order.countDocuments({ status: 'pending' })  // Đếm TẤT CẢ đơn pending, không giới hạn ngày
   ])
 
   const todayRevenue = todayOrders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + (o.total || 0), 0)
@@ -79,7 +80,7 @@ const getAdminContext = async () => {
     doanhThu7Ngay: revenueResult,
     top5BanChay7NgayQua: topProductsResult,
     sanPhamSapHetHangTheoSize: lowStockVariants.slice(0, 15),
-    donChoXuLy: todayOrders.filter(o => o.status === 'pending').length,
+    donChoXuLy: totalPendingOrders,  // Tổng đơn pending toàn hệ thống (mọi ngày)
     categoryInsights: catInsights,
     latestWeeklyReport: latestWeekly
   }, null, 2)
