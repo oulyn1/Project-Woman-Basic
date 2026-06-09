@@ -108,15 +108,13 @@ const parseAIResponse = (responseText) => {
 /**
  * Gửi message từ customer đến AI và nhận response.
  */
-const sendCustomerMessage = async ({ sessionId, message, history = [] }) => {
+const sendCustomerMessage = async ({ sessionId, message }) => {
   if (!sessionId || !message) throw new ApiError(StatusCodes.BAD_REQUEST, 'sessionId và message là bắt buộc.')
 
   const normalizedMsg = normalizeQuestion(message)
-  if (history.length === 0) {
-    const cached = await ChatCache.findOne({ normalizedQuestion: normalizedMsg }).lean()
-    if (cached && cached.answer) {
-      return { reply: cached.answer, products: cached.products, quickReplies: cached.quickReplies, fromCache: true }
-    }
+  const cached = await ChatCache.findOne({ normalizedQuestion: normalizedMsg }).lean()
+  if (cached && cached.answer) {
+    return { reply: cached.answer, products: cached.products, quickReplies: cached.quickReplies, fromCache: true }
   }
 
   const products = await getProductContextData(message)
@@ -143,7 +141,7 @@ ${JSON.stringify(products, null, 2)}
 - MỖI SẢN PHẨM TRONG JSON PHẢI CÓ ĐỦ CÁC TRƯỜNG: _id, name, price, image.
 - Gợi ý câu hỏi qua tag <!--QUICK_REPLIES::[...]-->`
 
-  const messages = [{ role: 'system', content: systemPrompt }, ...history.slice(-10).map(m => ({ role: m.role, content: m.content })), { role: 'user', content: message }]
+  const messages = [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }]
 
   const aiResponseText = await aiHelper.callGroqAI({ contextName: 'CustomerChat', messages })
   const parsed = parseAIResponse(aiResponseText)
@@ -161,7 +159,7 @@ ${JSON.stringify(products, null, 2)}
     })
   }
 
-  if (history.length === 0 && parsed.reply) {
+  if (parsed.reply) {
     await ChatCache.findOneAndUpdate({ normalizedQuestion: normalizedMsg }, { ...parsed, normalizedQuestion: normalizedMsg, originalQuestion: message }, { upsert: true })
   }
 
