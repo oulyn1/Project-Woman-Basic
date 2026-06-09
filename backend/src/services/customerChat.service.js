@@ -73,20 +73,32 @@ const parseAIResponse = (responseText) => {
     let match
     while ((match = regex.exec(text)) !== null) {
       try {
-        // Làm sạch nội dung: xóa markdown code block nếu có
         const cleanedJson = match[1]
           .replace(/```(?:json)?/gi, '')
           .replace(/```/gi, '')
           .trim()
-        
-        const parsed = JSON.parse(cleanedJson)
-        if (Array.isArray(parsed)) {
-          results.push(...parsed)
-        } else {
-          results.push(parsed)
+
+        // Thử parse JSON trực tiếp
+        try {
+          const parsed = JSON.parse(cleanedJson)
+          if (Array.isArray(parsed)) {
+            results.push(...parsed)
+          } else {
+            results.push(parsed)
+          }
+        } catch {
+          // Fallback: AI trả markdown list ("- item") thay vì JSON array
+          const lines = cleanedJson.split('\n')
+            .map(l => l.replace(/^[\s*\-–•]+/, '').trim())
+            .filter(Boolean)
+          if (lines.length > 0) {
+            results.push(...lines)
+          } else {
+            console.error('[AI Parser] JSON Error — không thể parse:', cleanedJson.substring(0, 80))
+          }
         }
       } catch (e) {
-        console.error('[AI Parser] JSON Error:', e.message, '| Content:', match[1])
+        console.error('[AI Parser] Unexpected error:', e.message)
       }
     }
     return results
@@ -137,9 +149,9 @@ const sendCustomerMessage = async ({ sessionId, message }) => {
   const systemPrompt = `Bạn là trợ lý AI của Woman Basic. Gợi ý sản phẩm và tư vấn size dựa trên dữ liệu:
 ${JSON.stringify(products, null, 2)}
 - Dùng tiếng Việt, thân thiện.
-- Nếu có sản phẩm phù hợp, hãy trả về danh sách sản phẩm dưới dạng JSON array trong tag <!--PRODUCTS::[...]-->. 
+- Nếu có sản phẩm phù hợp, hãy trả về danh sách sản phẩm dưới dạng JSON array trong tag <!--PRODUCTS::[...]-->.
 - MỖI SẢN PHẨM TRONG JSON PHẢI CÓ ĐỦ CÁC TRƯỜNG: _id, name, price, image.
-- Gợi ý câu hỏi qua tag <!--QUICK_REPLIES::[...]-->`
+- Gợi ý câu hỏi tiếp theo qua tag <!--QUICK_REPLIES::["câu 1", "câu 2", "câu 3"]--> (BẮT BUỘC dùng JSON array với dấu ngoặc vuông và dấu nháy kép, KHÔNG dùng dấu gạch đầu dòng).`
 
   const messages = [{ role: 'system', content: systemPrompt }, { role: 'user', content: message }]
 
