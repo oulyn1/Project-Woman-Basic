@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import ApiError from '~/utils/ApiError'
 import { aiAnalyzeService } from '~/services/aiAnalyze.service'
+import Category from '~/models/categoryModel'
 
 // Giới hạn kích thước ảnh: 4MB = 4 * 1024 * 1024 bytes
 // Base64 overhead ≈ 4/3, nên 4MB file ≈ ~5.5MB base64 string
@@ -43,7 +44,10 @@ const analyzeProduct = async (req, res, next) => {
       return clean
     })
 
-    const result = await aiAnalyzeService.analyzeProductWithAI(cleanImages)
+    // Lấy danh sách categories thực từ DB để AI biết chính xác cần chọn gì
+    const categories = await Category.find().select('_id name').lean()
+
+    const result = await aiAnalyzeService.analyzeProductWithAI(cleanImages, categories)
 
     res.status(StatusCodes.OK).json({
       success: true,

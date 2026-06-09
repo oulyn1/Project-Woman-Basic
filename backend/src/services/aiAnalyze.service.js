@@ -5,16 +5,27 @@ import { StatusCodes } from 'http-status-codes'
 /**
  * Analyze a fashion product image using Groq.
  */
-const analyzeProductWithAI = async (base64Images) => {
+const analyzeProductWithAI = async (base64Images, categories = []) => {
   // Hỗ trợ cả string đơn lẻ (backward compatible) và mảng
   const imageList = Array.isArray(base64Images) ? base64Images : [base64Images]
+
+  // Build danh sách category cho prompt — nếu có categories thực từ DB thì dùng,
+  // fallback về danh sách cứng nếu DB trống
+  const categoryList = categories.length > 0
+    ? categories.map(c => `"${c.name}"`).join(', ')
+    : '"Áo", "Quần", "Đầm", "Váy", "Phụ kiện", "Giày", "Túi xách"'
+
+  const categoryFieldDesc = categories.length > 0
+    ? `"category": "Phải là MỘT TRONG các tên danh mục sau (chép CHÍNH XÁC, không thay đổi chính tả): ${categoryList}"`
+    : `"category": "Một trong: ${categoryList}"`
+
   const groqPrompt = `Bạn là chuyên gia viết nội dung (Copywriter) cho website thời trang nữ "Woman Basic".
 Dựa trên hình ảnh sản phẩm, hãy tạo một đối tượng JSON với cấu trúc sau:
 {
   "isValid": true,
   "invalidReason": "",
   "name": "Tên sản phẩm theo cấu trúc: [Loại sản phẩm] [Chi tiết kiểu dáng] [Mã sản phẩm]. Ví dụ: Quần Giả Váy Ngắn Chữ A GV08. KHÔNG kèm màu sắc.",
-  "category": "Một trong: Áo, Quần, Đầm, Váy, Phụ kiện, Giày, Túi xách",
+  ${categoryFieldDesc},
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"],
   "description": "Nội dung bài PR sản phẩm theo cấu trúc dưới đây (PHẢI là một chuỗi string thuần, KHÔNG ĐƯỢC trả về dạng object hay array)"
 }
@@ -104,7 +115,23 @@ Lưu Ý Khi Mua Hàng
     throw new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, 'Dữ liệu từ AI thiếu các trường bắt buộc.')
   }
 
-  return { name, category, description, tags }
+  // Resolve categoryId từ tên AI trả về — 3 cấp độ matching (giảm dần độ chặt)
+  let categoryId = null
+  if (categories.length > 0) {
+    const normalize = (str) => str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+    const aiCatNorm = normalize(category)
+
+    // 1. Exact match (bỏ dấu)
+    let matched = categories.find(c => normalize(c.name) === aiCatNorm)
+    // 2. AI output chứa tên DB (vd: AI trả "Áo thun" → DB có "Áo")
+    if (!matched) matched = categories.find(c => aiCatNorm.includes(normalize(c.name)))
+    // 3. Tên DB chứa AI output (vd: AI trả "Áo" → DB có "Áo thun")
+    if (!matched) matched = categories.find(c => normalize(c.name).includes(aiCatNorm))
+
+    if (matched) categoryId = matched._id.toString()
+  }
+
+  return { name, category, categoryId, description, tags }
 }
 
 /**

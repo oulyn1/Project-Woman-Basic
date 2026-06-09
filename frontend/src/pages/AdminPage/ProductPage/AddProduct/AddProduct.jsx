@@ -244,16 +244,18 @@ function AddProduct({ open, onClose, onSuccess }) {
       )
 
       const response = await analyzeProductWithAIAPI(base64Images, token)
-      const { name, category, description, tags } = response.data
+      const { name, category, categoryId: aiCategoryId, description, tags } = response.data
 
-      let matchedCategoryId = ''
-      if (category && productCategories.length > 0) {
-        const aiCategoryLower = category.toLowerCase().trim()
-        const match = productCategories.find(
-          (cat) =>
-            cat.label.toLowerCase().includes(aiCategoryLower) ||
-            aiCategoryLower.includes(cat.label.toLowerCase()),
-        )
+      // Ưu tiên dùng categoryId đã được backend resolve từ DB
+      // Fallback: client-side matching bằng includes() nếu backend không resolve được
+      let matchedCategoryId = aiCategoryId || ''
+      if (!matchedCategoryId && category && productCategories.length > 0) {
+        const normalize = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
+        const aiCatNorm = normalize(category)
+        const match = productCategories.find(cat => {
+          const dbNorm = normalize(cat.label)
+          return dbNorm === aiCatNorm || aiCatNorm.includes(dbNorm) || dbNorm.includes(aiCatNorm)
+        })
         if (match) matchedCategoryId = match.value
       }
 
