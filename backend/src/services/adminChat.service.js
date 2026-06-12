@@ -10,6 +10,69 @@ import { getCategoryInsights } from '~/services/recommendation.service.js'
 import WeeklyInsight from '~/models/weeklyInsight.model.js'
 
 /**
+ * Dùng AI nhẹ để trích xuất khoảng thời gian từ câu hỏi của admin.
+ * Trả về mảng các { startDate, endDate, label } hoặc [] nếu không có.
+ */
+const extractDateRanges = async (message) => {
+  const now = new Date()
+  const todayStr = now.toISOString().split('T')[0]
+  const prompt = `Hôm nay là ${todayStr}. Trích xuất khoảng thời gian từ câu hỏi sau. Trả về JSON: { "ranges": [{ "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD", "label": "mô tả ngắn" }] }. Nếu không có khoảng thời gian cụ thể, trả về { "ranges": [] }. Chỉ trả JSON, không giải thích.\n\nCâu hỏi: "${message}"`
+  try {
+    const content = await aiHelper.callGroqAI({
+      contextName: 'DateExtract',
+      response_format: { type: 'json_object' },
+      temperature: 0.1,
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }]
+    })
+    const parsed = aiHelper.parseSafeJSON(content)
+    return Array.isArray(parsed.ranges) ? parsed.ranges : []
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Query doanh thu theo khoảng thời gian bất kỳ.
+ */
+const getRevenueByDateRange = async (startDate, endDate) => {
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  end.setHours(23, 59, 59, 999)
+
+  const [revenueByDay, topProducts, summary] = await Promise.all([
+    Order.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 'cancelled' } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, revenue: { $sum: '$total' }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 'cancelled' } } },
+      { $unwind: '$items' },
+      { $group: { _id: '$items.productId', totalSold: { $sum: '$items.quantity' } } },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'info' } },
+      { $unwind: '$info' },
+      { $project: { name: '$info.name', sold: '$totalSold' } }
+    ]),
+    Order.aggregate([
+      { $match: { createdAt: { $gte: start, $lte: end }, status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, tongDoanhThu: { $sum: '$total' }, tongDonHang: { $sum: 1 } } }
+    ])
+  ])
+
+  return {
+    tuNgay: startDate,
+    denNgay: endDate,
+    tongDoanhThu: summary[0]?.tongDoanhThu || 0,
+    tongDonHang: summary[0]?.tongDonHang || 0,
+    chiTietTheoNgay: revenueByDay,
+    top5BanChay: topProducts
+  }
+}
+
+/**
  * Lấy context dữ liệu kinh doanh để inject vào admin system prompt.
  */
 const getAdminContext = async () => {
@@ -167,7 +230,23 @@ const parseAdminAIResponse = (responseText) => {
 const sendAdminMessage = async ({ adminId, role = 'admin', message, history = [], conversationId = null }) => {
   if (!adminId || !message) throw new ApiError(StatusCodes.BAD_REQUEST, 'adminId và message là bắt buộc.')
 
-  const adminContext = await getAdminContext()
+  // Song song: lấy context mặc định + trích xuất khoảng thời gian từ câu hỏi
+  const [adminContext, dateRanges] = await Promise.all([
+    getAdminContext(),
+    extractDateRanges(message)
+  ])
+
+  // Nếu admin hỏi về khoảng thời gian cụ thể, query thêm dữ liệu
+  let customRangeData = ''
+  if (dateRanges.length > 0) {
+    const rangeResults = await Promise.all(
+      dateRanges.map(async (r) => {
+        const data = await getRevenueByDateRange(r.startDate, r.endDate)
+        return { label: r.label, ...data }
+      })
+    )
+    customRangeData = `\n\nDỮ LIỆU DOANH THU THEO KHOẢNG THỜI GIAN ADMIN YÊU CẦU:\n${JSON.stringify(rangeResults, null, 2)}`
+  }
 
   let roleDirective = ''
   if (role === 'employee') {
@@ -180,13 +259,14 @@ LƯU Ý QUAN TRỌNG VỀ PHÂN QUYỀN TÀI KHOẢN (BẠN ĐANG TRÒ CHUYỆN 
   }
 
   const systemPrompt = `Bạn là Giám đốc kinh doanh (CEO) tài ba của Woman Basic.
-Dữ liệu thực tế hiện tại (tính đến ${new Date().toLocaleString('vi-VN')}): ${adminContext}
+Dữ liệu thực tế hiện tại (tính đến ${new Date().toLocaleString('vi-VN')}): ${adminContext}${customRangeData}
 ${roleDirective}
 
 LƯU Ý CỰC KỲ QUAN TRỌNG VỀ TÍNH CẬP NHẬT CỦA DỮ LIỆU:
 - Lịch sử chat (history) chỉ dùng để duy trì ngữ cảnh đối thoại (mạch trò chuyện, từ ngữ xưng hô).
 - TUYỆT ĐỐI KHÔNG sử dụng lại các con số, số liệu thống kê, doanh thu, đơn hàng, hay tồn kho đã trả lời ở các lượt chat cũ trong lịch sử chat để trả lời cho câu hỏi mới nhất của người dùng.
 - Với MỖI lượt hỏi mới, bạn BẮT BUỘC phải trích xuất, tính toán và phân tích số liệu dựa trên "Dữ liệu thực tế hiện tại" mới nhất được cung cấp ở trên (không dùng lại số liệu cũ từ lịch sử trò chuyện). Hãy luôn đảm bảo con số bạn đưa ra là chính xác so với dữ liệu thời gian thực được inject ở trên.
+- Nếu có mục "DỮ LIỆU DOANH THU THEO KHOẢNG THỜI GIAN ADMIN YÊU CẦU", hãy ƯU TIÊN sử dụng dữ liệu đó để trả lời câu hỏi của admin. Dữ liệu này đã được truy vấn chính xác theo khoảng thời gian admin yêu cầu.
 
 TUYỆT ĐỐI NGHIÊM NGẶT - GIỚI HẠN PHẠM VI TRẢ LỜI:
 - BẠN CHỈ ĐƯỢC PHÉP TRẢ LỜI các câu hỏi liên quan đến nghiệp vụ bán hàng, báo cáo doanh thu, tồn kho, quản lý sản phẩm, đơn hàng, khách hàng, khuyến mãi, nhận xét, hoặc vận hành hệ thống của project Woman Basic.
