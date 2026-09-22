@@ -21,13 +21,13 @@ const getProductContextData = async (userMessage = '') => {
       $text: { $search: userMessage }
     })
       .select('name price categoryId description tags images variants sizeChart sizeGuide')
-      .limit(20)
+      .limit(10)
       .lean()
   }
 
-  // 2. Nếu tìm kiếm không đủ, lấy thêm các sản phẩm mới nhất
+  // 2. Nếu tìm kiếm không đủ, lấy thêm các sản phẩm mới nhất (tối đa 10)
   const currentCount = products.length
-  if (currentCount < 30) {
+  if (currentCount < 10) {
     const existingIds = products.map(p => p._id)
     const extraProducts = await Product.find({
       isDeleted: { $ne: true },
@@ -35,7 +35,7 @@ const getProductContextData = async (userMessage = '') => {
     })
       .select('name price categoryId description tags images variants sizeChart sizeGuide')
       .sort({ createdAt: -1 })
-      .limit(30 - currentCount)
+      .limit(10 - currentCount)
       .lean()
 
     products = [...products, ...extraProducts]
@@ -51,7 +51,7 @@ const getProductContextData = async (userMessage = '') => {
     name: p.name,
     price: p.price,
     category: categoryMap[p.categoryId?.toString()] || 'Khác',
-    description: p.description ? p.description.substring(0, 150) + '...' : '',
+    description: p.description ? p.description.substring(0, 80) + '...' : '',
     tags: p.tags || [],
     stock: (p.variants || []).reduce((sum, v) => sum + (v.stock || 0), 0),
     image: p.images?.[0] || '',
@@ -147,7 +147,7 @@ const sendCustomerMessage = async ({ sessionId, message }) => {
   }
 
   const systemPrompt = `Bạn là trợ lý AI của Woman Basic. Gợi ý sản phẩm và tư vấn size dựa trên dữ liệu:
-${JSON.stringify(products, null, 2)}
+${JSON.stringify(products)}
 - Dùng tiếng Việt, thân thiện.
 - Nếu có sản phẩm phù hợp, hãy trả về danh sách sản phẩm dưới dạng JSON array trong tag <!--PRODUCTS::[...]-->.
 - MỖI SẢN PHẨM TRONG JSON PHẢI CÓ ĐỦ CÁC TRƯỜNG: _id, name, price, image.

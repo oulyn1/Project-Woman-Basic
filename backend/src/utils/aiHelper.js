@@ -4,7 +4,8 @@ import ApiError from '~/utils/ApiError'
 import { StatusCodes } from 'http-status-codes'
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const GROQ_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
+const GROQ_MODEL = 'openai/gpt-oss-20b'
+const GROQ_VISION_MODEL = 'qwen/qwen3.8-27b'
 
 /**
  * Gọi Groq API với cơ chế tự động thử lại (Retry)
@@ -15,14 +16,33 @@ const callGroqAI = async ({ messages, response_format = null, temperature = 0.7,
     throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Thiếu cấu hình GROQ_API_KEY cho ${contextName}.`)
   }
 
+  // Tự động kiểm tra xem tin nhắn có chứa ảnh hay không
+  const hasImage = messages.some(msg => 
+    Array.isArray(msg.content) && msg.content.some(item => item.type === 'image_url')
+  )
+
+  // Nếu có ảnh -> Dùng Vision Model; Nếu chỉ có text -> Dùng openai/gpt-oss-20b (và lọc bỏ array content)
+  const selectedModel = hasImage ? GROQ_VISION_MODEL : GROQ_MODEL
+
+  const sanitizedMessages = messages.map(msg => {
+    if (!hasImage && Array.isArray(msg.content)) {
+      const textParts = msg.content
+        .filter(item => item.type === 'text')
+        .map(item => item.text)
+        .join('\n')
+      return { ...msg, content: textParts || '' }
+    }
+    return msg
+  })
+
   const MAX_RETRIES = 3
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       const response = await axios.post(
         GROQ_API_URL,
         {
-          model: GROQ_MODEL,
-          messages,
+          model: selectedModel,
+          messages: sanitizedMessages,
           response_format,
           temperature,
           max_tokens
